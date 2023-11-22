@@ -62,7 +62,7 @@ class Tracker(object):
             cfg, args, self.scale, device=self.device)
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
-            self.frame_reader, batch_size=1, shuffle=False, num_workers=1)
+            self.frame_reader, batch_size=1, shuffle=False, num_workers=0) #changed to 0 original num_workers = 1
         self.visualizer = Visualizer(freq=cfg['tracking']['vis_freq'], inside_freq=cfg['tracking']['vis_inside_freq'],
                                      vis_dir=os.path.join(self.output, 'vis' if 'Demo' in self.output else 'tracking_vis'),
                                      renderer=self.renderer, verbose=self.verbose, device=self.device)
