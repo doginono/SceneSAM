@@ -68,6 +68,8 @@ class Tracker(object):
                                      renderer=self.renderer, verbose=self.verbose, device=self.device)
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
 
+    #TODO need Ground Truth semantics of current frame
+    #TODO update Tracker to also optimize semantics
     def optimize_cam_in_batch(self, camera_tensor, gt_color, gt_depth, batch_size, optimizer):
         """
         Do one iteration of camera iteration. Sample pixels, render depth/color, calculate loss and backpropagation.

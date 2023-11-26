@@ -308,6 +308,7 @@ class NICE(nn.Module):
         self.color_decoder = MLP(name='color', dim=dim, c_dim=c_dim, color=True,
                                  skips=[2], n_blocks=5, hidden_size=hidden_size,
                                  grid_len=color_grid_len, pos_embedding_method=pos_embedding_method)
+        #TODO add semantic_decoder same as color_decoder probably
 
     def forward(self, p, c_grid, stage='middle', **kwargs):
         """
@@ -340,3 +341,4 @@ class NICE(nn.Module):
             middle_occ = middle_occ.squeeze(0)
             raw[..., -1] = fine_occ+middle_occ
             return raw
+        #TODO stage = semantics: ...

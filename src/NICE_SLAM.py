@@ -47,6 +47,7 @@ class NICE_SLAM():
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
         self.update_cam()
 
+        #TODO add semantics decoder to the model
         model = config.get_model(cfg,  nice=self.nice)
         self.shared_decoders = model
 
@@ -92,6 +93,8 @@ class NICE_SLAM():
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
+        #TODO Here probably add another mapper for semantics
+        #TODO We probably need also a new grid for the semantics mapper/dont know where to add that for now
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
         self.tracker = Tracker(cfg, args, self)
@@ -291,6 +294,7 @@ class NICE_SLAM():
         """
 
         processes = []
+        #TODO Start the semantic process also
         for rank in range(3):
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank, ))
