@@ -121,6 +121,7 @@ class Replica(BaseDataset):
             glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
+        #TODO add path for semantic masks
         self.n_img = len(self.color_paths)
         self.load_poses(f'{self.input_folder}/traj.txt')
 

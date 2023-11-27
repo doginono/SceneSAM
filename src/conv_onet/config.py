@@ -18,6 +18,7 @@ def get_model(cfg,  nice=True):
     middle_grid_len = cfg['grid_len']['middle']
     fine_grid_len = cfg['grid_len']['fine']
     color_grid_len = cfg['grid_len']['color']
+    #TODO add sematic_grid_len
     c_dim = cfg['model']['c_dim']  # feature dimensions
     pos_embedding_method = cfg['model']['pos_embedding_method']
     if nice:

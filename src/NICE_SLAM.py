@@ -66,8 +66,8 @@ class NICE_SLAM():
         except RuntimeError:
             pass
 
-        self.frame_reader = get_dataset(cfg, args, self.scale)
-        self.n_img = len(self.frame_reader)
+        self.frame_reader = get_dataset(cfg, args, self.scale) #J:saves ordered the paths of images, depth masks 
+        self.n_img = len(self.frame_reader) 
         self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.estimate_c2w_list.share_memory_()
 
@@ -82,7 +82,7 @@ class NICE_SLAM():
         self.mapping_idx.share_memory_()
         self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
         self.mapping_cnt.share_memory_()
-        for key, val in self.shared_c.items():
+        for key, val in self.shared_c.items(): #J:shared_c contains the grids for the different decoders
             val = val.to(self.cfg['mapping']['device'])
             val.share_memory_()
             self.shared_c[key] = val
@@ -156,6 +156,7 @@ class NICE_SLAM():
             self.shared_decoders.middle_decoder.bound = self.bound
             self.shared_decoders.fine_decoder.bound = self.bound
             self.shared_decoders.color_decoder.bound = self.bound
+            #TODO add the bound for the semantic decoder
             if self.coarse:
                 self.shared_decoders.coarse_decoder.bound = self.bound*self.coarse_bound_enlarge
 
@@ -166,6 +167,7 @@ class NICE_SLAM():
         Args:
             cfg (dict): parsed config dict
         """
+        #not TODO no color decoder mentioned here -> no semantic decoder
 
         if self.coarse:
             ckpt = torch.load(cfg['pretrained_decoders']['coarse'],
@@ -199,6 +201,7 @@ class NICE_SLAM():
         Args:
             cfg (dict): parsed config dict.
         """
+        #TODO initialize the grid for the semantic decoder
         if self.coarse:
             coarse_grid_len = cfg['grid_len']['coarse']
             self.coarse_grid_len = coarse_grid_len
@@ -249,6 +252,8 @@ class NICE_SLAM():
         val_shape = [1, c_dim, *color_val_shape]
         color_val = torch.zeros(val_shape).normal_(mean=0, std=0.01)
         c[color_key] = color_val
+
+        #TODO copy past the same as color for sematic key
 
         self.shared_c = c
 
