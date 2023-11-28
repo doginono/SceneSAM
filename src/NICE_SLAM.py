@@ -89,12 +89,12 @@ class NICE_SLAM():
         self.shared_decoders = self.shared_decoders.to(
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
-        self.renderer = Renderer(cfg, args, self)
+        self.renderer = Renderer(cfg, args, self) 
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
-        #TODO Here probably add another mapper for semantics
-        #TODO We probably need also a new grid for the semantics mapper/dont know where to add that for now
+        #maybe TODO: probably add another mapper for semantics
+    
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
         self.tracker = Tracker(cfg, args, self)

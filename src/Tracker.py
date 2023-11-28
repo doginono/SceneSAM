@@ -48,6 +48,7 @@ class Tracker(object):
         self.tracking_pixels = cfg['tracking']['pixels']
         self.seperate_LR = cfg['tracking']['seperate_LR']
         self.w_color_loss = cfg['tracking']['w_color_loss']
+        #TODO add probably a w_semantics_loss
         self.ignore_edge_W = cfg['tracking']['ignore_edge_W']
         self.ignore_edge_H = cfg['tracking']['ignore_edge_H']
         self.handle_dynamic = cfg['tracking']['handle_dynamic']

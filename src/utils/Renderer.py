@@ -173,7 +173,9 @@ class Renderer(object):
             z_vals[..., :, None]  # [N_rays, N_samples+N_surface, 3]
         pointsf = pts.reshape(-1, 3)
 
-        raw = self.eval_points(pointsf, decoders, c, stage, device)
+        #TODO: In eval the predicting of the sampled points takes place depending on stage,
+        #  so add stage semantics here to predict the semantics
+        raw = self.eval_points(pointsf, decoders, c, stage, device) #J:forward pass of grid decoders and only keeping points inside of boundaries
         raw = raw.reshape(N_rays, N_samples+N_surface, -1)
 
         depth, uncertainty, color, weights = raw2outputs_nerf_color(
@@ -191,6 +193,7 @@ class Renderer(object):
             raw = self.eval_points(pts, decoders, c, stage, device)
             raw = raw.reshape(N_rays, N_samples+N_importance+N_surface, -1)
 
+            #TODO add semantic prediction here
             depth, uncertainty, color, weights = raw2outputs_nerf_color(
                 raw, z_vals, rays_d, occupancy=self.occupancy, device=device)
             return depth, uncertainty, color

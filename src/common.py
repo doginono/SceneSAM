@@ -229,6 +229,7 @@ def raw2outputs_nerf_color(raw, z_vals, rays_d, occupancy=False, device='cuda:0'
     # different ray angle corresponds to different unit length
     dists = dists * torch.norm(rays_d[..., None, :], dim=-1)
     rgb = raw[..., :-1]
+    #J: Calculating alpha from occupancy
     if occupancy:
         raw[..., 3] = torch.sigmoid(10*raw[..., -1])
         alpha = raw[..., -1]
@@ -240,9 +241,10 @@ def raw2outputs_nerf_color(raw, z_vals, rays_d, occupancy=False, device='cuda:0'
         device).float(), (1.-alpha + 1e-10).float()], -1).float(), -1)[:, :-1]
     rgb_map = torch.sum(weights[..., None] * rgb, -2)  # (N_rays, 3)
     depth_map = torch.sum(weights * z_vals, -1)  # (N_rays)
+    #TODO add semantic map like rgb_map, maybe change it later
     tmp = (z_vals-depth_map.unsqueeze(-1))  # (N_rays, N_samples)
     depth_var = torch.sum(weights*tmp*tmp, dim=1)  # (N_rays)
-    return depth_map, depth_var, rgb_map, weights
+    return depth_map, depth_var, rgb_map, weights #TODO return semantic map
 
 
 def get_rays(H, W, fx, fy, cx, cy, c2w, device):

@@ -59,6 +59,7 @@ class Mapper(object):
         self.num_joint_iters = cfg['mapping']['iters']
         self.clean_mesh = cfg['meshing']['clean_mesh']
         self.every_frame = cfg['mapping']['every_frame']
+        #TODO maybe need to add semantics<- check what color_refine and w_color_loss is doing
         self.color_refine = cfg['mapping']['color_refine']
         self.w_color_loss = cfg['mapping']['w_color_loss']
         self.keyframe_every = cfg['mapping']['keyframe_every']
@@ -293,6 +294,7 @@ class Mapper(object):
         middle_grid_para = []
         fine_grid_para = []
         color_grid_para = []
+        #TODO add semantic grid para list
         gt_depth_np = cur_gt_depth.cpu().numpy()
         if self.nice:
             if self.frustum_feature_selection:
@@ -310,6 +312,7 @@ class Mapper(object):
                         fine_grid_para.append(val)
                     elif key == 'grid_color':
                         color_grid_para.append(val)
+                        #TODO add semantics
 
                 else:
                     mask = self.get_mask_from_c2w(
@@ -331,6 +334,7 @@ class Mapper(object):
                         fine_grid_para.append(val_grad)
                     elif key == 'grid_color':
                         color_grid_para.append(val_grad)
+                        #TODO add semantics
 
         if self.nice:
             if not self.fix_fine:
@@ -339,6 +343,7 @@ class Mapper(object):
             if not self.fix_color:
                 decoders_para_list += list(
                     self.decoders.color_decoder.parameters())
+                #TODO i dont understand what fix_color does -> ?add it for semantics?
         else:
             # imap*, single MLP
             decoders_para_list += list(self.decoders.parameters())
@@ -364,6 +369,7 @@ class Mapper(object):
 
         if self.nice:
             if self.BA:
+                #TODO add the parameter list for semantics
                 # The corresponding lr will be set according to which stage the optimization is in
                 optimizer = torch.optim.Adam([{'params': decoders_para_list, 'lr': 0},
                                               {'params': coarse_grid_para, 'lr': 0},
@@ -388,7 +394,7 @@ class Mapper(object):
             from torch.optim.lr_scheduler import StepLR
             scheduler = StepLR(optimizer, step_size=200, gamma=0.8)
 
-        for joint_iter in range(num_joint_iters):
+        for joint_iter in range(num_joint_iters): #num_joint_iters is 1500 in this execution
             if self.nice:
                 if self.frustum_feature_selection:
                     for key, val in c.items():
@@ -402,21 +408,27 @@ class Mapper(object):
 
                 if self.coarse_mapper:
                     self.stage = 'coarse'
-                elif joint_iter <= int(num_joint_iters*self.middle_iter_ratio):
+                elif joint_iter <= int(num_joint_iters*self.middle_iter_ratio): #middle_iter_ratio is 0.4
                     self.stage = 'middle'
-                elif joint_iter <= int(num_joint_iters*self.fine_iter_ratio):
+                elif joint_iter <= int(num_joint_iters*self.fine_iter_ratio): #fine_iter_ratio is 0.6
                     self.stage = 'fine'
                 else:
                     self.stage = 'color'
+                    #add TODO semantics, we should probably increase the 
+                    # num_joint_iters and decrease the ratios to train on semantics 
+                    # as long as on colors and keeping the rest the same
 
                 optimizer.param_groups[0]['lr'] = cfg['mapping']['stage'][self.stage]['decoders_lr']*lr_factor
                 optimizer.param_groups[1]['lr'] = cfg['mapping']['stage'][self.stage]['coarse_lr']*lr_factor
                 optimizer.param_groups[2]['lr'] = cfg['mapping']['stage'][self.stage]['middle_lr']*lr_factor
                 optimizer.param_groups[3]['lr'] = cfg['mapping']['stage'][self.stage]['fine_lr']*lr_factor
                 optimizer.param_groups[4]['lr'] = cfg['mapping']['stage'][self.stage]['color_lr']*lr_factor
+                #TODO add semantics
+
                 if self.BA:
                     if self.stage == 'color':
                         optimizer.param_groups[5]['lr'] = self.BA_cam_lr
+                        #TODO maybe add semantics
             else:
                 self.stage = 'color'
                 optimizer.param_groups[0]['lr'] = cfg['mapping']['imap_decoders_lr']
@@ -432,12 +444,14 @@ class Mapper(object):
             batch_rays_o_list = []
             batch_gt_depth_list = []
             batch_gt_color_list = []
+            #TODO add gt semantics lsit
 
             camera_tensor_id = 0
             for frame in optimize_frame:
                 if frame != -1:
                     gt_depth = keyframe_dict[frame]['depth'].to(device)
                     gt_color = keyframe_dict[frame]['color'].to(device)
+                    #TODO add semantics
                     if self.BA and frame != oldest_frame:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
                         camera_tensor_id += 1
@@ -448,6 +462,7 @@ class Mapper(object):
                 else:
                     gt_depth = cur_gt_depth.to(device)
                     gt_color = cur_gt_color.to(device)
+                    #TODO add semantics
                     if self.BA:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
                         c2w = get_camera_from_tensor(camera_tensor)
@@ -460,11 +475,13 @@ class Mapper(object):
                 batch_rays_d_list.append(batch_rays_d.float())
                 batch_gt_depth_list.append(batch_gt_depth.float())
                 batch_gt_color_list.append(batch_gt_color.float())
+                #TODO add semantics
 
             batch_rays_d = torch.cat(batch_rays_d_list)
             batch_rays_o = torch.cat(batch_rays_o_list)
             batch_gt_depth = torch.cat(batch_gt_depth_list)
             batch_gt_color = torch.cat(batch_gt_color_list)
+            #TODO add semantics
 
             if self.nice:
                 # should pre-filter those out of bounding box depth value
@@ -479,6 +496,9 @@ class Mapper(object):
                 batch_rays_o = batch_rays_o[inside_mask]
                 batch_gt_depth = batch_gt_depth[inside_mask]
                 batch_gt_color = batch_gt_color[inside_mask]
+                #TODO add semantics
+                
+                #TODO add semantics in Render output
             ret = self.renderer.render_batch_ray(c, self.decoders, batch_rays_d,
                                                  batch_rays_o, device, self.stage,
                                                  gt_depth=None if self.coarse_mapper else batch_gt_depth)
@@ -576,6 +596,7 @@ class Mapper(object):
                 num_joint_iters = cfg['mapping']['iters']
 
                 # here provides a color refinement postprocess
+                #TODO maybe add the same for semantics
                 if idx == self.n_img-1 and self.color_refine and not self.coarse_mapper:
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
@@ -602,6 +623,7 @@ class Mapper(object):
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
 
+                #TODO add semantics to optimize_map
                 _ = self.optimize_map(num_joint_iters, lr_factor, idx, gt_color, gt_depth,
                                       gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w)
                 if self.BA:
