@@ -228,6 +228,7 @@ class Renderer(object):
             depth_list = []
             uncertainty_list = []
             color_list = []
+            #TODO add sematic list
 
             ray_batch_size = self.ray_batch_size
             gt_depth = gt_depth.reshape(-1)
@@ -243,18 +244,21 @@ class Renderer(object):
                     ret = self.render_batch_ray(
                         c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=gt_depth_batch)
 
-                depth, uncertainty, color = ret
+                depth, uncertainty, color = ret #TODO add return of semantics
                 depth_list.append(depth.double())
                 uncertainty_list.append(uncertainty.double())
                 color_list.append(color)
+                #TODO append to semantic list
 
             depth = torch.cat(depth_list, dim=0)
             uncertainty = torch.cat(uncertainty_list, dim=0)
             color = torch.cat(color_list, dim=0)
+            #TODO torch.cat semantic list
 
             depth = depth.reshape(H, W)
             uncertainty = uncertainty.reshape(H, W)
             color = color.reshape(H, W, 3)
+            #TODO reshape sematic list and return it
             return depth, uncertainty, color
 
     # this is only for imap*

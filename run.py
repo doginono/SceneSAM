@@ -33,8 +33,8 @@ def main():
     parser.set_defaults(nice=True)
     args = parser.parse_args()
 
-    cfg = config.load_config(
-        args.config, 'configs/nice_slam.yaml' if args.nice else 'configs/imap.yaml')
+    cfg = config.load_config( #J:changed it to use our config file including semantics
+        args.config, 'configs/nice_slam_sem.yaml' if args.nice else 'configs/imap.yaml')
 
     slam = NICE_SLAM(cfg, args)
 

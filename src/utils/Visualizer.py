@@ -39,7 +39,7 @@ class Visualizer(object):
         with torch.no_grad():
             if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
                 gt_depth_np = gt_depth.cpu().numpy()
-                gt_color_np = gt_color.cpu().numpy()
+                gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                 if len(c2w_or_camera_tensor.shape) == 1:
                     bottom = torch.from_numpy(
                         np.array([0, 0, 0, 1.]).reshape([1, 4])).type(
@@ -50,7 +50,7 @@ class Visualizer(object):
                 else:
                     c2w = c2w_or_camera_tensor
 
-                depth, uncertainty, color = self.renderer.render_img(
+                depth, uncertainty, color = self.renderer.render_img( #TODO add semantics
                     c,
                     decoders,
                     c2w,

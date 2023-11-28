@@ -47,7 +47,7 @@ class NICE_SLAM():
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
         self.update_cam()
 
-        #TODO add semantics decoder to the model
+        #Done: add semantics decoder to the model
         model = config.get_model(cfg,  nice=self.nice)
         self.shared_decoders = model
 
@@ -93,11 +93,11 @@ class NICE_SLAM():
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
-        #maybe TODO: probably add another mapper for semantics
+        #TODO mapper has some attributes related to color, which are not clear to me: color_refine, w_color_loss, fix_color 
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
-        self.tracker = Tracker(cfg, args, self)
+        self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
         self.print_output_desc()
 
     def print_output_desc(self):
@@ -156,7 +156,8 @@ class NICE_SLAM():
             self.shared_decoders.middle_decoder.bound = self.bound
             self.shared_decoders.fine_decoder.bound = self.bound
             self.shared_decoders.color_decoder.bound = self.bound
-            #TODO add the bound for the semantic decoder
+            self.shared_decoders.semantic_decoder.bound = self.bound
+            #Done: add the bound for the semantic decoder
             if self.coarse:
                 self.shared_decoders.coarse_decoder.bound = self.bound*self.coarse_bound_enlarge
 
@@ -167,7 +168,6 @@ class NICE_SLAM():
         Args:
             cfg (dict): parsed config dict
         """
-        #not TODO no color decoder mentioned here -> no semantic decoder
 
         if self.coarse:
             ckpt = torch.load(cfg['pretrained_decoders']['coarse'],
@@ -201,7 +201,7 @@ class NICE_SLAM():
         Args:
             cfg (dict): parsed config dict.
         """
-        #TODO initialize the grid for the semantic decoder
+        #Done: initialize the grid for the semantic decoder
         if self.coarse:
             coarse_grid_len = cfg['grid_len']['coarse']
             self.coarse_grid_len = coarse_grid_len
@@ -211,6 +211,10 @@ class NICE_SLAM():
         self.fine_grid_len = fine_grid_len
         color_grid_len = cfg['grid_len']['color']
         self.color_grid_len = color_grid_len
+        #---------------added--------------------------------
+        semantic_grid_len = cfg['grid_len']['semantic']
+        self.semantic_grid_len = semantic_grid_len
+        #----------------end_added----------------------------
 
         c = {}
         c_dim = cfg['model']['c_dim']
@@ -253,7 +257,16 @@ class NICE_SLAM():
         color_val = torch.zeros(val_shape).normal_(mean=0, std=0.01)
         c[color_key] = color_val
 
-        #TODO copy past the same as color for sematic key
+        #Done: copy past the same as color for sematic key
+        #---------------added--------------------------------
+        semantic_key = 'grid_semantic'
+        semantic_val_shape = list(map(int, (xyz_len/semantic_grid_len).tolist()))
+        semantic_val_shape[0], semantic_val_shape[2] = semantic_val_shape[2], semantic_val_shape[0]
+        self.semantic_val_shape = semantic_val_shape
+        val_shape = [1, c_dim, *semantic_val_shape]
+        semantic_val = torch.zeros(val_shape).normal_(mean=0, std=0.01)
+        c[semantic_key] = semantic_val
+        #---------------end added--------------------------------
 
         self.shared_c = c
 

@@ -93,6 +93,9 @@ class MLP(nn.Module):
     Decoder. Point coordinates not only used in sampling the feature grids, but also as MLP input.
 
     Args:
+        semantic (bool): whether or not to use semantic decoder.
+        output_dimension_semantic (int): output dimension of semantic decoder.
+
         name (str): name of this decoder.
         dim (int): input dimension.
         c_dim (int): feature dimension.
@@ -107,18 +110,23 @@ class MLP(nn.Module):
         concat_feature (bool): whether to get feature from middle level and concat to the current feature.
     """
 
+    #added semantic, output_dimension_semantic as arguments
     def __init__(self, name='', dim=3, c_dim=128,
                  hidden_size=256, n_blocks=5, leaky=False, sample_mode='bilinear',
-                 color=False, skips=[2], grid_len=0.16, pos_embedding_method='fourier', concat_feature=False):
+                 color=False, semantic=False, output_dimension_semantic = 0,skips=[2], grid_len=0.16, pos_embedding_method='fourier', concat_feature=False):
         super().__init__()
         self.name = name
         self.color = color
+        self.semantic = semantic #J: added semantic as an option, used to generate correct output dimension
         self.no_grad_feature = False
         self.c_dim = c_dim
         self.grid_len = grid_len
         self.concat_feature = concat_feature
         self.n_blocks = n_blocks
         self.skips = skips
+
+        self.output_dimension_semantic = output_dimension_semantic #J: added this
+        self.semantic= semantic #J: added this
 
         if c_dim != 0:
             self.fc_c = nn.ModuleList([
@@ -137,6 +145,10 @@ class MLP(nn.Module):
                 multires = 10
                 self.embedder = Nerf_positional_embedding(
                     multires, log_sampling=True)
+            elif 'semantic' in name: #J: copied from color, should not be entered
+                multires = 10
+                self.embedder = Nerf_positional_embedding(
+                    multires, log_sampling=False)
             else:
                 multires = 5
                 self.embedder = Nerf_positional_embedding(
@@ -151,9 +163,12 @@ class MLP(nn.Module):
             [DenseLayer(hidden_size, hidden_size, activation="relu") if i not in self.skips
              else DenseLayer(hidden_size + embedding_size, hidden_size, activation="relu") for i in range(n_blocks-1)])
 
-        if self.color:
+        if self.color: #J: self.color=True for most of the decoders (I think only for coarse and maybe middle not)
             self.output_linear = DenseLayer(
                 hidden_size, 4, activation="linear")
+        elif self.semantic: #J: self.semantic=True for semantic decoder
+            self.output_linear = DenseLayer(
+                hidden_size, output_dimension_semantic, activation="linear")
         else:
             self.output_linear = DenseLayer(
                 hidden_size, 1, activation="linear")
@@ -279,6 +294,8 @@ class NICE(nn.Module):
     Neural Implicit Scalable Encoding.
 
     Args:
+        output_dimension_semantic (int): output dimension of semantic decoder.
+
         dim (int): input dimension.
         c_dim (int): feature dimension.
         coarse_grid_len (float): voxel length in coarse grid.
@@ -290,9 +307,9 @@ class NICE(nn.Module):
         pos_embedding_method (str): positional embedding method.
     """
 
-    def __init__(self, dim=3, c_dim=32,
+    def __init__(self, output_dimension_semantic, dim=3, c_dim=32,
                  coarse_grid_len=2.0,  middle_grid_len=0.16, fine_grid_len=0.16,
-                 color_grid_len=0.16, hidden_size=32, coarse=False, pos_embedding_method='fourier'):
+                 color_grid_len=0.16, semantic_grid_len=0.16, hidden_size=32, coarse=False, pos_embedding_method='fourier'):
         super().__init__()
 
         if coarse:
@@ -308,7 +325,10 @@ class NICE(nn.Module):
         self.color_decoder = MLP(name='color', dim=dim, c_dim=c_dim, color=True,
                                  skips=[2], n_blocks=5, hidden_size=hidden_size,
                                  grid_len=color_grid_len, pos_embedding_method=pos_embedding_method)
-        #TODO add semantic_decoder same as color_decoder probably
+        #J: changed color to false for semantic_decoder because we dont want to output colors, we want to output one-hot vectors
+        self.semantic_decoder = MLP(name='semantic', output_dimension_semantic=output_dimension_semantic, semantic=True, dim=dim, c_dim=c_dim, color=False,
+                                 skips=[2], n_blocks=5, hidden_size=hidden_size,
+                                 grid_len=semantic_grid_len, pos_embedding_method=pos_embedding_method)
 
     def forward(self, p, c_grid, stage='middle', **kwargs):
         """

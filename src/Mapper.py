@@ -429,7 +429,7 @@ class Mapper(object):
                     if self.stage == 'color':
                         optimizer.param_groups[5]['lr'] = self.BA_cam_lr
                         #TODO maybe add semantics
-            else:
+            else: #J: this else will not be entered because nice = True always in our case
                 self.stage = 'color'
                 optimizer.param_groups[0]['lr'] = cfg['mapping']['imap_decoders_lr']
                 if self.BA:
@@ -505,16 +505,17 @@ class Mapper(object):
             depth, uncertainty, color = ret
 
             depth_mask = (batch_gt_depth > 0)
-            loss = torch.abs(
+            loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
             if ((not self.nice) or (self.stage == 'color')):
                 color_loss = torch.abs(batch_gt_color - color).sum()
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
+            #TODO add semantic loss
 
             # for imap*, it uses volume density
             regulation = (not self.occupancy)
-            if regulation:
+            if regulation: #TODO check if we enter here, have to change renderer input
                 point_sigma = self.renderer.regulation(
                     c, self.decoders, batch_rays_d, batch_rays_o, batch_gt_depth, device, self.stage)
                 regulation_loss = torch.abs(point_sigma).sum()
@@ -589,14 +590,14 @@ class Mapper(object):
                 print(prefix+"Mapping Frame ", idx.item())
                 print(Style.RESET_ALL)
 
-            _, gt_color, gt_depth, gt_c2w = self.frame_reader[idx]
+            _, gt_color, gt_depth, gt_c2w = self.frame_reader[idx] #TODO add semantics
 
             if not init:
                 lr_factor = cfg['mapping']['lr_factor']
                 num_joint_iters = cfg['mapping']['iters']
 
                 # here provides a color refinement postprocess
-                #TODO maybe add the same for semantics
+                #TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
                 if idx == self.n_img-1 and self.color_refine and not self.coarse_mapper:
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
@@ -635,7 +636,7 @@ class Mapper(object):
                     if (idx % self.keyframe_every == 0 or (idx == self.n_img-2)) \
                             and (idx not in self.keyframe_list):
                         self.keyframe_list.append(idx)
-                        self.keyframe_dict.append({'gt_c2w': gt_c2w.cpu(), 'idx': idx, 'color': gt_color.cpu(
+                        self.keyframe_dict.append({'gt_c2w': gt_c2w.cpu(), 'idx': idx, 'color': gt_color.cpu(#TODO add semantics ground truth
                         ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone()})
 
             if self.low_gpu_mem:
