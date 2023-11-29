@@ -53,8 +53,13 @@ class Renderer(object):
             ret = ret.squeeze(0)
             if len(ret.shape) == 1 and ret.shape[0] == 4:
                 ret = ret.unsqueeze(0)
-
-            ret[~mask, 3] = 100
+            
+            #-------------------added-------------------
+            if stage != 'semantic':
+                ret[~mask, 3] = 100 #TODO: that does not make sense for color and semantics <- check
+            else:
+                ret[~mask, -1] = 100
+            #-------------------------------------------
             rets.append(ret)
 
         ret = torch.cat(rets, dim=0)

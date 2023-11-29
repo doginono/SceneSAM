@@ -166,9 +166,12 @@ class MLP(nn.Module):
         if self.color: #J: self.color=True for most of the decoders (I think only for coarse and maybe middle not)
             self.output_linear = DenseLayer(
                 hidden_size, 4, activation="linear")
+            #-------added-----------------------------------------------------------------------------------------------------------
         elif self.semantic: #J: self.semantic=True for semantic decoder
             self.output_linear = DenseLayer(
-                hidden_size, output_dimension_semantic, activation="linear")
+                hidden_size, output_dimension_semantic, activation="linear") #J: changed last activation to ssoftmax, TODO: check if this works
+            self.softmax = nn.Softmax(dim=1) #TODO check if dim is correct
+            #-------end-added-------------------------------------------------------------------------------------------------------
         else:
             self.output_linear = DenseLayer(
                 hidden_size, 1, activation="linear")
@@ -213,6 +216,8 @@ class MLP(nn.Module):
             if i in self.skips:
                 h = torch.cat([embedded_pts, h], -1)
         out = self.output_linear(h)
+        if self.semantic: #J: added this
+            out = self.softmax(out)
         if not self.color:
             out = out.squeeze(-1)
         return out
@@ -326,9 +331,11 @@ class NICE(nn.Module):
                                  skips=[2], n_blocks=5, hidden_size=hidden_size,
                                  grid_len=color_grid_len, pos_embedding_method=pos_embedding_method)
         #J: changed color to false for semantic_decoder because we dont want to output colors, we want to output one-hot vectors
+        #--------------------------------added---------------------------------------------------------------------------------------
         self.semantic_decoder = MLP(name='semantic', output_dimension_semantic=output_dimension_semantic, semantic=True, dim=dim, c_dim=c_dim, color=False,
                                  skips=[2], n_blocks=5, hidden_size=hidden_size,
                                  grid_len=semantic_grid_len, pos_embedding_method=pos_embedding_method)
+        #-------------------------------end-added---------------------------------------------------------------------------------------
 
     def forward(self, p, c_grid, stage='middle', **kwargs):
         """
@@ -361,4 +368,11 @@ class NICE(nn.Module):
             middle_occ = middle_occ.squeeze(0)
             raw[..., -1] = fine_occ+middle_occ
             return raw
-        #TODO stage = semantics: ...
+        #--------------------------------added---------------------------------------------------------------------------------------
+        elif stage == 'semantic':
+            fine_occ = self.fine_decoder(p, c_grid)
+            raw = self.semantic_decoder(p, c_grid)
+            middle_occ = self.middle_decoder(p, c_grid)
+            middle_occ = middle_occ.squeeze(0)
+            raw = torch.cat((raw, fine_occ+middle_occ), dim=-1) #TODO: check if we need this -> might overwrite the softmax, hence no valid output
+            return raw

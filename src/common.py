@@ -89,8 +89,10 @@ def get_rays_from_uv(i, j, c2w, H, W, fx, fy, cx, cy, device):
     return rays_o, rays_d
 
 
-def select_uv(i, j, n, depth, color, device='cuda:0'):
+def select_uv(i, j, n, depth, color, semantic, device='cuda:0'):
     """
+    changed arguments to include semantic
+
     Select n uv from dense uv.
 
     """
@@ -102,36 +104,46 @@ def select_uv(i, j, n, depth, color, device='cuda:0'):
     j = j[indices]  # (n)
     depth = depth.reshape(-1)
     color = color.reshape(-1, 3)
+    
     depth = depth[indices]  # (n)
     color = color[indices]  # (n,3)
-    return i, j, depth, color
+    if semantic is not None:
+        semantic = semantic.reshape(-1, semantic.shape[-1]) #TODO: check if this is 101 for room0
+        semantic = semantic[indices]  # (n, #instances)
+    return i, j, depth, color, semantic
 
 
-def get_sample_uv(H0, H1, W0, W1, n, depth, color, device='cuda:0'):
+def get_sample_uv(H0, H1, W0, W1, n, depth, color, semantic, device='cuda:0'):
     """
+    changed arguments to include semantic
+
     Sample n uv coordinates from an image region H0..H1, W0..W1
 
     """
     depth = depth[H0:H1, W0:W1]
     color = color[H0:H1, W0:W1]
+    if semantic is not None:
+        semantic = semantic[H0:H1, W0:W1]
     i, j = torch.meshgrid(torch.linspace(
         W0, W1-1, W1-W0).to(device), torch.linspace(H0, H1-1, H1-H0).to(device))
     i = i.t()  # transpose
     j = j.t()
-    i, j, depth, color = select_uv(i, j, n, depth, color, device=device)
-    return i, j, depth, color
+    i, j, depth, color, semantic= select_uv(i, j, n, depth, color, semantic, device=device)
+    return i, j, depth, color, semantic
 
 
-def get_samples(H0, H1, W0, W1, n, H, W, fx, fy, cx, cy, c2w, depth, color, device):
+def get_samples(H0, H1, W0, W1, n, H, W, fx, fy, cx, cy, c2w, depth, color, semantic, device):
     """
+    added semantic as argument, changed get_samples_uv to get_samples for semantic
+
     Get n rays from the image region H0..H1, W0..W1.
     c2w is its camera pose and depth/color is the corresponding image tensor.
 
     """
-    i, j, sample_depth, sample_color = get_sample_uv(
-        H0, H1, W0, W1, n, depth, color, device=device)
+    i, j, sample_depth, sample_color, sample_semantic = get_sample_uv(
+        H0, H1, W0, W1, n, depth, color, semantic, device=device)
     rays_o, rays_d = get_rays_from_uv(i, j, c2w, H, W, fx, fy, cx, cy, device)
-    return rays_o, rays_d, sample_depth, sample_color
+    return rays_o, rays_d, sample_depth, sample_color, sample_semantic
 
 
 def quad2rotation(quad):

@@ -5,4 +5,4 @@ mapping:
 data:
   input_folder: Datasets/Replica/room0
   output: output/Replica/room0
-output_dimension_semantic: 13
+output_dimension_semantic: 101

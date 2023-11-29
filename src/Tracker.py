@@ -48,7 +48,7 @@ class Tracker(object):
         self.tracking_pixels = cfg['tracking']['pixels']
         self.seperate_LR = cfg['tracking']['seperate_LR']
         self.w_color_loss = cfg['tracking']['w_color_loss']
-        #TODO add probably a w_semantics_loss
+        #TODO add probably a w_semantics_loss if the tracker should also be updated on the semantics, else it does not matter
         self.ignore_edge_W = cfg['tracking']['ignore_edge_W']
         self.ignore_edge_H = cfg['tracking']['ignore_edge_H']
         self.handle_dynamic = cfg['tracking']['handle_dynamic']
@@ -70,7 +70,6 @@ class Tracker(object):
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
 
     #TODO need Ground Truth semantics of current frame
-    #TODO update Tracker to also optimize semantics
     def optimize_cam_in_batch(self, camera_tensor, gt_color, gt_depth, batch_size, optimizer):
         """
         Do one iteration of camera iteration. Sample pixels, render depth/color, calculate loss and backpropagation.
@@ -91,8 +90,8 @@ class Tracker(object):
         c2w = get_camera_from_tensor(camera_tensor)
         Wedge = self.ignore_edge_W
         Hedge = self.ignore_edge_H
-        batch_rays_o, batch_rays_d, batch_gt_depth, batch_gt_color = get_samples(
-            Hedge, H-Hedge, Wedge, W-Wedge, batch_size, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, self.device)
+        batch_rays_o, batch_rays_d, batch_gt_depth, batch_gt_color, _ = get_samples(
+            Hedge, H-Hedge, Wedge, W-Wedge, batch_size, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, None, self.device)
         if self.nice:
             # should pre-filter those out of bounding box depth value
             with torch.no_grad():
@@ -108,7 +107,7 @@ class Tracker(object):
 
         ret = self.renderer.render_batch_ray(
             self.c, self.decoders, batch_rays_d, batch_rays_o,  self.device, stage='color',  gt_depth=batch_gt_depth)
-        depth, uncertainty, color = ret
+        depth, uncertainty, color = ret #TODO semantics will also be in the output of the renderer
 
         uncertainty = uncertainty.detach()
         if self.handle_dynamic:
@@ -120,7 +119,7 @@ class Tracker(object):
         loss = (torch.abs(batch_gt_depth-depth) /
                 torch.sqrt(uncertainty+1e-10))[mask].sum()
 
-        if self.use_color_in_tracking:
+        if self.use_color_in_tracking: #TODO we could also use semantics in tracking
             color_loss = torch.abs(
                 batch_gt_color - color)[mask].sum()
             loss += self.w_color_loss*color_loss
@@ -152,7 +151,8 @@ class Tracker(object):
         else:
             pbar = tqdm(self.frame_loader)
 
-        for idx, gt_color, gt_depth, gt_c2w in pbar:
+        #TODO maybe add semantic loss for tracking later
+        for idx, gt_color, gt_depth, gt_c2w, _ in pbar:
             if not self.verbose:
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 

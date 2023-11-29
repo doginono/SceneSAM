@@ -52,7 +52,14 @@ class BaseDataset(Dataset):
     def __init__(self, cfg, args, scale, device='cuda:0'
                  ):
         super(BaseDataset, self).__init__()
+
         self.name = cfg['dataset']
+
+        #-------------------added-----------------------------------------------
+        if self.name == 'replica':
+            self.output_dimension_semantic = cfg['output_dimension_semantic']
+        #------------------end-added-----------------------------------------------
+
         self.device = device
         self.scale = scale
         self.png_depth_scale = cfg['cam']['png_depth_scale']
@@ -80,7 +87,7 @@ class BaseDataset(Dataset):
         color_data = cv2.imread(color_path) 
         #-------------------added-----------------------------------------------
         semantic_path = self.semantic_paths[index] 
-        semantic_data = np.load(semantic_path)#TODO probably change later to actual semantic data
+        semantic_data = np.load(semantic_path).astype(bool)#TODO probably change later to actual semantic data
         #-----------------end--added-----------------------------------------------
         if '.png' in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
@@ -96,9 +103,9 @@ class BaseDataset(Dataset):
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
         #-------------------added-----------------------------------------------
-        semantic_data = semantic_data.resize((W, H)) #TODO check if this works
+        #semantic_data = semantic_data.resize((H, W, self.output_dimension_semantic)) #TODO check if this works
         #------------------end-added-----------------------------------------------
-        color_data = cv2.resize(color_data, (W, H)) 
+        color_data = cv2.resize(color_data, (W, H)) #shape after (680, 1200, 3) = (H, W, 3)
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
