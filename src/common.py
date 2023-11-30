@@ -213,7 +213,7 @@ def get_tensor_from_camera(RT, Tquad=False):
     return tensor
 
 
-def raw2outputs_nerf_color(raw, z_vals, rays_d, occupancy=False, device='cuda:0'):
+def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='cuda:0'):
     """
     Transforms model's predictions to semantically meaningful values.
 
@@ -240,23 +240,29 @@ def raw2outputs_nerf_color(raw, z_vals, rays_d, occupancy=False, device='cuda:0'
 
     # different ray angle corresponds to different unit length
     dists = dists * torch.norm(rays_d[..., None, :], dim=-1)
-    rgb = raw[..., :-1]
+    rgb = raw[..., :-1] #J: should be one-hot encodings in semantic stage
     #J: Calculating alpha from occupancy
     if occupancy:
-        raw[..., 3] = torch.sigmoid(10*raw[..., -1])
+        if stage != 'semantic':
+            raw[..., 3] = torch.sigmoid(10*raw[..., -1])
+        else:
+            # semantic
+            raw[..., -1] = torch.sigmoid(100*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
         alpha = raw[..., -1]
     else:
+        #J: never enters here in our case
         # original nerf, volume density
         alpha = raw2alpha(raw[..., -1], dists)  # (N_rays, N_samples)
 
     weights = alpha.float() * torch.cumprod(torch.cat([torch.ones((alpha.shape[0], 1)).to(
         device).float(), (1.-alpha + 1e-10).float()], -1).float(), -1)[:, :-1]
-    rgb_map = torch.sum(weights[..., None] * rgb, -2)  # (N_rays, 3)
+    rgb_map = torch.sum(weights[..., None] * rgb, -2)  # (N_rays, 3 or #instances)
     depth_map = torch.sum(weights * z_vals, -1)  # (N_rays)
-    #TODO add semantic map like rgb_map, maybe change it later
+
+    #Done: add semantic map like rgb_map, maybe change it later <- rgb_map is semantic map in stage semantic
     tmp = (z_vals-depth_map.unsqueeze(-1))  # (N_rays, N_samples)
     depth_var = torch.sum(weights*tmp*tmp, dim=1)  # (N_rays)
-    return depth_map, depth_var, rgb_map, weights #TODO return semantic map
+    return depth_map, depth_var, rgb_map, weights #Done: add semantic map like rgb_map, maybe change it later <- rgb_map is semantic map in stage semantic
 
 
 def get_rays(H, W, fx, fy, cx, cy, c2w, device):

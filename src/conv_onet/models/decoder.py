@@ -374,5 +374,7 @@ class NICE(nn.Module):
             raw = self.semantic_decoder(p, c_grid)
             middle_occ = self.middle_decoder(p, c_grid)
             middle_occ = middle_occ.squeeze(0)
-            raw = torch.cat((raw, fine_occ+middle_occ), dim=-1) #TODO: check if we need this -> might overwrite the softmax, hence no valid output
+            tmp = fine_occ+middle_occ
+            tmp = tmp.view(-1, 1)
+            raw = torch.cat((raw, tmp), dim=1) #TODO: check if we need this -> might overwrite the softmax, hence no valid output
             return raw

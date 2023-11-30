@@ -64,6 +64,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   w_color_loss: 0.2
+  w_semantic_loss: 0.2
   frustum_feature_selection: True
   keyframe_selection_method: 'overlap'
   save_selected_keyframes_info: False
