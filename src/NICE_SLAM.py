@@ -89,7 +89,8 @@ class NICE_SLAM():
         self.shared_decoders = self.shared_decoders.to(
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
-        self.renderer = Renderer(cfg, args, self, points_batch_size=2500, ray_batch_size=500) #J: changed from default in renderer constructor
+        self.renderer = Renderer(cfg, args, self, points_batch_size=200000, ray_batch_size=20000) #J: changed from default in renderer constructor
+
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)

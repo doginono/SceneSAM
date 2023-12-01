@@ -22,7 +22,7 @@ class Visualizer(object):
         os.makedirs(f'{vis_dir}', exist_ok=True)
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
-            decoders, gt_semantic=None, only_semantic=False):
+            decoders, gt_semantic=None, only_semantic=False, stage = ""):
         """
         Visualization of depth, color images and save to file.
 
@@ -41,14 +41,14 @@ class Visualizer(object):
 
         #TODO: find way to make vis work with semantic -> currently cuda out of memory error
         #TODO: render_img is super messy, clean it up
-        with torch.no_grad():
-            if only_semantic == False:
-                if gt_semantic is not None:
-                    if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
+        if (idx % self.freq == 0) and (iter % self.inside_freq == 0) and stage != 'coarse':
+            with torch.no_grad():
+                if only_semantic == False:
+                    if gt_semantic is not None:
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                         gt_semantic_np = gt_semantic.cpu().numpy()
-                        gt_semantic_np = np.argmax(gt_semantic_np, axis=0)
+                        gt_semantic_np = np.argmax(gt_semantic_np, axis=2)
                         if len(c2w_or_camera_tensor.shape) == 1:
                             bottom = torch.from_numpy(
                                 np.array([0, 0, 0, 1.]).reshape([1, 4])).type(
@@ -59,7 +59,7 @@ class Visualizer(object):
                         else:
                             c2w = c2w_or_camera_tensor
 
-                        depth, uncertainty, color, semantic = self.renderer.render_img( #TODO add semantics
+                        depth, uncertainty, color, semantic = self.renderer.render_img( #Done add semantics
                             c,
                             decoders,
                             c2w,
@@ -69,11 +69,15 @@ class Visualizer(object):
                         depth_np = depth.detach().cpu().numpy()
                         color_np = color.detach().cpu().numpy()
                         semantic_np = semantic.detach().cpu().numpy() #added
+                        print("SEMANTIC",semantic_np[0,:])
+                        print("SEMANTIC",semantic_np[1,:])
+                        print("SEMANTIC TYPE",type(semantic_np))
+                        print("COLOR",color_np[0,0,:])
                         depth_residual = np.abs(gt_depth_np - depth_np)
                         depth_residual[gt_depth_np == 0.0] = 0.0
                         color_residual = np.abs(gt_color_np - color_np)
                         color_residual[gt_depth_np == 0.0] = 0.0
-                        semantic_residual = np.abs(gt_semantic_np - semantic_np) #added
+                        semantic_residual = np.abs(~(gt_semantic_np == semantic_np)) #added
                         semantic_residual[gt_depth_np == 0.0] = 0.0 #added
 
                         fig, axs = plt.subplots(3, 3) #previously 2,3
@@ -130,9 +134,8 @@ class Visualizer(object):
 
                         if self.verbose:
                             print(
-                                f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
-                else: #normal execution without semantics 
-                    if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
+                                f'1Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
+                    else: #normal execution without semantics 
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy()
                         if len(c2w_or_camera_tensor.shape) == 1:
@@ -199,94 +202,94 @@ class Visualizer(object):
 
                         if self.verbose:
                             print(
-                                f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
+                                f'2Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
 
-            else: #include semantics ignore color
-                if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
-                    gt_depth_np = gt_depth.cpu().numpy()
-                    #gt_color_np = gt_color.cpu().numpy() #TODO add semantics
-                    gt_semantic_np = gt_semantic.cpu().numpy()
-                    gt_semantic_np = np.argmax(gt_semantic_np, axis=2)
-                    if len(c2w_or_camera_tensor.shape) == 1:
-                        bottom = torch.from_numpy(
-                            np.array([0, 0, 0, 1.]).reshape([1, 4])).type(
-                                torch.float32).to(self.device)
-                        c2w = get_camera_from_tensor(
-                            c2w_or_camera_tensor.clone().detach())
-                        c2w = torch.cat([c2w, bottom], dim=0)
-                    else:
-                        c2w = c2w_or_camera_tensor
+                else: #include semantics ignore color
+                    if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
+                        gt_depth_np = gt_depth.cpu().numpy()
+                        gt_color_np = gt_color.cpu().numpy() #Done add semantics
+                        gt_semantic_np = gt_semantic.cpu().numpy()
+                        gt_semantic_np = np.argmax(gt_semantic_np, axis=2)
+                        if len(c2w_or_camera_tensor.shape) == 1:
+                            bottom = torch.from_numpy(
+                                np.array([0, 0, 0, 1.]).reshape([1, 4])).type(
+                                    torch.float32).to(self.device)
+                            c2w = get_camera_from_tensor(
+                                c2w_or_camera_tensor.clone().detach())
+                            c2w = torch.cat([c2w, bottom], dim=0)
+                        else:
+                            c2w = c2w_or_camera_tensor
 
-                    depth, uncertainty, color, semantic = self.renderer.render_img( #TODO add semantics
-                        c,
-                        decoders,
-                        c2w,
-                        self.device,
-                        stage='visualize_semantic',
-                        gt_depth=gt_depth)
-                    depth_np = depth.detach().cpu().numpy()
-                    #color_np = color.detach().cpu().numpy()
-                    semantic_np = semantic.detach().cpu().numpy() #added
-                    depth_residual = np.abs(gt_depth_np - depth_np)
-                    depth_residual[gt_depth_np == 0.0] = 0.0
-                    #color_residual = np.abs(gt_color_np - color_np)
-                    #color_residual[gt_depth_np == 0.0] = 0.0
-                    semantic_residual = np.abs(gt_semantic_np - semantic_np) #added
-                    semantic_residual[gt_depth_np == 0.0] = 0.0 #added
+                        depth, uncertainty, color, semantic = self.renderer.render_img( #TODO add semantics
+                            c,
+                            decoders,
+                            c2w,
+                            self.device,
+                            stage='visualize_semantic',
+                            gt_depth=gt_depth)
+                        depth_np = depth.detach().cpu().numpy()
+                        #color_np = color.detach().cpu().numpy()
+                        semantic_np = semantic.detach().cpu().numpy() #added
+                        depth_residual = np.abs(gt_depth_np - depth_np)
+                        depth_residual[gt_depth_np == 0.0] = 0.0
+                        #color_residual = np.abs(gt_color_np - color_np)
+                        #color_residual[gt_depth_np == 0.0] = 0.0
+                        semantic_residual = np.abs(gt_semantic_np - semantic_np) #added
+                        semantic_residual[gt_depth_np == 0.0] = 0.0 #added
 
-                    fig, axs = plt.subplots(2, 3) #previously 2,3
-                    fig.tight_layout()
-                    max_depth = np.max(gt_depth_np)
-                    axs[0, 0].imshow(gt_depth_np, cmap="plasma",
-                                    vmin=0, vmax=max_depth)
-                    axs[0, 0].set_title('Input Depth')
-                    axs[0, 0].set_xticks([])
-                    axs[0, 0].set_yticks([])
-                    axs[0, 1].imshow(depth_np, cmap="plasma",
-                                    vmin=0, vmax=max_depth)
-                    axs[0, 1].set_title('Generated Depth')
-                    axs[0, 1].set_xticks([])
-                    axs[0, 1].set_yticks([])
-                    axs[0, 2].imshow(depth_residual, cmap="plasma",
-                                    vmin=0, vmax=max_depth)
-                    axs[0, 2].set_title('Depth Residual')
-                    axs[0, 2].set_xticks([])
-                    axs[0, 2].set_yticks([])
-                    """
-                    gt_color_np = np.clip(gt_color_np, 0, 1)
-                    color_np = np.clip(color_np, 0, 1)
-                    color_residual = np.clip(color_residual, 0, 1)
-                    axs[1, 0].imshow(gt_color_np, cmap="plasma")
-                    axs[1, 0].set_title('Input RGB')
-                    axs[1, 0].set_xticks([])
-                    axs[1, 0].set_yticks([])
-                    axs[1, 1].imshow(color_np, cmap="plasma")
-                    axs[1, 1].set_title('Generated RGB')
-                    axs[1, 1].set_xticks([])
-                    axs[1, 1].set_yticks([])
-                    axs[1, 2].imshow(color_residual, cmap="plasma")
-                    axs[1, 2].set_title('RGB Residual')
-                    axs[1, 2].set_xticks([])
-                    axs[1, 2].set_yticks([])"""
-                    #------------------added------------------
-                    axs[1, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
-                    axs[1, 0].set_title('Input Semantic')
-                    axs[1, 0].set_xticks([])
-                    axs[1, 0].set_yticks([])
-                    axs[1, 1].imshow(semantic_np, cmap="plasma", interpolation='nearest')
-                    axs[1, 1].set_title('Generated Semantic')
-                    axs[1, 1].set_xticks([])
-                    axs[1, 1].set_yticks([])
-                    axs[1, 2].imshow(semantic_residual, cmap="plasma", interpolation='nearest')
-                    axs[1, 2].set_title('Semantic Residual')
-                    axs[1, 2].set_xticks([])
-                    axs[1, 2].set_yticks([])
-                    #-----------------end-added------------------
-                    plt.subplots_adjust(wspace=0, hspace=0)
-                    plt.savefig(
-                        f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
-                    plt.clf()
+                        fig, axs = plt.subplots(2, 3) #previously 2,3
+                        fig.tight_layout()
+                        max_depth = np.max(gt_depth_np)
+                        axs[0, 0].imshow(gt_depth_np, cmap="plasma",
+                                        vmin=0, vmax=max_depth)
+                        axs[0, 0].set_title('Input Depth')
+                        axs[0, 0].set_xticks([])
+                        axs[0, 0].set_yticks([])
+                        axs[0, 1].imshow(depth_np, cmap="plasma",
+                                        vmin=0, vmax=max_depth)
+                        axs[0, 1].set_title('Generated Depth')
+                        axs[0, 1].set_xticks([])
+                        axs[0, 1].set_yticks([])
+                        axs[0, 2].imshow(depth_residual, cmap="plasma",
+                                        vmin=0, vmax=max_depth)
+                        axs[0, 2].set_title('Depth Residual')
+                        axs[0, 2].set_xticks([])
+                        axs[0, 2].set_yticks([])
+                        """
+                        gt_color_np = np.clip(gt_color_np, 0, 1)
+                        color_np = np.clip(color_np, 0, 1)
+                        color_residual = np.clip(color_residual, 0, 1)
+                        axs[1, 0].imshow(gt_color_np, cmap="plasma")
+                        axs[1, 0].set_title('Input RGB')
+                        axs[1, 0].set_xticks([])
+                        axs[1, 0].set_yticks([])
+                        axs[1, 1].imshow(color_np, cmap="plasma")
+                        axs[1, 1].set_title('Generated RGB')
+                        axs[1, 1].set_xticks([])
+                        axs[1, 1].set_yticks([])
+                        axs[1, 2].imshow(color_residual, cmap="plasma")
+                        axs[1, 2].set_title('RGB Residual')
+                        axs[1, 2].set_xticks([])
+                        axs[1, 2].set_yticks([])"""
+                        #------------------added------------------
+                        axs[1, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
+                        axs[1, 0].set_title('Input Semantic')
+                        axs[1, 0].set_xticks([])
+                        axs[1, 0].set_yticks([])
+                        axs[1, 1].imshow(semantic_np, cmap="plasma", interpolation='nearest')
+                        axs[1, 1].set_title('Generated Semantic')
+                        axs[1, 1].set_xticks([])
+                        axs[1, 1].set_yticks([])
+                        axs[1, 2].imshow(semantic_residual, cmap="plasma", interpolation='nearest')
+                        axs[1, 2].set_title('Semantic Residual')
+                        axs[1, 2].set_xticks([])
+                        axs[1, 2].set_yticks([])
+                        #-----------------end-added------------------
+                        plt.subplots_adjust(wspace=0, hspace=0)
+                        plt.savefig(
+                            f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                        plt.clf()
 
-                    if self.verbose:
-                        print(
-                            f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
+                        if self.verbose:
+                            print(
+                                f'3Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')

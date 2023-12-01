@@ -57,8 +57,8 @@ mapping:
   no_vis_on_first_frame: True
   no_mesh_on_first_frame: True
   no_log_on_first_frame: True
-  vis_freq: 50
-  vis_inside_freq: 25 #each iteration 
+  vis_freq: 50 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
+  vis_inside_freq: 25 #J:frequence of visualization on a frame where we visualize; is true #iters/vis_inside_freq times 
   mesh_freq: 50
   ckpt_freq: 500
   keyframe_every: 50
@@ -71,8 +71,8 @@ mapping:
   lr_first_factor: 5
   lr_factor: 1
   pixels: 1000
-  iters_first: 1500
-  iters: 60
+  iters_first: 2000 #J: num_joint_iters in Mapper on optimize_map on first iteration
+  iters: 100 #J: num_joint_iters in Mapper on optimize_map on all but first iteration
   stage:
     coarse:
       decoders_lr: 0.0
@@ -101,14 +101,14 @@ mapping:
       middle_lr: 0.005
       fine_lr: 0.005
       color_lr: 0.005
-      semantic_lr: 0.005
+      semantic_lr: 0.0
     semantic: 
       decoders_lr: 0.005
       coarse_lr: 0.0
       middle_lr: 0.005
       fine_lr: 0.005
-      color_lr: 0.005
-      semantic_lr: 0.005
+      color_lr: 0.0
+      semantic_lr: 0.01 #original: 0.005
 
 cam:
   H: 680

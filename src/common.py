@@ -247,7 +247,7 @@ def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='
             raw[..., 3] = torch.sigmoid(10*raw[..., -1])
         else:
             # semantic
-            raw[..., -1] = torch.sigmoid(100*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
+            raw[..., -1] = torch.sigmoid(10*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
         alpha = raw[..., -1]
     else:
         #J: never enters here in our case

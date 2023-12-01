@@ -55,6 +55,7 @@ class Renderer(object):
                 ret = ret.unsqueeze(0)
             
             #-------------------added-------------------
+            #setting occupancy in this part
             if stage != 'semantic':
                 ret[~mask, 3] = 100 #TODO: that does not make sense for color and semantics <- check
             else:
@@ -289,6 +290,7 @@ class Renderer(object):
             if stage == "visualize":#Done torch.cat semantic list and reshape
                 semantic = torch.cat(semantic_list, dim=0)
                 semantic = semantic.reshape(H,W)
+                color = color.reshape(H, W, 3)
             elif stage == "visualize_semantic":
                 color = color.reshape(H,W)
             else:

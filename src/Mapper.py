@@ -466,7 +466,7 @@ class Mapper(object):
 
             if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output):
                 self.visualizer.vis(
-                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=True) 
+                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage) 
 
             optimizer.zero_grad()
             batch_rays_d_list = []
@@ -557,7 +557,8 @@ class Mapper(object):
                 loss += weighted_color_loss
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
-                semantic_loss = torch.abs(batch_gt_semantic - color_semantics).sum()
+                loss_function = torch.nn.CrossEntropyLoss()
+                semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
