@@ -571,6 +571,7 @@ class Mapper(object):
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
                 if joint_iter == num_joint_iters +inc -1:
+                    print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]
                 #writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
                 weighted_color_loss = self.w_color_loss*color_loss
