@@ -331,6 +331,8 @@ class NICE_SLAM():
             processes.append(p)
         for p in processes:
             p.join()
+        
+        self.writer.close() #J:added
 
 
 # This part is required by torch.multiprocessing
