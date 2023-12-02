@@ -428,6 +428,9 @@ class Mapper(object):
             inc = int(self.semantic_iter_ratio*num_joint_iters)
         else:
             inc = 0
+        depth_loss_writer = 0 #losses for the Tensorboard writer
+        color_loss_writer = 0
+        semantic_loss_writer = 0
         for joint_iter in range(num_joint_iters + inc): 
             if self.nice:
                 if self.frustum_feature_selection:
@@ -560,18 +563,20 @@ class Mapper(object):
             loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
             if writer is not None:
-                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), idx*(num_joint_iters+inc)+joint_iter)
+                depth_loss_writer += loss.item()/torch.sum(depth_mask)
+                #writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), idx*(num_joint_iters+inc)+joint_iter)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
-                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
+                color_loss_writer += color_loss.item()/color_semantics.shape[0]
+                #writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
-                print('SEMANTIC LOSS ', semantic_loss.item()/color_semantics.shape[0]) 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
+                semantic_loss_writer += semantic_loss.item()/color_semantics.shape[0] 
+                #writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
@@ -601,6 +606,10 @@ class Mapper(object):
                         val = val.detach()
                         val[mask] = val_grad.clone().detach()
                         c[key] = val
+        
+        writer.add_scalar(f'Loss/depth', depth_loss_writer/(num_joint_iters+inc), idx)
+        writer.add_scalar(f'Loss/color', color_loss_writer/(num_joint_iters+inc), idx)
+        writer.add_scalar(f'Loss/semantic', semantic_loss_writer/(num_joint_iters+inc), idx)
 
         if self.BA:
             # put the updated camera poses back
