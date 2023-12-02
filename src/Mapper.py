@@ -610,8 +610,8 @@ class Mapper(object):
                         c[key] = val
         
         writer.add_scalar(f'Loss/depth', depth_loss_writer/(num_joint_iters+inc), idx)
-        writer.add_scalar(f'Loss/color', color_loss_writer/(num_joint_iters+inc), idx)
-        writer.add_scalar(f'Loss/semantic', semantic_loss_writer/(num_joint_iters+inc), idx)
+        writer.add_scalar(f'Loss/color', color_loss_writer/inc, idx)
+        writer.add_scalar(f'Loss/semantic', semantic_loss_writer/inc, idx)
 
         if self.BA:
             # put the updated camera poses back
