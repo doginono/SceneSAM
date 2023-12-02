@@ -14,7 +14,7 @@ from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
-from torch.utils.tensorboard import SummaryWriter #J: added
+#from torch.utils.tensorboard import SummaryWriter #J: added
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -67,8 +67,7 @@ class NICE_SLAM():
             mp.set_start_method('spawn', force=True)
         except RuntimeError:
             pass
-
-        self.writer = SummaryWriter(cfg['writer_path']) #J: added
+        
         self.frame_reader = get_dataset(cfg, args, self.scale) #J:saves ordered the paths of images, depth masks 
         self.n_img = len(self.frame_reader) 
         self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
@@ -96,7 +95,7 @@ class NICE_SLAM():
 
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
-        self.mapper = Mapper(cfg, args, self, self.writer, coarse_mapper=False)
+        self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, w_color_loss, fix_color 
     
         if self.coarse:
@@ -332,7 +331,6 @@ class NICE_SLAM():
         for p in processes:
             p.join()
         
-        self.writer.close() #J:added
 
 
 # This part is required by torch.multiprocessing

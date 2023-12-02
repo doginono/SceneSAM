@@ -12,6 +12,7 @@ from src.common import (get_camera_from_tensor, get_samples,
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
 
+from torch.utils.tensorboard import SummaryWriter #J: added
 
 class Mapper(object):
     """
@@ -19,7 +20,7 @@ class Mapper(object):
 
     """
 
-    def __init__(self, cfg, args, slam, writer = None,coarse_mapper=False
+    def __init__(self, cfg, args, slam,coarse_mapper=False
                  ):
 
         self.cfg = cfg
@@ -30,7 +31,8 @@ class Mapper(object):
         #self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
-        self.writer = writer
+        if ~self.coarse_mapper:
+            self.writer = SummaryWriter(cfg['writer_path']) #J: added
         #------end-added------------------
 
         self.idx = slam.idx
@@ -552,17 +554,18 @@ class Mapper(object):
             depth_mask = (batch_gt_depth > 0)
             loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
-            self.writer.add_scalar(f'Loss/depth', loss.item(), idx)
+            #if self.stage != 'coarse':
+                #self.writer.add_scalar(f'Loss/depth', loss.item(), idx)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
-                self.writer.add_scalar(f'Loss/color', color_loss.item(), idx)
+                #self.writer.add_scalar(f'Loss/color', color_loss.item(), idx)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
-                self.writer.add_scalar(f'Loss/semantic', semantic_loss.item(), idx)
+                #self.writer.add_scalar(f'Loss/semantic', semantic_loss.item(), idx)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
@@ -735,6 +738,8 @@ class Mapper(object):
                                              self.estimate_c2w_list, idx, self.device, show_forecast=False,
                                              clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
                     break
+                
+                self.writer.close()
 
             if idx == self.n_img-1:
                 break
