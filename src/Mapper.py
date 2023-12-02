@@ -561,17 +561,17 @@ class Mapper(object):
             loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
             if writer is not None:
-                writer.add_scalar(f'Loss/depth', loss.item()/np.sum(depth_mask), idx)
+                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), idx)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
-                writer.add_scalar(f'Loss/color', color_loss.item()/len(color_semantics), idx)
+                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic) 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/len(color_semantics), idx)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
