@@ -428,8 +428,7 @@ class Mapper(object):
             inc = int(self.semantic_iter_ratio*num_joint_iters)
         else:
             inc = 0
-        num_joint_iters += inc
-        for joint_iter in range(num_joint_iters): 
+        for joint_iter in range(num_joint_iters + inc): 
             if self.nice:
                 if self.frustum_feature_selection:
                     for key, val in c.items():
@@ -570,7 +569,8 @@ class Mapper(object):
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
-                semantic_loss = loss_function(color_semantics, batch_gt_semantic) 
+                semantic_loss = loss_function(color_semantics, batch_gt_semantic)
+                print('SEMANTIC LOSS ', semantic_loss.item()/color_semantics.shape[0]) 
                 writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss

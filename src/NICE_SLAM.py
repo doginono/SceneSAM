@@ -328,7 +328,7 @@ class NICE_SLAM():
                     p = mp.Process(target=self.coarse_mapping, args=(rank, ))
                 else:
                     continue
-            print(rank)
+            print('Started Thread: ', rank)
             p.start()
             processes.append(p)
         for p in processes:
