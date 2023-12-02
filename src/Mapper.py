@@ -19,7 +19,7 @@ class Mapper(object):
 
     """
 
-    def __init__(self, cfg, args, slam, coarse_mapper=False
+    def __init__(self, cfg, args, slam, writer = None,coarse_mapper=False
                  ):
 
         self.cfg = cfg
@@ -30,6 +30,7 @@ class Mapper(object):
         #self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
+        self.writer = writer
         #------end-added------------------
 
         self.idx = slam.idx
