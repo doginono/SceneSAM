@@ -32,6 +32,8 @@ class Mapper(object):
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
         self.writer_path = cfg['writer_path'] #J:added
+        self.use_vis = cfg['mapping']['use_vis']
+        self.use_mesh = cfg['mapping']['use_mesh']
         """if ~self.coarse_mapper:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
         else:
@@ -475,7 +477,7 @@ class Mapper(object):
                 if self.BA:
                     optimizer.param_groups[1]['lr'] = self.BA_cam_lr
 
-            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output):
+            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output) and self.use_vis:
                 self.visualizer.vis(
                     idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage) 
 
@@ -737,7 +739,7 @@ class Mapper(object):
                 self.mapping_idx[0] = idx
                 self.mapping_cnt[0] += 1
 
-                if (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
+                if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh.ply'
                     self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
                                          idx,  self.device, show_forecast=self.mesh_coarse_level,

@@ -44,6 +44,7 @@ tracking:
   pixels: 200
   iters: 10
 mapping:
+  use_vis: False #J: added, whether to use visualization in mapping
   device: "cuda:0"
   color_refine: True
   middle_iter_ratio: 0.4
@@ -60,6 +61,7 @@ mapping:
   vis_freq: 50 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
   vis_inside_freq: 25 #J:frequence of visualization on a frame where we visualize; is true #iters/vis_inside_freq times 
   mesh_freq: 50
+  use_mesh: False
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
@@ -71,8 +73,8 @@ mapping:
   lr_first_factor: 5
   lr_factor: 1
   pixels: 1000
-  iters_first: 2000 #J: num_joint_iters in Mapper on optimize_map on first iteration
-  iters: 100 #J: num_joint_iters in Mapper on optimize_map on all but first iteration
+  iters_first: 1500 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
+  iters: 60 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
   stage:
     coarse:
       decoders_lr: 0.0
