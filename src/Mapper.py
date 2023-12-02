@@ -20,7 +20,7 @@ class Mapper(object):
 
     """
 
-    def __init__(self, cfg, args, slam,coarse_mapper=False
+    def __init__(self, cfg, args, slam, coarse_mapper=False
                  ):
 
         self.cfg = cfg
@@ -31,8 +31,13 @@ class Mapper(object):
         #self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
-        if ~self.coarse_mapper:
-            self.writer = SummaryWriter(cfg['writer_path']) #J: added
+        self.writer_path = cfg['writer_path'] #J:added
+        """if ~self.coarse_mapper:
+            self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
+        else:
+            self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'regular'))"""
+        
+        #self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
         #------end-added------------------
 
         self.idx = slam.idx
@@ -237,7 +242,7 @@ class Mapper(object):
             np.array(selected_keyframe_list))[:k])
         return selected_keyframe_list
 
-    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, keyframe_dict, keyframe_list, cur_c2w, cur_gt_semantic = None):
+    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, keyframe_dict, keyframe_list, cur_c2w, cur_gt_semantic = None, writer = None):
         """
         Mapping iterations. Sample pixels from selected keyframes,
         then optimize scene representation and camera poses(if local BA enabled).
@@ -554,18 +559,18 @@ class Mapper(object):
             depth_mask = (batch_gt_depth > 0)
             loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
-            #if self.stage != 'coarse':
-                #self.writer.add_scalar(f'Loss/depth', loss.item(), idx)
+            if writer is not None:
+                writer.add_scalar(f'Loss/depth', loss.item(), idx)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
-                #self.writer.add_scalar(f'Loss/color', color_loss.item(), idx)
+                writer.add_scalar(f'Loss/color', color_loss.item(), idx)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
-                #self.writer.add_scalar(f'Loss/semantic', semantic_loss.item(), idx)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item(), idx)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
@@ -618,6 +623,9 @@ class Mapper(object):
             return None
 
     def run(self):
+        
+        writer = SummaryWriter(self.writer_path)
+        
         cfg = self.cfg
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0] #Done add semantics to output, runs into index error 
         #as long as the sematic files are not added like .../Results/sematic*.npy
@@ -688,7 +696,7 @@ class Mapper(object):
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
-                                      gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic) #Done add semantics to arguments
+                                      gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     self.estimate_c2w_list[idx] = cur_c2w
@@ -739,7 +747,7 @@ class Mapper(object):
                                              clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
                     break
                 
-                self.writer.close()
+                writer.close()
 
             if idx == self.n_img-1:
                 break

@@ -14,7 +14,7 @@ from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
-#from torch.utils.tensorboard import SummaryWriter #J: added
+from torch.utils.tensorboard import SummaryWriter #J: added
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -26,6 +26,8 @@ class NICE_SLAM():
     """
 
     def __init__(self, cfg, args):
+        
+        #self.writer_path = cfg['writer_path'] #J:added
 
         self.cfg = cfg
         self.args = args
@@ -95,6 +97,7 @@ class NICE_SLAM():
 
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
+        
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, w_color_loss, fix_color 
     
@@ -315,17 +318,17 @@ class NICE_SLAM():
         """
 
         processes = []
-        #TODO Start the semantic process also
         for rank in range(3):
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank, ))
             elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank, ))
+                p = mp.Process(target=self.mapping, args=(rank, )) 
             elif rank == 2:
                 if self.coarse:
                     p = mp.Process(target=self.coarse_mapping, args=(rank, ))
                 else:
                     continue
+            print(rank)
             p.start()
             processes.append(p)
         for p in processes:
