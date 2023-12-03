@@ -479,7 +479,7 @@ class Mapper(object):
 
             if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output) and self.use_vis:
                 self.visualizer.vis(
-                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage) 
+                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage, writer = writer) 
 
             optimizer.zero_grad()
             batch_rays_d_list = []
@@ -573,7 +573,7 @@ class Mapper(object):
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
-                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
+                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter-num_joint_iters*self.fine_iter_ratio)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
@@ -582,7 +582,7 @@ class Mapper(object):
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx*inc+joint_iter-num_joint_iters)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------

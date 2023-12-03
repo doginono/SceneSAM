@@ -22,7 +22,7 @@ class Visualizer(object):
         os.makedirs(f'{vis_dir}', exist_ok=True)
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
-            decoders, gt_semantic=None, only_semantic=False, stage = ""):
+            decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None):
         """
         Visualization of depth, color images and save to file.
 
@@ -130,6 +130,7 @@ class Visualizer(object):
                         plt.subplots_adjust(wspace=0, hspace=0)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                        
                         plt.clf()
 
                         if self.verbose:
@@ -198,6 +199,7 @@ class Visualizer(object):
                         plt.subplots_adjust(wspace=0, hspace=0)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                        writer.add_figure(f'{idx:05d}_{iter:04d}.jpg', fig, idx)
                         plt.clf()
 
                         if self.verbose:
