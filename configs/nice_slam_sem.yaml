@@ -44,7 +44,7 @@ tracking:
   pixels: 200
   iters: 10
 mapping:
-  use_vis: False #J: added, whether to use visualization in mapping
+  use_vis: True #J: added, whether to use visualization in mapping
   device: "cuda:0"
   color_refine: True
   middle_iter_ratio: 0.4
@@ -73,8 +73,8 @@ mapping:
   lr_first_factor: 5
   lr_factor: 1
   pixels: 1000
-  iters_first: 1500 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
-  iters: 60 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
+  iters_first: 3000 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
+  iters: 200 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
   stage:
     coarse:
       decoders_lr: 0.0
