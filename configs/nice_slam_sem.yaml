@@ -55,7 +55,7 @@ mapping:
   BA_cam_lr: 0.001
   fix_fine: True
   fix_color: False
-  no_vis_on_first_frame: False
+  no_vis_on_first_frame: True
   no_mesh_on_first_frame: True
   no_log_on_first_frame: True
   vis_freq: 20 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
@@ -73,8 +73,8 @@ mapping:
   lr_first_factor: 5
   lr_factor: 1
   pixels: 1000
-  iters_first: 1500 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
-  iters: 60 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
+  iters_first: 3000 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
+  iters: 1000 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
   stage:
     coarse:
       decoders_lr: 0.0

@@ -34,6 +34,8 @@ class Mapper(object):
         self.writer_path = cfg['writer_path'] #J:added
         self.use_vis = cfg['mapping']['use_vis']
         self.use_mesh = cfg['mapping']['use_mesh']
+        self.vis_freq = cfg['mapping']['vis_freq']
+        self.vis_inside_freq = cfg['mapping']['vis_inside_freq']
         """if ~self.coarse_mapper:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
         else:
@@ -567,13 +569,13 @@ class Mapper(object):
             if writer is not None:
                 """if joint_iter == num_joint_iters +inc -1:
                     depth_loss_writer = loss.item()/torch.sum(depth_mask)"""
-                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), idx*(num_joint_iters+inc)+joint_iter)
+                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), int(idx/self.vis_freq)*(num_joint_iters+inc)+int(joint_iter/self.vis_inside_freq))
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
-                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], idx*(num_joint_iters+inc)+joint_iter-num_joint_iters*self.fine_iter_ratio)
+                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], int(idx/self.vis_freq)*(num_joint_iters+inc)+int(joint_iter/self.vis_inside_freq)-num_joint_iters*self.fine_iter_ratio)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
@@ -582,7 +584,7 @@ class Mapper(object):
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], idx*inc+joint_iter-num_joint_iters)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], int(idx/self.vis_freq)*inc+int(joint_iter/self.vis_inside_freq)-num_joint_iters)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
