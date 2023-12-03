@@ -50,7 +50,7 @@ class Mapper(object):
         self.mesher = slam.mesher
         self.output = slam.output
         self.verbose = slam.verbose
-        self.renderer = slam.renderer
+        self.renderer = slam.vis_renderer #J: added to use smaller batch size for visualization
         self.low_gpu_mem = slam.low_gpu_mem
         self.mapping_idx = slam.mapping_idx
         self.mapping_cnt = slam.mapping_cnt

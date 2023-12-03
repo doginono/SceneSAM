@@ -55,7 +55,7 @@ mapping:
   BA_cam_lr: 0.001
   fix_fine: True
   fix_color: False
-  no_vis_on_first_frame: True
+  no_vis_on_first_frame: False
   no_mesh_on_first_frame: True
   no_log_on_first_frame: True
   vis_freq: 20 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
