@@ -25,8 +25,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 1500
-  iters: 300
+  iters_first: 3000
+  iters: 1000
 
 cam:  #NOTE: intrinsic is different per scene in TUM
   H: 480 

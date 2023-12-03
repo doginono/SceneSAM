@@ -53,8 +53,14 @@ class Renderer(object):
             ret = ret.squeeze(0)
             if len(ret.shape) == 1 and ret.shape[0] == 4:
                 ret = ret.unsqueeze(0)
-
-            ret[~mask, 3] = 100
+            
+            #-------------------added-------------------
+            #setting occupancy in this part
+            if stage != 'semantic':
+                ret[~mask, 3] = 100 #TODO: that does not make sense for color and semantics <- check
+            else:
+                ret[~mask, -1] = 100
+            #-------------------------------------------
             rets.append(ret)
 
         ret = torch.cat(rets, dim=0)
@@ -173,11 +179,13 @@ class Renderer(object):
             z_vals[..., :, None]  # [N_rays, N_samples+N_surface, 3]
         pointsf = pts.reshape(-1, 3)
 
-        raw = self.eval_points(pointsf, decoders, c, stage, device)
+        #Done: In eval the predicting of the sampled points takes place depending on stage,
+        #  so add stage semantics here to predict the semantics
+        raw = self.eval_points(pointsf, decoders, c, stage, device) #J:forward pass of grid decoders and only keeping points inside of boundaries
         raw = raw.reshape(N_rays, N_samples+N_surface, -1)
 
-        depth, uncertainty, color, weights = raw2outputs_nerf_color(
-            raw, z_vals, rays_d, occupancy=self.occupancy, device=device)
+        depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
+            raw, z_vals, rays_d, occupancy=self.occupancy, device=device) #J: in semantic stage color will contain the semantic prediction
         if N_importance > 0:
             z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
             z_samples = sample_pdf(
@@ -191,11 +199,12 @@ class Renderer(object):
             raw = self.eval_points(pts, decoders, c, stage, device)
             raw = raw.reshape(N_rays, N_samples+N_importance+N_surface, -1)
 
-            depth, uncertainty, color, weights = raw2outputs_nerf_color(
+            #J: Added stage as argument to raw2outputs_nerf_color
+            depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
                 raw, z_vals, rays_d, occupancy=self.occupancy, device=device)
             return depth, uncertainty, color
 
-        return depth, uncertainty, color
+        return depth, uncertainty, color #J: color will contain the semantic prediction in semantic stage
 
     def render_img(self, c, decoders, c2w, device, stage, gt_depth=None):
         """
@@ -225,6 +234,8 @@ class Renderer(object):
             depth_list = []
             uncertainty_list = []
             color_list = []
+            semantic_list = []
+            #Done: add sematic list
 
             ray_batch_size = self.ray_batch_size
             gt_depth = gt_depth.reshape(-1)
@@ -232,27 +243,68 @@ class Renderer(object):
             for i in range(0, rays_d.shape[0], ray_batch_size):
                 rays_d_batch = rays_d[i:i+ray_batch_size]
                 rays_o_batch = rays_o[i:i+ray_batch_size]
+                #TODO: we might be able to do this more eficiently if we include a simultaneously rendering of color and semantics in render_batch_ray
+                #-------------------added-the if == 'visualize and changed the stages, originaly it was like in else------------------
                 if gt_depth is None:
-                    ret = self.render_batch_ray(
-                        c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=None)
+                    if stage == "visualize":
+                        _,_,semantic = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=None)
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'color', gt_depth=None)
+                    elif stage== 'visualize_semantic':
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=None)
+                    else: #stage == 'color'
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=None)
                 else:
                     gt_depth_batch = gt_depth[i:i+ray_batch_size]
-                    ret = self.render_batch_ray(
-                        c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=gt_depth_batch)
+                    if stage == "visualize":
+                        _,_,semantic = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=gt_depth_batch)
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'color', gt_depth=gt_depth_batch)
+                    elif stage== 'visualize_semantic':
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=gt_depth_batch)
+                    else: #stage == 'color'
+                        ret = self.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=gt_depth_batch)
+                #-----------------end--added-------------------
 
-                depth, uncertainty, color = ret
+                depth, uncertainty, color = ret 
                 depth_list.append(depth.double())
                 uncertainty_list.append(uncertainty.double())
-                color_list.append(color)
+                if stage == "visualize": 
+                    color_list.append(color)
+                    semantic_list.append(torch.argmax(semantic, dim=1)) #Done: add semantic list; TODO: check if argmax is along correct dimension
+                elif stage == "visualize_semantic":
+                    color_list.append(torch.argmax(color, dim=1))
+                else: #stage == 'color'
+                    color_list.append(color)
+                
 
             depth = torch.cat(depth_list, dim=0)
             uncertainty = torch.cat(uncertainty_list, dim=0)
             color = torch.cat(color_list, dim=0)
+            if stage == "visualize":#Done torch.cat semantic list and reshape
+                semantic = torch.cat(semantic_list, dim=0)
+                semantic = semantic.reshape(H,W)
+                color = color.reshape(H, W, 3)
+            elif stage == "visualize_semantic":
+                color = color.reshape(H,W)
+            else:
+                color = color.reshape(H, W, 3)
 
             depth = depth.reshape(H, W)
             uncertainty = uncertainty.reshape(H, W)
-            color = color.reshape(H, W, 3)
-            return depth, uncertainty, color
+            
+            if stage == "visualize":
+                return depth, uncertainty, color, semantic
+            elif stage == "visualize_semantic":
+                return depth, uncertainty, None, color #THis is not color but semantic in stage visualize_semantic
+            else:
+                return depth, uncertainty, color
 
     # this is only for imap*
     def regulation(self, c, decoders, rays_d, rays_o, gt_depth, device, stage='color'):

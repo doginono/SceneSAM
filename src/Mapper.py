@@ -12,6 +12,7 @@ from src.common import (get_camera_from_tensor, get_samples,
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
 
+from torch.utils.tensorboard import SummaryWriter #J: added
 
 class Mapper(object):
     """
@@ -26,6 +27,23 @@ class Mapper(object):
         self.args = args
         self.coarse_mapper = coarse_mapper
 
+        #-------added------------------
+        #self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
+        self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
+        self.writer_path = cfg['writer_path'] #J:added
+        self.use_vis = cfg['mapping']['use_vis']
+        self.use_mesh = cfg['mapping']['use_mesh']
+        self.vis_freq = cfg['mapping']['vis_freq']
+        self.vis_inside_freq = cfg['mapping']['vis_inside_freq']
+        """if ~self.coarse_mapper:
+            self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
+        else:
+            self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'regular'))"""
+        
+        #self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
+        #------end-added------------------
+
         self.idx = slam.idx
         self.nice = slam.nice
         self.c = slam.shared_c
@@ -34,7 +52,7 @@ class Mapper(object):
         self.mesher = slam.mesher
         self.output = slam.output
         self.verbose = slam.verbose
-        self.renderer = slam.renderer
+        self.renderer = slam.vis_renderer #J: added to use smaller batch size for visualization
         self.low_gpu_mem = slam.low_gpu_mem
         self.mapping_idx = slam.mapping_idx
         self.mapping_cnt = slam.mapping_cnt
@@ -59,6 +77,7 @@ class Mapper(object):
         self.num_joint_iters = cfg['mapping']['iters']
         self.clean_mesh = cfg['meshing']['clean_mesh']
         self.every_frame = cfg['mapping']['every_frame']
+        #TODO maybe need to add semantics<- check what color_refine and w_color_loss is doing
         self.color_refine = cfg['mapping']['color_refine']
         self.w_color_loss = cfg['mapping']['w_color_loss']
         self.keyframe_every = cfg['mapping']['keyframe_every']
@@ -182,8 +201,8 @@ class Mapper(object):
         device = self.device
         H, W, fx, fy, cx, cy = self.H, self.W, self.fx, self.fy, self.cx, self.cy
 
-        rays_o, rays_d, gt_depth, gt_color = get_samples(
-            0, H, 0, W, pixels, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, self.device)
+        rays_o, rays_d, gt_depth, gt_color, tmp= get_samples(
+            0, H, 0, W, pixels, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, None, self.device)
 
         gt_depth = gt_depth.reshape(-1, 1)
         gt_depth = gt_depth.repeat(1, N_samples)
@@ -227,12 +246,14 @@ class Mapper(object):
             np.array(selected_keyframe_list))[:k])
         return selected_keyframe_list
 
-    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, keyframe_dict, keyframe_list, cur_c2w):
+    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, keyframe_dict, keyframe_list, cur_c2w, cur_gt_semantic = None, writer = None):
         """
         Mapping iterations. Sample pixels from selected keyframes,
         then optimize scene representation and camera poses(if local BA enabled).
 
         Args:
+            cur_gt_semantic(tensor): gt_semantic image of the current camera.
+
             num_joint_iters (int): number of mapping iterations.
             lr_factor (float): the factor to times on current lr.
             idx (int): the index of current frame
@@ -293,6 +314,10 @@ class Mapper(object):
         middle_grid_para = []
         fine_grid_para = []
         color_grid_para = []
+        #-----------------added-------------------
+        semantic_grid_para = []
+        #-----------------end-added-------------------
+        
         gt_depth_np = cur_gt_depth.cpu().numpy()
         if self.nice:
             if self.frustum_feature_selection:
@@ -310,6 +335,10 @@ class Mapper(object):
                         fine_grid_para.append(val)
                     elif key == 'grid_color':
                         color_grid_para.append(val)
+                    #-----------------added-------------------
+                    elif key == 'grid_semantic':
+                        semantic_grid_para.append(val)
+                    #-----------------end-added-------------------
 
                 else:
                     mask = self.get_mask_from_c2w(
@@ -331,16 +360,22 @@ class Mapper(object):
                         fine_grid_para.append(val_grad)
                     elif key == 'grid_color':
                         color_grid_para.append(val_grad)
+                    #-----------------added-------------------
+                    elif key == 'grid_semantic':
+                        semantic_grid_para.append(val_grad)
+                    #-----------------end-added-------------------
 
-        if self.nice:
-            if not self.fix_fine:
+        if self.nice:   
+            if not self.fix_fine: #TODO check purpose -> maybe add similar for semantics
                 decoders_para_list += list(
                     self.decoders.fine_decoder.parameters())
             if not self.fix_color:
                 decoders_para_list += list(
                     self.decoders.color_decoder.parameters())
+    
         else:
-            # imap*, single MLP
+            # imap*, single MLP 
+            #J:will not be entered because nice = True always in our case
             decoders_para_list += list(self.decoders.parameters())
 
         if self.BA:
@@ -364,21 +399,25 @@ class Mapper(object):
 
         if self.nice:
             if self.BA:
+                #Done: add the parameter list for semantics
                 # The corresponding lr will be set according to which stage the optimization is in
                 optimizer = torch.optim.Adam([{'params': decoders_para_list, 'lr': 0},
                                               {'params': coarse_grid_para, 'lr': 0},
                                               {'params': middle_grid_para, 'lr': 0},
                                               {'params': fine_grid_para, 'lr': 0},
                                               {'params': color_grid_para, 'lr': 0},
+                                              {'params': semantic_grid_para, 'lr': 0},
                                               {'params': camera_tensor_list, 'lr': 0}])
             else:
                 optimizer = torch.optim.Adam([{'params': decoders_para_list, 'lr': 0},
                                               {'params': coarse_grid_para, 'lr': 0},
                                               {'params': middle_grid_para, 'lr': 0},
                                               {'params': fine_grid_para, 'lr': 0},
-                                              {'params': color_grid_para, 'lr': 0}])
+                                              {'params': color_grid_para, 'lr': 0},
+                                              {'params': semantic_grid_para, 'lr': 0}])
         else:
             # imap*, single MLP
+            #J:will not be entered because nice = True always in our case
             if self.BA:
                 optimizer = torch.optim.Adam([{'params': decoders_para_list, 'lr': 0},
                                               {'params': camera_tensor_list, 'lr': 0}])
@@ -388,7 +427,15 @@ class Mapper(object):
             from torch.optim.lr_scheduler import StepLR
             scheduler = StepLR(optimizer, step_size=200, gamma=0.8)
 
-        for joint_iter in range(num_joint_iters):
+        #J: added semantic optimizing part: for now it is 0.4 which is the same as the number of iterations spend on color. Carefull the semantic_iter_rati is added tothe num_joint_iters
+        if ~self.coarse_mapper:
+            inc = int(self.semantic_iter_ratio*num_joint_iters)
+        else:
+            inc = 0
+        depth_loss_writer = 0 #losses for the Tensorboard writer
+        color_loss_writer = 0
+        semantic_loss_writer = 0
+        for joint_iter in range(num_joint_iters + inc): 
             if self.nice:
                 if self.frustum_feature_selection:
                     for key, val in c.items():
@@ -402,42 +449,58 @@ class Mapper(object):
 
                 if self.coarse_mapper:
                     self.stage = 'coarse'
-                elif joint_iter <= int(num_joint_iters*self.middle_iter_ratio):
+                elif joint_iter <= int(num_joint_iters*self.middle_iter_ratio): #middle_iter_ratio is 0.4
                     self.stage = 'middle'
-                elif joint_iter <= int(num_joint_iters*self.fine_iter_ratio):
+                elif joint_iter <= int(num_joint_iters*self.fine_iter_ratio): #fine_iter_ratio is 0.6
                     self.stage = 'fine'
-                else:
+                elif joint_iter <= num_joint_iters:
                     self.stage = 'color'
+                else:
+                    self.stage = 'semantic'
+                    #DONE: add semantics, we should probably increase the 
+                    # num_joint_iters and decrease the ratios to train on semantics 
+                    # as long as on colors and keeping the rest the same
 
                 optimizer.param_groups[0]['lr'] = cfg['mapping']['stage'][self.stage]['decoders_lr']*lr_factor
                 optimizer.param_groups[1]['lr'] = cfg['mapping']['stage'][self.stage]['coarse_lr']*lr_factor
                 optimizer.param_groups[2]['lr'] = cfg['mapping']['stage'][self.stage]['middle_lr']*lr_factor
                 optimizer.param_groups[3]['lr'] = cfg['mapping']['stage'][self.stage]['fine_lr']*lr_factor
                 optimizer.param_groups[4]['lr'] = cfg['mapping']['stage'][self.stage]['color_lr']*lr_factor
+                #-----------------added-------------------
+                optimizer.param_groups[5]['lr'] = cfg['mapping']['stage'][self.stage]['semantic_lr']*lr_factor
+                #-----------------end-added-------------------
+
                 if self.BA:
                     if self.stage == 'color':
-                        optimizer.param_groups[5]['lr'] = self.BA_cam_lr
-            else:
+                        optimizer.param_groups[6]['lr'] = self.BA_cam_lr
+            else: #J: this else will not be entered because nice = True always in our case
                 self.stage = 'color'
                 optimizer.param_groups[0]['lr'] = cfg['mapping']['imap_decoders_lr']
                 if self.BA:
                     optimizer.param_groups[1]['lr'] = self.BA_cam_lr
 
-            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output):
+            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output) and self.use_vis:
                 self.visualizer.vis(
-                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders)
+                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage, writer = writer) 
 
             optimizer.zero_grad()
             batch_rays_d_list = []
             batch_rays_o_list = []
             batch_gt_depth_list = []
             batch_gt_color_list = []
+            #-----------------added-------------------
+            batch_gt_semantic_list = []
+            #-----------------end-added-------------------
+            
 
             camera_tensor_id = 0
             for frame in optimize_frame:
                 if frame != -1:
                     gt_depth = keyframe_dict[frame]['depth'].to(device)
                     gt_color = keyframe_dict[frame]['color'].to(device)
+                    #-----------------added-------------------
+                    gt_semantic = keyframe_dict[frame]['semantic'].to(device)
+                    #-----------------end-added-------------------
                     if self.BA and frame != oldest_frame:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
                         camera_tensor_id += 1
@@ -448,23 +511,34 @@ class Mapper(object):
                 else:
                     gt_depth = cur_gt_depth.to(device)
                     gt_color = cur_gt_color.to(device)
+                    #-----------------added-------------------
+                    gt_semantic = cur_gt_semantic.to(device)
+                    #-----------------end-added-------------------
                     if self.BA:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
                         c2w = get_camera_from_tensor(camera_tensor)
                     else:
                         c2w = cur_c2w
 
-                batch_rays_o, batch_rays_d, batch_gt_depth, batch_gt_color = get_samples(
-                    0, H, 0, W, pixs_per_image, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, self.device)
+                #-----------------added-------------------
+                batch_rays_o, batch_rays_d, batch_gt_depth, batch_gt_color, batch_gt_semantic = get_samples(
+                    0, H, 0, W, pixs_per_image, H, W, fx, fy, cx, cy, c2w, gt_depth, gt_color, gt_semantic, self.device)
+                #-----------------end-added-------------------
                 batch_rays_o_list.append(batch_rays_o.float())
                 batch_rays_d_list.append(batch_rays_d.float())
                 batch_gt_depth_list.append(batch_gt_depth.float())
                 batch_gt_color_list.append(batch_gt_color.float())
+                #-----------------added-------------------
+                batch_gt_semantic_list.append(batch_gt_semantic.float())
+                #-----------------end-added-------------------
 
             batch_rays_d = torch.cat(batch_rays_d_list)
             batch_rays_o = torch.cat(batch_rays_o_list)
             batch_gt_depth = torch.cat(batch_gt_depth_list)
             batch_gt_color = torch.cat(batch_gt_color_list)
+            #-----------------added-------------------
+            batch_gt_semantic = torch.cat(batch_gt_semantic_list)
+            #-----------------end-added-------------------
 
             if self.nice:
                 # should pre-filter those out of bounding box depth value
@@ -479,22 +553,45 @@ class Mapper(object):
                 batch_rays_o = batch_rays_o[inside_mask]
                 batch_gt_depth = batch_gt_depth[inside_mask]
                 batch_gt_color = batch_gt_color[inside_mask]
+                #-----------------added-------------------
+                batch_gt_semantic = batch_gt_semantic[inside_mask]
+                #-----------------end-added-------------------
+                
+                #Done: add semantics in Render output
             ret = self.renderer.render_batch_ray(c, self.decoders, batch_rays_d,
                                                  batch_rays_o, device, self.stage,
                                                  gt_depth=None if self.coarse_mapper else batch_gt_depth)
-            depth, uncertainty, color = ret
+            depth, uncertainty, color_semantics = ret #J: color will contain semantics in semantic stage
 
             depth_mask = (batch_gt_depth > 0)
-            loss = torch.abs(
+            loss = torch.abs( #J: we backpropagate only through depth in stage middle and fine
                 batch_gt_depth[depth_mask]-depth[depth_mask]).sum()
-            if ((not self.nice) or (self.stage == 'color')):
-                color_loss = torch.abs(batch_gt_color - color).sum()
+            if writer is not None:
+                """if joint_iter == num_joint_iters +inc -1:
+                    depth_loss_writer = loss.item()/torch.sum(depth_mask)"""
+                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), int(idx/self.vis_freq)*(num_joint_iters+inc)+int(joint_iter/self.vis_inside_freq))
+            if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
+                color_loss = torch.abs(batch_gt_color - color_semantics).sum()
+                """if joint_iter == num_joint_iters +inc -1:
+                    print('Entered')
+                    color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
+                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], int(idx/self.vis_freq)*(num_joint_iters+inc)+int(joint_iter/self.vis_inside_freq)-num_joint_iters*self.fine_iter_ratio)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
+            #-----------------added-------------------
+            elif (self.stage == 'semantic'): 
+                loss_function = torch.nn.CrossEntropyLoss()
+                semantic_loss = loss_function(color_semantics, batch_gt_semantic)
+                """if joint_iter == num_joint_iters +inc -1:
+                    semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], int(idx/self.vis_freq)*inc+int(joint_iter/self.vis_inside_freq)-num_joint_iters)
+                weighted_semantic_loss = self.w_semantic_loss*semantic_loss
+                loss += weighted_semantic_loss
+            #-----------------end-added-------------------
 
             # for imap*, it uses volume density
             regulation = (not self.occupancy)
-            if regulation:
+            if regulation: #Done: check if we enter here <- we never enter
                 point_sigma = self.renderer.regulation(
                     c, self.decoders, batch_rays_d, batch_rays_o, batch_gt_depth, device, self.stage)
                 regulation_loss = torch.abs(point_sigma).sum()
@@ -502,7 +599,7 @@ class Mapper(object):
 
             loss.backward(retain_graph=False)
             optimizer.step()
-            if not self.nice:
+            if not self.nice: #J: never enter
                 # for imap*
                 scheduler.step()
             optimizer.zero_grad()
@@ -517,6 +614,10 @@ class Mapper(object):
                         val = val.detach()
                         val[mask] = val_grad.clone().detach()
                         c[key] = val
+        
+        """writer.add_scalar(f'Loss/depth', depth_loss_writer, idx)
+        writer.add_scalar(f'Loss/color', color_loss_writer, idx)
+        writer.add_scalar(f'Loss/semantic', semantic_loss_writer, idx)"""
 
         if self.BA:
             # put the updated camera poses back
@@ -540,8 +641,12 @@ class Mapper(object):
             return None
 
     def run(self):
+        
+        writer = SummaryWriter(self.writer_path)
+        
         cfg = self.cfg
-        idx, gt_color, gt_depth, gt_c2w = self.frame_reader[0]
+        idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0] #Done add semantics to output, runs into index error 
+        #as long as the sematic files are not added like .../Results/sematic*.npy
 
         self.estimate_c2w_list[0] = gt_c2w.cpu()
         init = True
@@ -569,18 +674,23 @@ class Mapper(object):
                 print(prefix+"Mapping Frame ", idx.item())
                 print(Style.RESET_ALL)
 
-            _, gt_color, gt_depth, gt_c2w = self.frame_reader[idx]
+            _, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[idx] #Done add semantics to output
+            #runs into index error as long as the sematic files are not added like .../Results/sematic*.npy
+
 
             if not init:
                 lr_factor = cfg['mapping']['lr_factor']
                 num_joint_iters = cfg['mapping']['iters']
 
                 # here provides a color refinement postprocess
+                #TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
+                #-> check when semantics are available
                 if idx == self.n_img-1 and self.color_refine and not self.coarse_mapper:
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
                     self.middle_iter_ratio = 0.0
                     self.fine_iter_ratio = 0.0
+                    self.semantic_iter_ratio = 1.0 #J: added to make it consistent to the previous code
                     num_joint_iters *= 5
                     self.fix_color = True
                     self.frustum_feature_selection = False
@@ -602,8 +712,9 @@ class Mapper(object):
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
 
-                _ = self.optimize_map(num_joint_iters, lr_factor, idx, gt_color, gt_depth,
-                                      gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w)
+                #Done: add semantics to optimize_map
+                _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
+                                      gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     self.estimate_c2w_list[idx] = cur_c2w
@@ -614,7 +725,8 @@ class Mapper(object):
                             and (idx not in self.keyframe_list):
                         self.keyframe_list.append(idx)
                         self.keyframe_dict.append({'gt_c2w': gt_c2w.cpu(), 'idx': idx, 'color': gt_color.cpu(
-                        ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone()})
+                        ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone(),
+                        'semantic': gt_semantic.cpu()}) #Done: add semantics ground truth
 
             if self.low_gpu_mem:
                 torch.cuda.empty_cache()
@@ -633,7 +745,7 @@ class Mapper(object):
                 self.mapping_idx[0] = idx
                 self.mapping_cnt[0] += 1
 
-                if (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
+                if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh.ply'
                     self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
                                          idx,  self.device, show_forecast=self.mesh_coarse_level,
@@ -652,6 +764,8 @@ class Mapper(object):
                                              self.estimate_c2w_list, idx, self.device, show_forecast=False,
                                              clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
                     break
+                
+                writer.close()
 
             if idx == self.n_img-1:
                 break

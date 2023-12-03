@@ -14,6 +14,8 @@ from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
+from torch.utils.tensorboard import SummaryWriter #J: added
+
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 
@@ -24,6 +26,8 @@ class NICE_SLAM():
     """
 
     def __init__(self, cfg, args):
+        
+        #self.writer_path = cfg['writer_path'] #J:added
 
         self.cfg = cfg
         self.args = args
@@ -47,6 +51,7 @@ class NICE_SLAM():
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
         self.update_cam()
 
+        #Done: add semantics decoder to the model
         model = config.get_model(cfg,  nice=self.nice)
         self.shared_decoders = model
 
@@ -64,9 +69,9 @@ class NICE_SLAM():
             mp.set_start_method('spawn', force=True)
         except RuntimeError:
             pass
-
-        self.frame_reader = get_dataset(cfg, args, self.scale)
-        self.n_img = len(self.frame_reader)
+        
+        self.frame_reader = get_dataset(cfg, args, self.scale) #J:saves ordered the paths of images, depth masks 
+        self.n_img = len(self.frame_reader) 
         self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.estimate_c2w_list.share_memory_()
 
@@ -81,20 +86,25 @@ class NICE_SLAM():
         self.mapping_idx.share_memory_()
         self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
         self.mapping_cnt.share_memory_()
-        for key, val in self.shared_c.items():
+        for key, val in self.shared_c.items(): #J:shared_c contains the grids for the different decoders
             val = val.to(self.cfg['mapping']['device'])
             val.share_memory_()
             self.shared_c[key] = val
         self.shared_decoders = self.shared_decoders.to(
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
-        self.renderer = Renderer(cfg, args, self)
+        self.renderer = Renderer(cfg, args, self) #J: changed from default in renderer constructor, thisis the train renderer
+        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=200000, ray_batch_size=20000)
+
         self.mesher = Mesher(cfg, args, self)
         self.logger = Logger(cfg, args, self)
+        
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
+        #TODO mapper has some attributes related to color, which are not clear to me: color_refine, w_color_loss, fix_color 
+    
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
-        self.tracker = Tracker(cfg, args, self)
+        self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
         self.print_output_desc()
 
     def print_output_desc(self):
@@ -153,6 +163,8 @@ class NICE_SLAM():
             self.shared_decoders.middle_decoder.bound = self.bound
             self.shared_decoders.fine_decoder.bound = self.bound
             self.shared_decoders.color_decoder.bound = self.bound
+            self.shared_decoders.semantic_decoder.bound = self.bound
+            #Done: add the bound for the semantic decoder
             if self.coarse:
                 self.shared_decoders.coarse_decoder.bound = self.bound*self.coarse_bound_enlarge
 
@@ -196,6 +208,7 @@ class NICE_SLAM():
         Args:
             cfg (dict): parsed config dict.
         """
+        #Done: initialize the grid for the semantic decoder
         if self.coarse:
             coarse_grid_len = cfg['grid_len']['coarse']
             self.coarse_grid_len = coarse_grid_len
@@ -205,6 +218,10 @@ class NICE_SLAM():
         self.fine_grid_len = fine_grid_len
         color_grid_len = cfg['grid_len']['color']
         self.color_grid_len = color_grid_len
+        #---------------added--------------------------------
+        semantic_grid_len = cfg['grid_len']['semantic']
+        self.semantic_grid_len = semantic_grid_len
+        #----------------end_added----------------------------
 
         c = {}
         c_dim = cfg['model']['c_dim']
@@ -246,6 +263,17 @@ class NICE_SLAM():
         val_shape = [1, c_dim, *color_val_shape]
         color_val = torch.zeros(val_shape).normal_(mean=0, std=0.01)
         c[color_key] = color_val
+
+        #Done: copy past the same as color for sematic key
+        #---------------added--------------------------------
+        semantic_key = 'grid_semantic'
+        semantic_val_shape = list(map(int, (xyz_len/semantic_grid_len).tolist()))
+        semantic_val_shape[0], semantic_val_shape[2] = semantic_val_shape[2], semantic_val_shape[0]
+        self.semantic_val_shape = semantic_val_shape
+        val_shape = [1, c_dim, *semantic_val_shape]
+        semantic_val = torch.zeros(val_shape).normal_(mean=0, std=0.01)
+        c[semantic_key] = semantic_val
+        #---------------end added--------------------------------
 
         self.shared_c = c
 
@@ -295,16 +323,18 @@ class NICE_SLAM():
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank, ))
             elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank, ))
+                p = mp.Process(target=self.mapping, args=(rank, )) 
             elif rank == 2:
                 if self.coarse:
                     p = mp.Process(target=self.coarse_mapping, args=(rank, ))
                 else:
                     continue
+            print('Started Thread: ', rank)
             p.start()
             processes.append(p)
         for p in processes:
             p.join()
+        
 
 
 # This part is required by torch.multiprocessing
