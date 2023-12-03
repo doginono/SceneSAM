@@ -128,6 +128,7 @@ class Visualizer(object):
                         axs[2, 2].set_yticks([])
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
                         
@@ -197,9 +198,10 @@ class Visualizer(object):
                         axs[1, 2].set_xticks([])
                         axs[1, 2].set_yticks([])
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
-                        writer.add_figure(f'{idx:05d}_{iter:04d}.jpg', fig, idx)
+                        
                         plt.clf()
 
                         if self.verbose:
@@ -288,6 +290,7 @@ class Visualizer(object):
                         axs[1, 2].set_yticks([])
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
                         plt.clf()
