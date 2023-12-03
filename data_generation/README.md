@@ -2,12 +2,25 @@
 
 
 #### From nice-slam directly call
+
+```angular2html
 python ./data_generation/habitat_renderer.py --config ./data_generation/replica_render_config_vMAP.yaml 
+```
+The relevant paths and the image shape e.g 1200x640 in
+```angular2html
+./data_generation/replica_render_config_vMAP.yaml
+```
 
-The relevant paths are defined in ./data_generation/replica_render_config_vMAP.yaml and you also define the image shape e.g 1200x640
+Use the habitat environment already created on this computer: or I also integrated to nice-slam-2 environment
 
-Use the habitat environment already created on this computer: conda activate habitat
+```angular2html
+conda activate habitat
+```
+or I also integrated to nice-slam-2 environment
 
+```angular2html
+conda activate nice-slam-2
+```
 I am using the ground truth Trajectory for the generation from the replica dataset in nice-slam
 
 ## Normal workflow
