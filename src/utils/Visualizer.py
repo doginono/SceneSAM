@@ -12,7 +12,7 @@ class Visualizer(object):
 
     """
 
-    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0'):
+    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0', iters_first=1500, num_iter= 60):
         self.freq = freq
         self.device = device
         self.vis_dir = vis_dir
@@ -20,6 +20,10 @@ class Visualizer(object):
         self.renderer = renderer
         self.inside_freq = inside_freq
         os.makedirs(f'{vis_dir}', exist_ok=True)
+        
+        #------------------added------------------
+        self.iters_first = iters_first
+        self.num_iter = num_iter
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
             decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None):
@@ -128,6 +132,7 @@ class Visualizer(object):
                         axs[2, 2].set_yticks([])
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                         writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
@@ -198,6 +203,7 @@ class Visualizer(object):
                         axs[1, 2].set_xticks([])
                         axs[1, 2].set_yticks([])
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                         writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
@@ -290,6 +296,7 @@ class Visualizer(object):
                         axs[1, 2].set_yticks([])
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                         writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)

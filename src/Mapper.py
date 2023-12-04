@@ -34,6 +34,7 @@ class Mapper(object):
         self.writer_path = cfg['writer_path'] #J:added
         self.use_vis = cfg['mapping']['use_vis']
         self.use_mesh = cfg['mapping']['use_mesh']
+        self.iters_first = cfg['mapping']['iters_first']
         """if ~self.coarse_mapper:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
         else:
@@ -104,7 +105,7 @@ class Mapper(object):
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
                                          vis_dir=os.path.join(self.output, 'mapping_vis'), renderer=self.renderer,
-                                         verbose=self.verbose, device=self.device)
+                                         verbose=self.verbose, device=self.device, iters_first=cfg['mapping']['iters_first'], num_iter=cfg['mapping']['iters'])
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
 
     def get_mask_from_c2w(self, c2w, key, val_shape, depth_np):
@@ -430,9 +431,7 @@ class Mapper(object):
             inc = int(self.semantic_iter_ratio*num_joint_iters)
         else:
             inc = 0
-        depth_loss_writer = 0 #losses for the Tensorboard writer
-        color_loss_writer = 0
-        semantic_loss_writer = 0
+        
         for joint_iter in range(num_joint_iters + inc): 
             if self.nice:
                 if self.frustum_feature_selection:
@@ -567,13 +566,13 @@ class Mapper(object):
             if writer is not None:
                 """if joint_iter == num_joint_iters +inc -1:
                     depth_loss_writer = loss.item()/torch.sum(depth_mask)"""
-                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask), int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter)
+                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask),self.iters_first*(idx!=0) + int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
-                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0], int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter-num_joint_iters*self.fine_iter_ratio)
+                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0],self.iters_first*(idx!=0)+ int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
@@ -582,7 +581,7 @@ class Mapper(object):
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0], int(idx/self.every_frame)*inc+joint_iter-num_joint_iters)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0],self.iters_first*(idx!=0)+ int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
