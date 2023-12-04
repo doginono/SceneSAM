@@ -585,6 +585,8 @@ class Mapper(object):
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
+            if writer is not None:
+                writer.add_scalar(f'Loss_overall', loss.item(),self.iters_first*(idx!=0) + int(idx/self.every_frame)*(num_joint_iters+inc)+joint_iter)
 
             # for imap*, it uses volume density
             regulation = (not self.occupancy)
