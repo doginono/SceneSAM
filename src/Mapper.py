@@ -765,4 +765,5 @@ class Mapper(object):
                 writer.close()
 
             if idx == self.n_img-1:
+                
                 break

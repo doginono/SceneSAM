@@ -138,8 +138,7 @@ class Replica(BaseDataset):
     def __init__(self, cfg, args, scale, device='cuda:0'
                  ):
         super(Replica, self).__init__(cfg, args, scale, device)
-        self.color_paths = sorted(
-            glob.glob(f'{self.input_folder}/results/frame*.jpg'))
+        self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
         #-------------------added-----------------------------------------------
