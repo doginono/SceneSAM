@@ -55,7 +55,7 @@ mapping:
   BA_cam_lr: 0.001
   fix_fine: True
   fix_color: False
-  no_vis_on_first_frame: False
+  no_vis_on_first_frame: True
   no_mesh_on_first_frame: True
   no_log_on_first_frame: True
   vis_freq: 20 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
@@ -66,7 +66,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   w_color_loss: 0.2
-  w_semantic_loss: 0.8
+  w_semantic_loss: 2
   frustum_feature_selection: True
   keyframe_selection_method: 'overlap'
   save_selected_keyframes_info: False
@@ -110,7 +110,7 @@ mapping:
       middle_lr: 0.005
       fine_lr: 0.005
       color_lr: 0.0
-      semantic_lr: 0.005 #original: 0.005
+      semantic_lr: 0.01 #original: 0.005
 
 cam:
   H: 680
