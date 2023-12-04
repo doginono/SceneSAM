@@ -47,9 +47,9 @@ mapping:
   use_vis: True #J: added, whether to use visualization in mapping
   device: "cuda:0"
   color_refine: True
-  middle_iter_ratio: 0.4
-  fine_iter_ratio: 0.6
-  semantic_iter_ratio: 0.4
+  middle_iter_ratio: 0.4 #0.4
+  fine_iter_ratio: 0.6 #0.6
+  semantic_iter_ratio: 0.4 #0.4
   every_frame: 5
   BA: True
   BA_cam_lr: 0.001
@@ -66,7 +66,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   w_color_loss: 0.2
-  w_semantic_loss: 0.2
+  w_semantic_loss: 0.8
   frustum_feature_selection: True
   keyframe_selection_method: 'overlap'
   save_selected_keyframes_info: False
@@ -110,7 +110,7 @@ mapping:
       middle_lr: 0.005
       fine_lr: 0.005
       color_lr: 0.0
-      semantic_lr: 0.01 #original: 0.005
+      semantic_lr: 0.005 #original: 0.005
 
 cam:
   H: 680
