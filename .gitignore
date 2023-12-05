@@ -6,6 +6,7 @@ output
 3rdparty
 Datasets
 logs.*
+logs0
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
