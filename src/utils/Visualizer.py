@@ -81,9 +81,12 @@ class Visualizer(object):
                         depth_residual[gt_depth_np == 0.0] = 0.0
                         color_residual = np.abs(gt_color_np - color_np)
                         color_residual[gt_depth_np == 0.0] = 0.0
-                        semantic_residual = np.abs(~(gt_semantic_np == semantic_np)) #added
-                        semantic_residual[gt_depth_np == 0.0] = 0.0 #added
-
+                        #------------------added------------------
+                        semantic_argmax = np.argmax(semantic_np, axis=2)
+                        semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
+                        semantic_pred[gt_depth_np == 0.0] = -1 #TODO, not sure what is right here
+                        predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance
+                        #-----------------end-added------------------
                         fig, axs = plt.subplots(3, 3) #previously 2,3
                         fig.tight_layout()
                         max_depth = np.max(gt_depth_np)
@@ -122,26 +125,41 @@ class Visualizer(object):
                         axs[2, 0].set_title('Input Semantic')
                         axs[2, 0].set_xticks([])
                         axs[2, 0].set_yticks([])
-                        axs[2, 1].imshow(semantic_np, cmap="plasma", interpolation='nearest')
+                        axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
                         axs[2, 1].set_title('Generated Semantic')
                         axs[2, 1].set_xticks([])
                         axs[2, 1].set_yticks([])
-                        axs[2, 2].imshow(semantic_residual, cmap="plasma", interpolation='nearest')
+                        img = axs[2, 2].imshow(predicted_semantic_probs, cmap='bwr', vmin=0, vmax=1)
+                        fig.colorbar(img, ax = axs[2,2], label='Class Probability')
                         axs[2, 2].set_title('Semantic Residual')
                         axs[2, 2].set_xticks([])
                         axs[2, 2].set_yticks([])
+                        
+                        """axs[2, 2].imshow(semantic_pred, cmap="plasma", interpolation='nearest')
+                        axs[2, 2].set_title('Correctness of Semantic prediction')
+                        axs[2, 2].set_xticks([])
+                        axs[2, 2].set_yticks([])"""
+                        
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
                         #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
-                        writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
-                        plt.savefig(
-                            f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                        writer.add_figure(f'figure/{idx:05d}_{iter:04d}', fig, idx)
+                        """plt.clf()
+                        fig, ax = plt.subplots()
+                        img = ax.imshow(predicted_semantic_probs, cmap='bwr', vmin=0, vmax=1)
+                        fig.colorbar(img, ax = ax, label='Class Probability')
+                        ax.set_title('Predicted Probability of Correct Instance')
+                        ax.set_xticks([])
+                        ax.set_yticks([])
+                        writer.add_figure(f'figure/{idx:05d}_{iter:04d}_probs', fig, idx)"""
+                        #plt.savefig(
+                           # f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
                         
                         plt.clf()
 
                         if self.verbose:
                             print(
-                                f'1Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
+                                f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
                     else: #normal execution without semantics 
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy()

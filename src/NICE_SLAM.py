@@ -14,7 +14,6 @@ from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
-from torch.utils.tensorboard import SummaryWriter #J: added
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 

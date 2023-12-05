@@ -20,8 +20,29 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1500
-  iters: 60
+  iters_first: 2000 #finetune
+  iters: 120 #finetune
+  w_color_loss: 0.2 #maybe finetune
+  w_semantic_loss: 10 #finetune
+  middle_iter_ratio: 0.4 #0.4 #finetune
+  fine_iter_ratio: 0.6 #0.6 #finetune
+  semantic_iter_ratio: 0.4 #0.4 #finetune
+  stage:
+    color: #maybe finetune, because our color results are not as good as in the original paper
+      decoders_lr: 0.005
+      coarse_lr: 0.0
+      middle_lr: 0.005
+      fine_lr: 0.005
+      color_lr: 0.005
+      semantic_lr: 0.0
+    semantic: #finetune
+      decoders_lr: 0.005
+      coarse_lr: 0.0
+      middle_lr: 0.005
+      fine_lr: 0.005
+      color_lr: 0.0
+      semantic_lr: 0.01 #original: 0.005
+
 cam:
   H: 680
   W: 1200
@@ -31,3 +52,5 @@ cam:
   cy: 339.5
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 0
+
+parames2finetune: ['mapping', ]

@@ -1,6 +1,6 @@
 #same as nice_slam.yaml, but with semantic segmentation
 coarse: True
-sync_method: strict
+sync_method: 'strict'
 scale: 1
 verbose: True
 occupancy: True
@@ -14,8 +14,8 @@ grid_len:
   semantic: 0.16
   bound_divisible: 0.32
 pretrained_decoders:
-  coarse: pretrained/coarse.pt
-  middle_fine: pretrained/middle_fine.pt # one ckpt contain both middle and fine
+  coarse: 'pretrained/coarse.pt'
+  middle_fine: 'pretrained/middle_fine.pt' # one ckpt contain both middle and fine
 meshing:
   level_set: 0
   resolution: 256 # change to 512 for higher resolution geometry
@@ -25,7 +25,7 @@ meshing:
   mesh_coarse_level: False
   clean_mesh_bound_scale: 1.02
   get_largest_components: False
-  color_mesh_extraction_method: direct_point_query
+  color_mesh_extraction_method: 'direct_point_query'
   remove_small_geometry_threshold: 0.2
 tracking:
   ignore_edge_W: 20
@@ -66,7 +66,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   w_color_loss: 0.2
-  w_semantic_loss: 2
+  w_semantic_loss: 10
   frustum_feature_selection: True
   keyframe_selection_method: 'overlap'
   save_selected_keyframes_info: False
@@ -74,7 +74,7 @@ mapping:
   lr_factor: 1
   pixels: 1000
   iters_first: 1500 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
-  iters: 300 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
+  iters: 100 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
   stage:
     coarse:
       decoders_lr: 0.0
@@ -132,5 +132,5 @@ data:
 model:
   c_dim: 32
   coarse_bound_enlarge: 2
-  pos_embedding_method: fourier
+  pos_embedding_method: 'fourier'
 writer_path: "logs"

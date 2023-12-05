@@ -8,7 +8,7 @@ from src import config
 from src.NICE_SLAM import NICE_SLAM
 
 import os #J:added
-
+from torch.utils.tensorboard import SummaryWriter #J: added
 
 def setup_seed(seed):
     torch.manual_seed(seed)
@@ -42,6 +42,10 @@ def main():
     num_of_runs = len(os.listdir(cfg["writer_path"])) if os.path.exists(cfg["writer_path"]) else 0
     path = os.path.join(cfg["writer_path"], f'run_{num_of_runs + 1}')
     cfg['writer_path'] = path
+    
+    """writer = SummaryWriter(cfg['writer_path'])
+    writer.add_hparams(cfg, {})
+    writer.close()"""
     #-----------------------------------------------------------------------------------
 
     slam = NICE_SLAM(cfg, args)

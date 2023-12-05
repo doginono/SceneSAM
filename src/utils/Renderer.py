@@ -277,9 +277,11 @@ class Renderer(object):
                 uncertainty_list.append(uncertainty.double())
                 if stage == "visualize": 
                     color_list.append(color)
-                    semantic_list.append(torch.argmax(semantic, dim=1)) #Done: add semantic list; TODO: check if argmax is along correct dimension
+                    #semantic_list.append(torch.argmax(semantic, dim=1)) #Done: add semantic list; TODO: check if argmax is along correct dimension
+                    semantic_list.append(semantic)
                 elif stage == "visualize_semantic":
-                    color_list.append(torch.argmax(color, dim=1))
+                    #color_list.append(torch.argmax(color, dim=1))
+                    semantic_list.append(semantic)
                 else: #stage == 'color'
                     color_list.append(color)
                 
@@ -289,10 +291,10 @@ class Renderer(object):
             color = torch.cat(color_list, dim=0)
             if stage == "visualize":#Done torch.cat semantic list and reshape
                 semantic = torch.cat(semantic_list, dim=0)
-                semantic = semantic.reshape(H,W)
+                semantic = semantic.reshape(H,W, -1) #remove -1 if using argmax
                 color = color.reshape(H, W, 3)
             elif stage == "visualize_semantic":
-                color = color.reshape(H,W)
+                color = color.reshape(H,W, -1) #remove -1 if using argmax
             else:
                 color = color.reshape(H, W, 3)
 
