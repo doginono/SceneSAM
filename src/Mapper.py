@@ -645,6 +645,7 @@ class Mapper(object):
     def run(self):
         
         writer = SummaryWriter(self.writer_path)
+            
         
         cfg = self.cfg
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0] #Done add semantics to output, runs into index error 
