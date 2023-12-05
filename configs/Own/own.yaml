@@ -14,7 +14,7 @@ tracking:
 mapping:
   every_frame: 5
   vis_freq: 20
-  vis_inside_freq: 25
+  vis_inside_freq: 119
   mesh_freq: 50
   ckpt_freq: 500
   keyframe_every: 50
