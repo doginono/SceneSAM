@@ -15,7 +15,7 @@ mapping:
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
-  vis_freq: 5
+  vis_freq: 20
   vis_inside_freq: 99
   vis_offset: 2 #we take the current frame - vis_offset for visualization
   mesh_freq: 50
