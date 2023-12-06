@@ -36,6 +36,11 @@ class Mapper(object):
         self.use_mesh = cfg['mapping']['use_mesh']
         self.iters_first = cfg['mapping']['iters_first']
         self.idx_writer = 0
+        self.vis_freq = cfg['mapping']['vis_freq']
+        self.vis_offset = cfg['mapping']['vis_offset']
+        self.no_vis_on_first_frame = cfg['mapping']['no_vis_on_first_frame']
+        self.freq = cfg['mapping']['vis_freq']
+        self.inside_freq = cfg['mapping']['vis_inside_freq']
         """if ~self.coarse_mapper:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'coarse')) #J: added
         else:
@@ -246,7 +251,7 @@ class Mapper(object):
             np.array(selected_keyframe_list))[:k])
         return selected_keyframe_list
 
-    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, keyframe_dict, keyframe_list, cur_c2w, cur_gt_semantic = None, writer = None):
+    def optimize_map(self, num_joint_iters, lr_factor, idx, cur_gt_color, cur_gt_depth, gt_cur_c2w, vis_c2w, keyframe_dict, keyframe_list, cur_c2w, cur_gt_semantic = None, writer = None):
         """
         Mapping iterations. Sample pixels from selected keyframes,
         then optimize scene representation and camera poses(if local BA enabled).
@@ -477,9 +482,11 @@ class Mapper(object):
                 if self.BA:
                     optimizer.param_groups[1]['lr'] = self.BA_cam_lr
 
-            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output) and self.use_vis:
+            #J: Part of the if is double checked (also in vis(), but we dont want to load data unnecessarily)
+            if (not (idx == 0 and self.no_vis_on_first_frame)) and ('Demo' not in self.output) and self.use_vis and idx-self.vis_offset >=0 and (idx % self.freq == 0) and (joint_iter % self.inside_freq == 0) and self.stage != 'coarse':
+                _,gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic   = self.frame_reader[idx - self.vis_offset]
                 self.visualizer.vis(
-                    idx, joint_iter, cur_gt_depth, cur_gt_color, cur_c2w, self.c, self.decoders, cur_gt_semantic, only_semantic=False, stage=self.stage, writer = writer) 
+                    idx, joint_iter, gt_vis_depth, gt_vis_color, vis_c2w, self.c, self.decoders, gt_vis_semantic, only_semantic=False, stage=self.stage, writer = writer, offset = self.vis_offset)
 
             optimizer.zero_grad()
             batch_rays_d_list = []
@@ -679,6 +686,7 @@ class Mapper(object):
 
             _, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[idx] #Done add semantics to output
             #runs into index error as long as the sematic files are not added like .../Results/sematic*.npy
+            
 
 
             if not init:
@@ -709,6 +717,11 @@ class Mapper(object):
                 num_joint_iters = cfg['mapping']['iters_first']
 
             cur_c2w = self.estimate_c2w_list[idx].to(self.device)
+            #J: using a unseen frame during training for visualization
+            if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >0:
+                vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
+            else:
+                vis_c2w = None
             num_joint_iters = num_joint_iters//outer_joint_iters
             for outer_joint_iter in range(outer_joint_iters):
 
@@ -717,7 +730,7 @@ class Mapper(object):
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
-                                      gt_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
+                                      gt_c2w, vis_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     self.estimate_c2w_list[idx] = cur_c2w

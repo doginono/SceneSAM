@@ -12,16 +12,19 @@ tracking:
   pixels: 200
   iters: 10
 mapping:
+  use_vis: True
+  no_vis_on_first_frame: True
   every_frame: 5
-  vis_freq: 20
-  vis_inside_freq: 119
+  vis_freq: 5
+  vis_inside_freq: 99
+  vis_offset: 2 #we take the current frame - vis_offset for visualization
   mesh_freq: 50
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 2000 #finetune
-  iters: 120 #finetune
+  iters_first: 3000 #finetune
+  iters: 100 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -36,12 +39,12 @@ mapping:
       color_lr: 0.005
       semantic_lr: 0.0
     semantic: #finetune
-      decoders_lr: 0.005
+      decoders_lr: 0.00
       coarse_lr: 0.0
-      middle_lr: 0.005
-      fine_lr: 0.005
+      middle_lr: 0.00
+      fine_lr: 0.00
       color_lr: 0.0
-      semantic_lr: 0.01 #original: 0.005
+      semantic_lr: 0.2 #original: 0.005
 
 cam:
   H: 680

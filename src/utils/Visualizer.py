@@ -26,7 +26,7 @@ class Visualizer(object):
         self.num_iter = num_iter
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
-            decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None):
+            decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None, offset = 0):
         """
         Visualization of depth, color images and save to file.
 
@@ -46,9 +46,11 @@ class Visualizer(object):
         #TODO: find way to make vis work with semantic -> currently cuda out of memory error
         #TODO: render_img is super messy, clean it up
         if (idx % self.freq == 0) and (iter % self.inside_freq == 0) and stage != 'coarse':
+            idx = idx - offset
             with torch.no_grad():
                 if only_semantic == False:
                     if gt_semantic is not None:
+                        #Carefull, this is the only up to date version of this function
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                         gt_semantic_np = gt_semantic.cpu().numpy()
@@ -88,6 +90,7 @@ class Visualizer(object):
                         predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance
                         #-----------------end-added------------------
                         fig, axs = plt.subplots(3, 3) #previously 2,3
+                        fig.suptitle(f'Frame: {idx:05d}, Iter: {iter:04d}')
                         fig.tight_layout()
                         max_depth = np.max(gt_depth_np)
                         axs[0, 0].imshow(gt_depth_np, cmap="plasma",
