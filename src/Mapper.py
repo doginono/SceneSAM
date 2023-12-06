@@ -111,7 +111,7 @@ class Mapper(object):
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
                                          vis_dir=os.path.join(self.output, 'mapping_vis'), renderer=self.renderer,
-                                         verbose=self.verbose, device=self.device, iters_first=cfg['mapping']['iters_first'], num_iter=cfg['mapping']['iters'])
+                                         verbose=self.verbose, device=self.device, iters_first=cfg['mapping']['iters_first'], num_iter=cfg['mapping']['iters'], input_dimension_semantic=cfg['output_dimension_semantic'])
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
 
     def get_mask_from_c2w(self, c2w, key, val_shape, depth_np):
@@ -764,13 +764,13 @@ class Mapper(object):
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh.ply'
                     self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
-                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
+                                         idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False)
 
                 if idx == self.n_img-1:
                     mesh_out_file = f'{self.output}/mesh/final_mesh.ply'
                     self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
-                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
+                                         idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False)
                     os.system(
                         f"cp {mesh_out_file} {self.output}/mesh/{idx:05d}_mesh.ply")

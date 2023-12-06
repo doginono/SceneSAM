@@ -2,6 +2,24 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+import matplotlib.pyplot as plt #J: added
+
+
+#----------------added-------------------
+#function to turn a vector of instance ids into rgb colors
+def get_rgb_from_instance_id(instance_id, num_instances, colormap='tab20'):
+    #instance_id is a vector of shape (N, )
+    #returns a vector of shape (N, 3) with rgb colors
+    cmap = plt.get_cmap(colormap)
+    norm = plt.Normalize(vmin=0, vmax=num_instances)
+    color_mapping = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    # Map each instance ID to a color
+    colors = color_mapping.to_rgba(instance_id)
+
+    return colors
+#------------------------------------------
+
 
 def as_intrinsics_matrix(intrinsics):
     """

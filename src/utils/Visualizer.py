@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from src.common import get_camera_from_tensor
+from src.common import get_camera_from_tensor, get_rgb_from_instance_id
 
 
 class Visualizer(object):
@@ -12,13 +12,14 @@ class Visualizer(object):
 
     """
 
-    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0', iters_first=1500, num_iter= 60):
+    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0', iters_first=1500, num_iter= 60, input_dimension_semantic = 101):
         self.freq = freq
         self.device = device
         self.vis_dir = vis_dir
         self.verbose = verbose
         self.renderer = renderer
         self.inside_freq = inside_freq
+        self.input_dimension_semantic = input_dimension_semantic #added
         os.makedirs(f'{vis_dir}', exist_ok=True)
         
         #------------------added------------------
@@ -85,8 +86,8 @@ class Visualizer(object):
                         color_residual[gt_depth_np == 0.0] = 0.0
                         #------------------added------------------
                         semantic_argmax = np.argmax(semantic_np, axis=2)
-                        semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
-                        semantic_pred[gt_depth_np == 0.0] = -1 #TODO, not sure what is right here
+                        #semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
+                        #semantic_pred[gt_depth_np == 0.0] = -1 #not sure what is right here
                         predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance
                         #-----------------end-added------------------
                         fig, axs = plt.subplots(3, 3) #previously 2,3
@@ -164,6 +165,7 @@ class Visualizer(object):
                             print(
                                 f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
                     else: #normal execution without semantics 
+                        assert False, "not up to date"
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy()
                         if len(c2w_or_camera_tensor.shape) == 1:
@@ -236,6 +238,7 @@ class Visualizer(object):
                                 f'2Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
 
                 else: #include semantics ignore color
+                    assert False, "not up to date"
                     if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy() #Done add semantics
