@@ -4,6 +4,8 @@ from src.common import get_rays, raw2outputs_nerf_color, sample_pdf
 
 class Renderer(object):
     def __init__(self, cfg, args, slam, points_batch_size=500000, ray_batch_size=100000):
+        self.semantic_occupancy_multiplier = cfg['rendering']['semantic_occupancy_multiplier']
+        
         self.ray_batch_size = ray_batch_size
         self.points_batch_size = points_batch_size
 
@@ -185,7 +187,7 @@ class Renderer(object):
         raw = raw.reshape(N_rays, N_samples+N_surface, -1)
 
         depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
-            raw, z_vals, rays_d, occupancy=self.occupancy, device=device) #J: in semantic stage color will contain the semantic prediction
+            raw, z_vals, rays_d, occupancy=self.occupancy, device=device, semantic_occupancy_multiplier = self.semantic_occupancy_multiplier) #J: in semantic stage color will contain the semantic prediction
         if N_importance > 0:
             z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
             z_samples = sample_pdf(
@@ -201,7 +203,7 @@ class Renderer(object):
 
             #J: Added stage as argument to raw2outputs_nerf_color
             depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
-                raw, z_vals, rays_d, occupancy=self.occupancy, device=device)
+                raw, z_vals, rays_d, occupancy=self.occupancy, device=device, semantic_occupancy_multiplier = self.semantic_occupancy_multiplier)
             return depth, uncertainty, color
 
         return depth, uncertainty, color #J: color will contain the semantic prediction in semantic stage

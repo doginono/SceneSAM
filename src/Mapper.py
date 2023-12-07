@@ -718,7 +718,7 @@ class Mapper(object):
 
             cur_c2w = self.estimate_c2w_list[idx].to(self.device)
             #J: using a unseen frame during training for visualization
-            if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >0:
+            if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >=0:
                 vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
             else:
                 vis_c2w = None
@@ -762,10 +762,14 @@ class Mapper(object):
                 self.mapping_cnt[0] += 1
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
-                    mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh.ply'
-                    self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
+                    mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'
+                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
+                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
+                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
+                    self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
-                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False)
+                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) #mesh on segmentation
+                    
 
                 if idx == self.n_img-1:
                     mesh_out_file = f'{self.output}/mesh/final_mesh.ply'

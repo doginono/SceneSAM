@@ -22,7 +22,7 @@ meshing:
   eval_rec: False
   clean_mesh: True
   depth_test: False
-  mesh_coarse_level: False
+  mesh_coarse_level: False #original: False; corresponds to show_forecast in code -> colors regions predicted by coarse-mapper to cyan
   clean_mesh_bound_scale: 1.02
   get_largest_components: False
   color_mesh_extraction_method: 'direct_point_query'

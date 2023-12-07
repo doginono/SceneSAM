@@ -561,7 +561,7 @@ class Mesher(object):
                     color = torch.cat(color_list, dim=0)
                     vertex_colors = color.cpu().numpy()
 
-                vertex_colors = np.clip(vertex_colors, 0, 1) * 255 #add colormap to map instance id to color
+                vertex_colors = np.clip(vertex_colors, 0, 1) * 255 
                 vertex_colors = vertex_colors.astype(np.uint8)
 
                 # cyan color for forecast region
@@ -620,8 +620,9 @@ class Mesher(object):
 
                 num_instances = vertex_id.shape[-1]
                 vertex_id = torch.argmax(vertex_id, dim=1).numpy() #get instance id
-                vertex_color = get_rgb_from_instance_id(vertex_id, num_instances) #add colormap to map instance id to color
-                vertex_colors = vertex_color.astype(np.uint8) #J: name it to colors to be able to reuse the end of the function
+                vertex_colors = get_rgb_from_instance_id(vertex_id, num_instances) #add colormap to map instance id to color
+                vertex_colors = np.clip(vertex_colors, 0, 1) * 255 #add colormap to map instance id to color
+                vertex_colors = vertex_colors.astype(np.uint8) #J: name it to colors to be able to reuse the end of the function
 
                 # cyan color for forecast region
                 if show_forecast:

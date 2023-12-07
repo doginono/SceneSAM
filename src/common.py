@@ -231,7 +231,7 @@ def get_tensor_from_camera(RT, Tquad=False):
     return tensor
 
 
-def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='cuda:0'):
+def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='cuda:0', semantic_occupancy_multiplier=10):
     """
     Transforms model's predictions to semantically meaningful values.
 
@@ -265,7 +265,7 @@ def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='
             raw[..., 3] = torch.sigmoid(10*raw[..., -1])
         else:
             # semantic
-            raw[..., -1] = torch.sigmoid(10*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
+            raw[..., -1] = torch.sigmoid(semantic_occupancy_multiplier*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
         alpha = raw[..., -1]
     else:
         #J: never enters here in our case
