@@ -26,7 +26,7 @@ class Mesher(object):
         """
         self.points_batch_size = points_batch_size
         self.ray_batch_size = ray_batch_size
-        self.renderer = slam.renderer
+        self.renderer = slam.mesh_renderer
         self.coarse = cfg['coarse']
         self.scale = cfg['scale']
         self.occupancy = cfg['occupancy']

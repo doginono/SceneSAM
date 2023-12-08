@@ -1,6 +1,7 @@
 dataset: 'replica'
 meshing:
   eval_rec: True
+  resolution: 512 # change to 512 for higher resolution geometry
 tracking:
   vis_freq: 50
   vis_inside_freq: 25
@@ -17,22 +18,22 @@ mapping:
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
-  vis_freq: 10
+  vis_freq: 20
   vis_inside_freq: 400
   vis_offset: 0 #we take the current frame - vis_offset for visualization
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: False
-  mesh_freq: 50
+  mesh_freq: 20
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 300 #finetune
+  iters_first: 3000 #finetune
   iters: 401 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
-  fine_iter_ratio: 1 #0.6 #finetune
+  fine_iter_ratio: 0.6 #0.6 #finetune
   semantic_iter_ratio: 0.4 #0.4 #finetune
   stage:
     color: #maybe finetune, because our color results are not as good as in the original paper
@@ -43,10 +44,10 @@ mapping:
       color_lr: 0.005
       semantic_lr: 0.0
     semantic: #finetune
-      decoders_lr: 0.00
+      decoders_lr: 0.005
       coarse_lr: 0.0
-      middle_lr: 0.00
-      fine_lr: 0.00
+      middle_lr: 0.005
+      fine_lr: 0.005
       color_lr: 0.0
       semantic_lr: 0.4 #original: 0.005
 
