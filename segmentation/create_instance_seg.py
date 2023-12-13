@@ -63,3 +63,22 @@ def create_sam():
 
     mask_generator = SamAutomaticMaskGenerator(sam)
     return mask_generator
+
+def create_instance_seg(img_path, store_directory, mask_generator):
+    """combines the functions in this file to create an instance segmentation of an image and save it to a file
+        and return it
+
+    Args:
+        img_path (str): path to image file
+        store_directory (str): path to directory where the instance segmentation should be saved, if None, it is not saved
+        mask_generator (SamAutomaticMaskGenerator): An SamAutomaticMaskGenerator object,
+
+    Returns:
+        np.array: with shape (height, width) and values in [0, len(masks)-1]
+    """
+    instances = path2instances(img_path, mask_generator)
+    if store_directory is not None:
+        save_path = os.path.join(store_directory, img_path.split("/")[-1].replace("frame","seg").replace("jpg", "npy"))
+        print(save_path)
+        instance_encoding2file(instances, save_path)
+    return instances
