@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import os
-from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+
 
 
 
