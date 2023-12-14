@@ -9,7 +9,7 @@ def T_inv(T):
     T_inv[3,3] = 1
     return T_inv
 
-def backproject_one_uv(uv, Tf, Tg, K, depthf, depthg):
+def backproject_one_uv(uv, Tf, Tg, K, depthf):
     """map uv to uv from the other frame
         goal is to use broadcast to calculate uv2 for all samples in one go
 
@@ -22,7 +22,7 @@ def backproject_one_uv(uv, Tf, Tg, K, depthf, depthg):
         depthg (np.array): _description_
         
     returns:
-        uv2 (_type_): _description_
+        (np.array): shape = (2,) uv coordinates of frame g
     """
     K_inv = np.array([[1/K[0,0], 0.0, -K[0,2]/K[0,0]], [0.0, 1/K[1,1], -K[1,2]/K[1,1]], [0.0, 0.0, 1.0]])
     Tf_inv = T_inv(Tf)
