@@ -1,18 +1,44 @@
+import numpy as np
 
+def T_inv(T):
+    R = T[:3,:3]
+    t = T[:3,3]
+    T_inv = np.zeros((4,4))
+    T_inv[:3,:3] = R.T
+    T_inv[:3,3] = -R.T @ t
+    T_inv[3,3] = 1
+    return T_inv
 
-def backproject(uv, T, T2, K):
+def backproject_one_uv(uv, Tf, Tg, K, depthf, depthg):
     """map uv to uv from the other frame
         goal is to use broadcast to calculate uv2 for all samples in one go
 
     Args:
         uv (np.array): _description_
-        T (np.array): includes both 
+        Tf (np.array): includes both 
+        Tg (np.array): includes both 
         K (np.array): _description_
+        depthf (np.array): _description_
+        depthg (np.array): _description_
         
     returns:
         uv2 (_type_): _description_
     """
-    return None
+    K_inv = np.array([[1/K[0,0], 0.0, -K[0,2]/K[0,0]], [0.0, 1/K[1,1], -K[1,2]/K[1,1]], [0.0, 0.0, 1.0]])
+    Tf_inv = T_inv(Tf)
+    Tg_inv = T_inv(Tg)
+    tmp = np.concatenate([uv, np.ones(1)])
+    tmp = K_inv @ tmp
+    tmp = tmp*depthf[uv[1], uv[0]].numpy() #real world in camera coordinates
+    tmp = np.concatenate([tmp, np.ones(1)])
+    tmp = Tf_inv @ tmp #real world coordinates
+    tmp = Tg @ tmp
+    tmp = tmp[:3] #real world coordinates in camera coordinates of g
+    tmp = tmp/tmp[-1]
+    tmp = K @ tmp
+    tmp = tmp[:-1] #uv coordinates of g
+    
+    return tmp
 
 def sample_from_instances(instances, points_per_instance):
     """samples uv from the instances
