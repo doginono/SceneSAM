@@ -59,12 +59,34 @@ def sample_from_instances(masks, points_per_instance=1):
         uv (numpy.array): shape(2,points_per_instance, len(instances))
 
     """
-    ans = {}
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=False)
+    # the ids are a only the ids of the instances
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+    ids = np.ones(
+        (
+            sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1],
+            1,
+        )
+    )
     for i, ann in enumerate(sortedMasks):
-        true_indices = np.where(ann["segmentation"])
-        indices = list(zip(true_indices[0], true_indices[1]))
+        m = ann["segmentation"]
+        idsForEachMask = np.concatenate([[i]])
+        ids[m] = idsForEachMask
+
+    torch_sampled_indices = torch.zeros(
+        (
+            2,  # 2D
+            points_per_instance,  # number of points per instance
+            len(sortedMasks),  # number of instances
+        )
+    )
+
+    for i in range(len(sortedMasks)):
+        labels = np.where(ids == i)
+        indices = list(zip(labels[0], labels[1]))
         if len(indices) > 0:  # Check if there are any True pixels
             sampled_indices = np.random.choice(len(indices), points_per_instance)
-            ans[i] = [indices[j] for j in sampled_indices]
-    return ans
+            torch_sampled_indices[:, :, i] = torch.tensor(
+                [indices[j][::-1] for j in sampled_indices]
+            ).T
+    return torch_sampled_indices
