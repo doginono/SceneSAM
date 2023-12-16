@@ -127,4 +127,4 @@ def sample_from_instances(masks, points_per_instance=1):
             torch_sampled_indices[:, :, i] = torch.tensor(
                 [indices[j][::-1] for j in sampled_indices]
             ).T
-    return torch_sampled_indices
+    return torch_sampled_indices.to(torch.int32)
