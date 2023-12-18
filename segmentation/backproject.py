@@ -134,3 +134,17 @@ def generateIds(masks):
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
     return ids
+
+def update_current_frame(curr_mask, id2id):
+    """update curr_mask according to sampleFromCurrentMask
+
+    Args:
+        curr_mask (np.array): (W,H) with ids 
+        id2id (np.array): shpae (2, #num ids in curr_mask)
+        
+    Return:
+        np.array (W,H): updated mask
+    """
+    #curr_mask[curr_mask == map[0,i]] = map[1,i]
+    pass
+    
