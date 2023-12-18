@@ -1,15 +1,17 @@
-import backproject
+from backproject import *
 import numpy as np
 import cv2
+import torch
 
 import backproject
 
-Depthg = readDepth(path_to_frames + "depth000000.png")
-Depthf = readDepth(path_to_frames + "depth000020.png")
-K = np.array([[600, 0.0, 599.5], [0.0, 600, 339.5], [0.0, 0.0, 1.0]])
-Tg = T_wc[0]
-Tf = T_wc[20]
 
+
+def readDepth(filepath):
+    depth=cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    depth_data = depth.astype(np.float32) / 6553.5
+    depth_data = torch.from_numpy(depth_data)
+    return depth_data
 
 def get_ids(masks1, masks2, instance=10):
     ids1 = generateIds(masks1)
@@ -41,3 +43,9 @@ def get_ids(masks1, masks2, instance=10):
         samplesFromCurrentMask[:, :, instance],
         backProjectedIds,
     )
+
+Depthg = readDepth(path_to_frames + "depth000000.png")
+Depthf = readDepth(path_to_frames + "depth000020.png")
+K = np.array([[600, 0.0, 599.5], [0.0, 600, 339.5], [0.0, 0.0, 1.0]])
+Tg = T_wc[0]
+Tf = T_wc[20]
