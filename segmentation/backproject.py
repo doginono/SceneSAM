@@ -78,6 +78,7 @@ def backproject(uv, Tf, Tg, K, depthf):
     tmp = tmp * depthf[uv[1], uv[0]].numpy()  # real world in camera coordinates
     tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
     tmp = Tf @ tmp  # real world coordinates
+    
     tmp = Tg_inv @ tmp
     tmp = tmp[:3, :]  # real world coordinates in camera coordinates of g
     zg = tmp[-1]  # zg has to align with the depthg
