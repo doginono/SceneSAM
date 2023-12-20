@@ -19,9 +19,9 @@ def createMapping(
     ids1,
     ids2,
     backprojectedSamples,
-    samplesFromCurrentMask,
-    zg,  #
-    depthg,
+    samplesFromCurrentMask,  #
+    zg,
+    depthG,
     instance=10,
 ):
     points_per_instance = 5
@@ -45,19 +45,23 @@ def createMapping(
     elementesCurrentFrame = np.array(
         list(zip(samplesFromCurrentMask[0], samplesFromCurrentMask[1]))
     )
-    print(elementesCurrentFrame.shape)
-    print(elementesCurrentFrame)
+
+    depthCheck = depthG - zg
+    print("depthCheck", depthCheck)
+    indices = np.where(abs(depthCheck) > 0.001)
+    numOfUnseenEarlier = len(indices)
+
+    elementsBackprojected = elementsBackprojected[indices]
+    elementesCurrentFrame = elementesCurrentFrame[indices]
+
     ids1_elements = ids1[elementsBackprojected[:, 1], elementsBackprojected[:, 0]]
     ids2_elements = ids2[elementesCurrentFrame[:, 1], elementesCurrentFrame[:, 0]]
-    print("ids1_elements", ids1_elements)
-    print("ids2_elements", ids2_elements)
+    array, counts = np.unique(ids1_elements, return_counts=True)
+    idMostOccuring = array[np.argmax(counts)]
 
-    # output: instances number-> to one earlier frame
-    # np unique mapping with OutofBounds
-    return filteredBackProj, numOutofBounds
-
-    # 10->12
-    # 15->16
+    if np.max(counts) > numOutofBounds + numOfUnseenEarlier:
+        return int(idMostOccuring)
+    return -1
 
 
 def update_current_frame(curr_mask, id2id):
