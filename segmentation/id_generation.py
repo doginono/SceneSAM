@@ -29,6 +29,19 @@ def createMapping(
     depthG,
     instance=10,
 ):
+    """_summary_
+
+    Args:
+        ids1 (_type_): ids from past frame corresponding to depthg
+        ids2 (_type_): ids from current frame
+        backprojectedSamples (_type_): _description_
+        samplesFromCurrentMask (_type_): _description_
+        depthG (_type_): _description_
+        instance (int, optional): _description_. Defaults to 10.
+
+    Returns:
+        _type_: _description_
+    """
     points_per_instance = 5
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
@@ -116,6 +129,7 @@ def create_complete_mapping_of_current_frame(ids_curr, curr_frame_number, frame_
         Tg = T[num]
         map_of_frame = np.ones(max_id) * (-1)
         ids2 = segmentations[num]
+        depthg = readDepth(depths[num])
 
         for instance in unique_ids:
             samplesFromCurrentMask = sample_from_instances(
@@ -128,7 +142,7 @@ def create_complete_mapping_of_current_frame(ids_curr, curr_frame_number, frame_
                 current, Tf, Tg, K, depthf
             )
             actual_id = createMapping(
-                ids_curr, num, backprojectedSamples, samplesFromCurrentMask, instance
+                ids_curr, num, backprojectedSamples, samplesFromCurrentMask,zg, depthg, instance
             )
             if actual_id == -1:
                 actual_id = id_counter
