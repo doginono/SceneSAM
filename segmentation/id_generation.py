@@ -72,3 +72,6 @@ def create_complete_mapping(ids_curr, frames  ):
             map.append(createMapping())
     #map = combineMaps(map)
     #update ids_curr according to map; update_current_frame
+    
+def combineMaps(map):
+    pass
