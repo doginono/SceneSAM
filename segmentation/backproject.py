@@ -133,4 +133,4 @@ def generateIds(masks):
         m = ann["segmentation"]
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
-    return ids.squeeze()
+    return ids.squeeze().astype(np.int32)

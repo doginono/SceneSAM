@@ -2,42 +2,8 @@ import numpy as np
 import cv2
 import os
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+import backproject
 
-
-
-
-
-def masks2encoding(masks):
-    """_summary_
-
-    Args:
-        masks (list): return of the SamAutomaticMaskGenerator.generate() function
-
-    Returns:
-        np.array: with shape (height, width) and values in [0, len(masks)-1]
-    """
-    onehot = np.zeros((masks[0]['segmentation'].shape[0], masks[0]['segmentation'].shape[1], len(masks)))
-    for i, e in enumerate(masks):
-        encoding = e['segmentation']
-        onehot[...,i] = encoding
-    return np.argmax(onehot, axis=-1)
-
-def path2instances(path, mask_generator):
-    """_summary_
-
-    Args:
-        path (str): path to image file
-        mask_generator (SamAutomaticMaskGenerator): An SamAutomaticMaskGenerator object
-
-    Returns:
-        np.array: with shape (height, width) and values in [0, len(masks)-1]
-    """
-    image = cv2.imread(path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    masks = mask_generator.generate(image)
-    instances = masks2encoding(masks)
-    return instances
 
 def instance_encoding2file(encoding, path):
     """_summary_
@@ -72,15 +38,23 @@ def create_instance_seg(img_path, store_directory, mask_generator):
 
     Args:
         img_path (str): path to image file
-        store_directory (str): path to directory where the instance segmentation should be saved, if None, it is not saved
+        store_directory (str): path to directory where the instance segmentation should be saved,
         mask_generator (SamAutomaticMaskGenerator): An SamAutomaticMaskGenerator object,
 
-    Returns:
-        np.array: with shape (height, width) and values in [0, len(masks)-1]
     """
-    instances = path2instances(img_path, mask_generator)
-    if store_directory is not None:
-        save_path = os.path.join(store_directory, img_path.split("/")[-1].replace("frame","seg").replace("jpg", "npy"))
-        print(save_path)
-        instance_encoding2file(instances, save_path)
-    return instances
+    instances = create_id(img_path, mask_generator)
+    
+    save_path = os.path.join(store_directory, img_path.split("/")[-1].replace("frame","seg").replace("jpg", "npy"))
+    print(save_path)
+    np.save(save_path, instances)
+        
+    
+
+def create_id(image, sam):
+    image = cv2.imread(image)
+    print(image.shape)
+
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    masks = sam.generate(image)
+    return backproject.generateIds(masks)
