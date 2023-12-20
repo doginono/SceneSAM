@@ -65,7 +65,7 @@ def update_current_frame(curr_mask, id2id):
     pass
 
 
-def create_complete_mapping(ids_curr, frames  ):
+def create_complete_mapping(ids_curr, frames):
     map = []
     for frame in frames:
         for instance in np.unique(np.flatten(ids_curr)):
