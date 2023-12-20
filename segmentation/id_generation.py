@@ -128,12 +128,12 @@ def create_complete_mapping_of_current_frame(ids_curr, curr_frame_number, frame_
     for num in frame_numbers:
         Tg = T[num]
         map_of_frame = np.ones(max_id) * (-1)
-        ids2 = segmentations[num]
+        ids_past = segmentations[int(num/points_per_instance)]
         depthg = readDepth(depths[num])
 
         for instance in unique_ids:
             samplesFromCurrentMask = sample_from_instances(
-                ids2, len(unique_ids), points_per_instance
+                ids_curr, len(unique_ids), points_per_instance
             )
 
             current = samplesFromCurrentMask[:, :, instance]
@@ -141,8 +141,9 @@ def create_complete_mapping_of_current_frame(ids_curr, curr_frame_number, frame_
             backprojectedSamples, zg = backproject.backproject(
                 current, Tf, Tg, K, depthf
             )
+            depthg = np.array(depthg[backprojectedSamples[1, :], backprojectedSamples[0, :]])
             actual_id = createMapping(
-                ids_curr, num, backprojectedSamples, samplesFromCurrentMask,zg, depthg, instance
+                ids_past, ids_curr, backprojectedSamples, samplesFromCurrentMask,zg, depthg, instance
             )
             if actual_id == -1:
                 actual_id = id_counter
