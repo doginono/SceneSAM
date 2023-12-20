@@ -19,9 +19,9 @@ def createMapping(
     ids1,
     ids2,
     backprojectedSamples,
-    samplesFromCurrentMask,
-    depth1=zg,  #
-    depth2=6,
+    samplesFromCurrentMask,  #
+    zg,
+    depthG,
     instance=10,
 ):
     points_per_instance = 5
@@ -45,30 +45,38 @@ def createMapping(
     elementesCurrentFrame = np.array(
         list(zip(samplesFromCurrentMask[0], samplesFromCurrentMask[1]))
     )
-    print(elementesCurrentFrame.shape)
-    print(elementesCurrentFrame)
+
+    depthCheck = depthG - zg
+    print("depthCheck", depthCheck)
+    indices = np.where(abs(depthCheck) > 0.001)
+    numOfUnseenEarlier = len(indices)
+
+    elementsBackprojected = elementsBackprojected[indices]
+    elementesCurrentFrame = elementesCurrentFrame[indices]
+
     ids1_elements = ids1[elementsBackprojected[:, 1], elementsBackprojected[:, 0]]
     ids2_elements = ids2[elementesCurrentFrame[:, 1], elementesCurrentFrame[:, 0]]
-    print("ids1_elements", ids1_elements)
-    print("ids2_elements", ids2_elements)
+    array, counts = np.unique(ids1_elements, return_counts=True)
+    idMostOccuring = array[np.argmax(counts)]
 
-    # output: instances number-> to one earlier frame
-    # np unique mapping with OutofBounds
-    return filteredBackProj, numOutofBounds
+    if np.max(counts) > numOutofBounds + numOfUnseenEarlier:
+        return int(idMostOccuring)
+    return -1
+
 
 def update_current_frame(curr_mask, id2id):
     """update curr_mask according to sampleFromCurrentMask
 
     Args:
-        curr_mask (np.array): (W,H) with ids 
+        curr_mask (np.array): (W,H) with ids
         id2id (np.array): 1D array where at id2id[i] = value, means that the id i of the current frame has actual id value
-        
+
     Return:
         np.array (W,H): updated mask
     """
     ids = np.unique(curr_mask)
     for id in ids:
-        curr_mask[curr_mask==id] = id2id[id]
+        curr_mask[curr_mask == id] = id2id[id]
     return curr_mask
 
 
@@ -98,20 +106,23 @@ def create_complete_mapping(curr_frame_number, frame_numbers, T,K, depths, frame
     ids_curr = segmentations[curr_frame_number]
     unique_ids = np.unique(np.flatten(ids_curr))
     max_id = np.max(unique_ids)
-    map = None 
-    
+    map = None
+
     for frame in frame_numbers:
-        
         Tg = T[frame]
-        map_of_frame = np.ones(max_id)*(-1)
+        map_of_frame = np.ones(max_id) * (-1)
         ids2 = segmentations[frame]
-        
+
         for instance in unique_ids:
-            samplesFromCurrentMask = sample_from_instances(ids2, len(unique_ids), points_per_instance)
+            samplesFromCurrentMask = sample_from_instances(
+                ids2, len(unique_ids), points_per_instance
+            )
 
             current = samplesFromCurrentMask[:, :, instance]
-            
-            backprojectedSamples, zg = backproject.backproject(current, Tf, Tg, K, depthf)
+
+            backprojectedSamples, zg = backproject.backproject(
+                current, Tf, Tg, K, depthf
+            )
             actual_id = createMapping(
                 ids_curr, frame, backprojectedSamples, samplesFromCurrentMask, instance
             )
@@ -123,19 +134,16 @@ def create_complete_mapping(curr_frame_number, frame_numbers, T,K, depths, frame
         if map is None:
             map = map_of_frame[None]
         else:
-            np.concatenate([map, map_of_frame[None]], axis=0) 
-        
-        
-    map = combineMaps(map.T) #at index i of map.T are the actual ids of the instance i according to the past frames
-    
-    
+            np.concatenate([map, map_of_frame[None]], axis=0)
+
+    map = combineMaps(
+        map.T
+    )  # at index i of map.T are the actual ids of the instance i according to the past frames
+
+
 def combineMaps(map):
-    #reduce map on axis 1 end check if all elements are the same or -1
+    # reduce map on axis 1 end check if all elements are the same or -1
     for i in range(map.shape[0]):
-        tmp = map[i][map[i]!=-1]
-        assert ~(np.all(tmp[0]-tmp==0)), "mapping is not consistent"
+        tmp = map[i][map[i] != -1]
+        assert ~(np.all(tmp[0] - tmp == 0)), "mapping is not consistent"
     return map.T[0]
-            
-    
-    
-    
