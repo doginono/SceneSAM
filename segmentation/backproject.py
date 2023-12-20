@@ -85,10 +85,10 @@ def backproject(uv, Tf, Tg, K, depthf):
     tmp = K @ tmp
     tmp = tmp[:2, :]  # uv coordinates of g
 
-    return tmp, zg
+    return tmp, zg  # 1D array for each element of tmp
 
 
-def sample_from_instances(masks, points_per_instance=1):
+def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
     """samples uv from the instances
 
     Args:
@@ -98,18 +98,15 @@ def sample_from_instances(masks, points_per_instance=1):
         uv (numpy.array): shape(2,points_per_instance, len(instances))
 
     """
-    # the ids are a only the ids of the instances
-    ids = generateIds(masks)
-
     torch_sampled_indices = torch.zeros(
         (
             2,  # 2D
             points_per_instance,  # number of points per instance
-            len(masks),  # number of instances
+            numberOfMasks,  # number of instances
         )
     )
 
-    for i in range(len(masks)):
+    for i in range(numberOfMasks):
         labels = np.where(ids == i)
         indices = list(zip(labels[0], labels[1]))
         if len(indices) > 0:  # Check if there are any True pixels
@@ -129,11 +126,10 @@ def generateIds(masks):
             1,
         )
     )
+    # maybe more efficient
+    # first frame has 85 instances so not too bad
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
-    return ids
-
-
-    
+    return ids.squeeze()

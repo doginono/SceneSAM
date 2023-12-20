@@ -14,8 +14,15 @@ def readDepth(filepath):
 
 
 # check one class mapping
+# behind or not check
 def createMapping(
-    ids1, ids2, backprojectedSamples, samplesFromCurrentMask, instance=10
+    ids1,
+    ids2,
+    backprojectedSamples,
+    samplesFromCurrentMask,
+    depth1=zg,  #
+    depth2=,
+    instance=10,
 ):
     points_per_instance = 5
     backprojectedSamples = backprojectedSamples.astype(int)
@@ -51,17 +58,19 @@ def createMapping(
 
     # 10->12
     # 15->16
+
+
 def update_current_frame(curr_mask, id2id):
     """update curr_mask according to sampleFromCurrentMask
 
     Args:
-        curr_mask (np.array): (W,H) with ids 
+        curr_mask (np.array): (W,H) with ids
         id2id (np.array): shpae (2, #num ids in curr_mask)
-        
+
     Return:
         np.array (W,H): updated mask
     """
-    #for all map[0,:]: curr_mask[curr_mask == map[0,i]] = map[1,i]
+    # for all map[0,:]: curr_mask[curr_mask == map[0,i]] = map[1,i]
     pass
 
 
@@ -70,8 +79,9 @@ def create_complete_mapping(ids_curr, frames):
     for frame in frames:
         for instance in np.unique(np.flatten(ids_curr)):
             map.append(createMapping())
-    #map = combineMaps(map)
-    #update ids_curr according to map; update_current_frame
-    
+    # map = combineMaps(map)
+    # update ids_curr according to map; update_current_frame
+
+
 def combineMaps(map):
     pass
