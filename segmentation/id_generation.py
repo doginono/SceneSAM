@@ -15,14 +15,10 @@ def readDepth(filepath):
 
 def createMapping(
     ids1,
-    ids2,
     backprojectedSamples,
-    samplesFromCurrentMask,  #
     zg,
     Depthg,
-    instance=10,
 ):
-    points_per_instance = 5
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
@@ -75,10 +71,11 @@ def update_current_frame(curr_mask, id2id):
     Return:
         np.array (W,H): updated mask
     """
+    updated = curr_mask.copy()
     ids = np.unique(curr_mask)
     for id in ids:
-        curr_mask[curr_mask == id] = id2id[id]
-    return curr_mask
+        updated[curr_mask == id] = id2id[id]
+    return updated
 
 
 def create_complete_mapping_of_current_frame(
@@ -137,12 +134,9 @@ def create_complete_mapping_of_current_frame(
             # this overwrites the depthg therefore I calculate it in actual_id # depthg
             actual_id = createMapping(
                 ids_past,
-                ids_curr,
                 backprojectedSamples,
-                samplesFromCurrentMask,
                 zg,
                 depthg,
-                instance,
             )
             if actual_id == -1:
                 actual_id = id_counter
