@@ -5,10 +5,11 @@ import glob
 import cv2
 import torch
 import matplotlib.pyplot as plt
-from vis import visualizer
+import vis
 
 
 def run():
+    visulizer = vis.visualizerForIds()
     path_to_traj = "/home/julius/Project/nice-slam/Datasets/Replica/room0/traj.txt"
     T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
 
@@ -59,4 +60,4 @@ def run():
         frame_numbers.append(i)
 
     for i, segment in enumerate(segmentations):
-        visualizer(segment)
+        visulizer.visualizer(segment, f"Frame {i*every_frame}")
