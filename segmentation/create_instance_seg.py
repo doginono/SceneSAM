@@ -13,8 +13,9 @@ def instance_encoding2file(encoding, path):
         path (str): path to save the encoding
     """
     np.save(path, encoding)
-    
-#TODO implement in nice-slam later
+
+
+# TODO implement in nice-slam later
 def create_sam():
     """_summary_
 
@@ -32,6 +33,7 @@ def create_sam():
     mask_generator = SamAutomaticMaskGenerator(sam)
     return mask_generator
 
+
 def create_instance_seg(img_path, store_directory, mask_generator):
     """combines the functions in this file to create an instance segmentation of an image and save it to a file
         and return it
@@ -43,16 +45,17 @@ def create_instance_seg(img_path, store_directory, mask_generator):
 
     """
     instances = create_id(img_path, mask_generator)
-    
-    save_path = os.path.join(store_directory, img_path.split("/")[-1].replace("frame","seg").replace("jpg", "npy"))
+
+    save_path = os.path.join(
+        store_directory,
+        img_path.split("/")[-1].replace("frame", "seg").replace("jpg", "npy"),
+    )
     print(save_path)
     np.save(save_path, instances)
-        
-    
+
 
 def create_id(image, sam):
     image = cv2.imread(image)
-    print(image.shape)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
