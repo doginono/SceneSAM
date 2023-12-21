@@ -8,6 +8,7 @@ Datasets
 logs
 segmentation/data
 segmentation/our_gen
+.metals/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
