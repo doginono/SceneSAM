@@ -72,14 +72,16 @@ def vis(path_to_image, masks, uv=None):
 
 
 class visualizerForIds:
-    self.colors = [np.random.random(3) for i in range(10000)]
+    def __init__(self, seed=123):
+        np.random.seed(seed)
+        self.colors = [np.random.random(3) for i in range(1000)]
+        self.cmap = mcolors.ListedColormap(self.colors)
 
-    def visualizer(anns, title=""):
+    def visualizer(self, anns, title=""):
         # Create a 2D numpy array
-        cmap = mcolors.ListedColormap(self.colors)
-        plt.figure(figsize=(30, 30))
         plt.title(title)
-        plt.imshow(anns, cmap=cmap)
+
+        plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors))
         # plt.colorbar(ticks=range(100), label='integer values')
         # plt.clim(-0.5, 10000)  # Set colorbar limi
         plt.show()
