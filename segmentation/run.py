@@ -5,6 +5,7 @@ import glob
 import cv2
 import torch
 import matplotlib.pyplot as plt
+from vis import visualizer
 
 
 def run():
@@ -58,6 +59,4 @@ def run():
         frame_numbers.append(i)
 
     for i, segment in enumerate(segmentations):
-        plt.imshow(segment, cmap="plasma", interpolation="nearest")
-        plt.title(f"frame {i*every_frame}")
-        plt.show()
+        visualizer(segment)
