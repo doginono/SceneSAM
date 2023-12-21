@@ -43,26 +43,16 @@ def createMapping(
     depthCheck = depthg - zg
 
     # depth check indices
-    indices = np.where(abs(depthCheck) > 0.001)
-    filterForDepth = np.ones(filteredBackProj.shape[1], dtype=bool)
-    filterForDepth[indices] = False
-    filteredBackProj = filteredBackProj[:, filterForDepth]
+    indices = np.where(abs(depthCheck) < 0.001)
+    filteredBackProj = filteredBackProj[:, indices]
 
-    numOutofBounds = points_per_instance - len(filteredBackProj[0])
-    elementsBackprojected = np.array(
-        list(zip(filteredBackProj[0], filteredBackProj[1]))
-    )
-
-    if len(elementsBackprojected) == 0:
+    if filteredBackProj.size == 0:
         return -1
-
-    ids1_elements = ids1[elementsBackprojected[:, 1], elementsBackprojected[:, 0]]
+    ids1_elements = ids1[filteredBackProj[1, :], filteredBackProj[0, :]]
     array, counts = np.unique(ids1_elements, return_counts=True)
-    idMostOccuring = array[np.argmax(counts)]
 
-    if np.max(counts) > numOutofBounds:
-        return int(idMostOccuring)
-    return -1
+    idMostOccuring = int(array[np.argmax(counts)])
+    return idMostOccuring
 
 
 def readImage(filepath):
@@ -130,7 +120,8 @@ def create_complete_mapping_of_current_frame(
 
     for num in frame_numbers:
         Tg = T[num]
-        map_of_frame = np.ones(max_id) * (-1)
+        # starts counting from 0 so the lenght is 1 more than the actual number of frames
+        map_of_frame = np.ones(max_id + 1) * (-1)
         ids_past = segmentations[int(num / points_per_instance)]
         # this gets overwritten
         depthg = readDepth(depths[num])
