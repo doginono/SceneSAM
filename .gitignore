@@ -6,6 +6,8 @@ output
 3rdparty
 Datasets
 logs
+segmentation/data
+segmentation/our_gen
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
