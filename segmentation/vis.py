@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import cv2
 import matplotlib.colors as mcolors
 
-colors = [np.random.random(3) for i in range(10000)]
-
 
 def show_anns(anns):
     if len(anns) == 0:
@@ -73,15 +71,16 @@ def vis(path_to_image, masks, uv=None):
     plt.show()
 
 
-def visualizer(anns):
-    # Create a 2D numpy array
+class visualizerForIds:
+    self.colors = [np.random.random(3) for i in range(10000)]
 
-    cmap = mcolors.ListedColormap(colors)
-
-    plt.figure(figsize=(30, 30))
-    plt.imshow(anns, cmap=cmap)
-
-    # plt.colorbar(ticks=range(100), label='integer values')
-    # plt.clim(-0.5, 10000)  # Set colorbar limi
-    plt.show()
-    # ax.imshow(img)
+    def visualizer(anns, title=""):
+        # Create a 2D numpy array
+        cmap = mcolors.ListedColormap(self.colors)
+        plt.figure(figsize=(30, 30))
+        plt.title(title)
+        plt.imshow(anns, cmap=cmap)
+        # plt.colorbar(ticks=range(100), label='integer values')
+        # plt.clim(-0.5, 10000)  # Set colorbar limi
+        plt.show()
+        # ax.imshow(img)
