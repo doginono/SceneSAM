@@ -126,9 +126,10 @@ def create_complete_mapping_of_current_frame(
         # this gets overwritten
         depthg = readDepth(depths[num])
         samplesFromCurrentMask = sample_from_instances(
-            ids_curr, len(unique_ids), points_per_instance
+            ids_curr, np.max(unique_ids) + 1, points_per_instance
         )
         for instance in unique_ids:
+            print(instance)
             current = samplesFromCurrentMask[:, :, instance]
 
             backprojectedSamples, zg = backproject.backproject(
