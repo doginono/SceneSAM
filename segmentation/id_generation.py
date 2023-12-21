@@ -19,7 +19,7 @@ def createMapping(
     backprojectedSamples,
     samplesFromCurrentMask,  #
     zg,
-    depthg,
+    Depthg,
     instance=10,
 ):
     points_per_instance = 5
