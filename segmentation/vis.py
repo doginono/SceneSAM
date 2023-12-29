@@ -81,7 +81,7 @@ class visualizerForIds:
         # Create a 2D numpy array
         plt.title(title)
 
-        plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors))
+        plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         # plt.colorbar(ticks=range(100), label='integer values')
         # plt.clim(-0.5, 10000)  # Set colorbar limi
         plt.show()
