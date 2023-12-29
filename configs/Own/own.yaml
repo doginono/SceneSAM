@@ -18,8 +18,8 @@ mapping:
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
-  vis_freq: 20
-  vis_inside_freq: 400
+  vis_freq: 5
+  vis_inside_freq: 99
   vis_offset: 0 #we take the current frame - vis_offset for visualization
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: False
@@ -28,8 +28,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 3000 #finetune
-  iters: 401 #finetune
+  iters_first: 1200 #finetune
+  iters: 100 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -61,4 +61,4 @@ cam:
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 0
 
-parames2finetune: ['mapping', ]
+#parames2finetune: ['mapping', ]

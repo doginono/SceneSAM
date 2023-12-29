@@ -82,12 +82,21 @@ class BaseDataset(Dataset):
         return self.n_img
 
     def __getitem__(self, index):
+        """two scenarios for accessing semanitc index:
+        1. index has already been seen -> have list list with seen encodings (dont store them on cuda
+        2. index has not been seen yet -> create instance encoding with sam model and backproject to seen ones
+        """
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path) 
         #-------------------added-----------------------------------------------
-        semantic_path = self.semantic_paths[index] 
-        semantic_data = np.load(semantic_path).astype(bool)#TODO probably change later to actual semantic data
+        semantic_path = self.semantic_paths[index//self.every_frame] #TODO instead have list or numpy array with seen instance encodings (i.e. use this for backprojection)
+        semantic_data = np.load(semantic_path)#.astype(bool)#TODO probably change later to actual semantic data
+
+        # Create one-hot encoding using numpy.eye
+        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data]
+        semantic_data = semantic_data.astype(bool)
+        assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
         #-----------------end--added-----------------------------------------------
         if '.png' in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
@@ -109,8 +118,10 @@ class BaseDataset(Dataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
+
         semantic_data = torch.from_numpy(semantic_data)
-        #------------------end-added-----------------------------------------------
+
+        #----------------------
         if self.crop_size is not None: #TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
             # follow the pre-processing step in lietorch, actually is resize
             assert False, "crop_size is not None -> need to crop semantic data"
@@ -138,11 +149,14 @@ class Replica(BaseDataset):
     def __init__(self, cfg, args, scale, device='cuda:0'
                  ):
         super(Replica, self).__init__(cfg, args, scale, device)
+        
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
         #-------------------added-----------------------------------------------
         self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
+        self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.every_frame = cfg['mapping']['every_frame']
         #-------------------end added-----------------------------------------------
         self.n_img = len(self.color_paths)
         self.load_poses(f'{self.input_folder}/traj.txt')
