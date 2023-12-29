@@ -22,15 +22,16 @@ def create_sam():
     Returns:
         SamAutomaticMaskGenerator: An SamAutomaticMaskGenerator object
     """
-    sam_checkpoint = "/home/julius/models/sam_vit_h_4b8939.pth"
-    model_type = "vit_h"
+    sam_checkpoint = "/Users/A200254469/Desktop/tum/2024ws/advancedDL4CV/segment/nice-slam/sam_vit_b_01ec64.pth"
+    model_type = "vit_b"
 
-    device = "cuda"
+    device = "cpu"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)
 
     mask_generator = SamAutomaticMaskGenerator(sam)
+
     return mask_generator
 
 
