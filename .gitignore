@@ -8,6 +8,9 @@ Datasets
 logs.*
 logs
 logs0
+segmentation/data
+segmentation/our_gen
+.metals/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -141,3 +144,5 @@ dmypy.json
 
 outputs/
 multirun/
+room*
+```
