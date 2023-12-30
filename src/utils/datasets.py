@@ -132,7 +132,7 @@ class Replica(BaseDataset):
     #-------------------added-----------------------------------------------
     semantic_frames = []
     id_counter = 0
-    sam = create_instance_seg.create_sam('cpu')
+    
 
     #shared_lock_frames = mp.Lock()
     #shared_lock_sam = mp.Lock()
@@ -199,18 +199,19 @@ class Replica(BaseDataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
-        
+        print('try to acquire lock ', threading.current_thread().ident)
         with self.lock:
-            print('acquired lock')
+            print('acquired lock ',  threading.current_thread().ident)
             if index == 0 and len(Replica.semantic_frames) == 0:
 
-                print("start sam by ", threading.current_thread().getName())
-                masks = Replica.sam.generate(image)
+                print("start sam by ", threading.current_thread().ident)
+                sam = create_instance_seg.create_sam('cpu')
+                masks = sam.generate(image)
                 print("end sam")
                     
                 semantic_data = id_generation.generateIds(masks)
                 Replica.semantic_frames.append(semantic_data)
-                print(f"segmenation on curretn frame {index}: ", semantic_data)
+                print(f"segmenation on current frame {index}: ", semantic_data)
                 print(f"unique ids on current frame: {index}", np.unique(semantic_data))
             
             elif index//self.every_frame < len(Replica.semantic_frames):
@@ -221,7 +222,8 @@ class Replica(BaseDataset):
                 #create instance encoding with sam model and backproject to seen ones
                 
                 print("start sam")
-                masks = Replica.sam.generate(image)
+                sam = create_instance_seg.create_sam('cpu')
+                masks = sam.generate(image)
                 print("end sam")
                 
                 semantic_data = id_generation.generateIds(masks)
