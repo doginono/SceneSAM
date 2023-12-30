@@ -11,6 +11,7 @@ logs0
 segmentation/data
 segmentation/our_gen
 .metals/*
+sam/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
