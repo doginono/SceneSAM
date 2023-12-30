@@ -105,8 +105,12 @@ class Mapper(object):
 
         self.keyframe_dict = []
         self.keyframe_list = []
+        """if coarse_mapper:
+            self.frame_reader = get_dataset(
+                cfg, args, self.scale, device=self.device, slam = slam, tracker=True)
+        else:"""
         self.frame_reader = get_dataset(
-            cfg, args, self.scale, device=self.device)
+            cfg, args, self.scale, device=self.device, slam = slam, tracker=False)
         self.n_img = len(self.frame_reader)
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
@@ -282,7 +286,7 @@ class Mapper(object):
         if len(keyframe_dict) == 0:
             optimize_frame = []
         else:
-            if self.keyframe_selection_method == 'global':
+            if self.keyframe_selection_method == 'global': #J: usually it is global
                 num = self.mapping_window_size-2
                 optimize_frame = random_select(len(self.keyframe_dict)-1, num)
             elif self.keyframe_selection_method == 'overlap':
@@ -517,7 +521,10 @@ class Mapper(object):
                     gt_depth = cur_gt_depth.to(device)
                     gt_color = cur_gt_color.to(device)
                     #-----------------added-------------------
-                    gt_semantic = cur_gt_semantic.to(device)
+                    if self.stage != 'coarse':
+                        gt_semantic = cur_gt_semantic.to(device)
+                    else:
+                        gt_semantic = None
                     #-----------------end-added-------------------
                     if self.BA:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
@@ -649,14 +656,19 @@ class Mapper(object):
         else:
             return None
 
-    def run(self):
-        
+    def run(self, lock):
+        #lock for accessing the frame_reader
+        self.frame_reader.setLock(lock)
         writer = SummaryWriter(self.writer_path)
             
         
         cfg = self.cfg
-        idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0] #Done add semantics to output, runs into index error 
+        """if self.coarse_mapper:
+            idx, gt_color, gt_depth, gt_c2w = self.frame_reader[0] #Done add semantics to output, runs into index error 
+            gt_semantic = None
         #as long as the sematic files are not added like .../Results/sematic*.npy
+        else: """
+        idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
         self.estimate_c2w_list[0] = gt_c2w.cpu()
         init = True
@@ -684,7 +696,11 @@ class Mapper(object):
                 print(prefix+"Mapping Frame ", idx.item())
                 print(Style.RESET_ALL)
 
-            _, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[idx] #Done add semantics to output
+            """if self.coarse_mapper:
+                _, gt_color, gt_depth, gt_c2w = self.frame_reader[idx] #Done add semantics to output
+                gt_semantic = None
+            else:"""
+            _, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[idx]
             #runs into index error as long as the sematic files are not added like .../Results/sematic*.npy
             
 
@@ -745,6 +761,8 @@ class Mapper(object):
                         'semantic': gt_semantic.cpu()}) #Done: add semantics ground truth
 
             if self.low_gpu_mem:
+                if self.verbose:
+                    print('Clearing GPU cache...')
                 torch.cuda.empty_cache()
 
             init = False

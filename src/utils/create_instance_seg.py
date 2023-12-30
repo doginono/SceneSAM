@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
-import backproject
+from src.utils import backproject
 
 
 def instance_encoding2file(encoding, path):
@@ -16,7 +16,7 @@ def instance_encoding2file(encoding, path):
 
 
 # TODO implement in nice-slam later
-def create_sam():
+def create_sam(device="cpu"):
     """_summary_
 
     Returns:
@@ -24,8 +24,6 @@ def create_sam():
     """
     sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
     model_type = "vit_b"
-
-    device = "cuda"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)

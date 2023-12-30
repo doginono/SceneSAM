@@ -1,5 +1,6 @@
 import glob
 import os
+import time
 
 import cv2
 import numpy as np
@@ -7,6 +8,10 @@ import torch
 import torch.nn.functional as F
 from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
+import threading
+
+import torch.multiprocessing as mp
+from src.utils import backproject, create_instance_seg, id_generation
 
 
 def readEXR_onlydepth(filename):
@@ -44,8 +49,8 @@ def readEXR_onlydepth(filename):
     return Y
 
 
-def get_dataset(cfg, args, scale, device='cuda:0'):
-    return dataset_dict[cfg['dataset']](cfg, args, scale, device=device)
+def get_dataset(cfg, args, scale, device='cuda:0', tracker = False, slam = None):
+    return dataset_dict[cfg['dataset']](cfg, args, scale, device=device, tracker = tracker, slam = slam)
 
 
 class BaseDataset(Dataset):
@@ -80,8 +85,86 @@ class BaseDataset(Dataset):
 
     def __len__(self):
         return self.n_img
+    
+    def __getitem__(self, index):
+        color_path = self.color_paths[index]
+        depth_path = self.depth_paths[index]
+        color_data = cv2.imread(color_path)
+        if '.png' in depth_path:
+            depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        elif '.exr' in depth_path:
+            depth_data = readEXR_onlydepth(depth_path)
+        if self.distortion is not None:
+            K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+            # undistortion is only applied on color image, not depth!
+            color_data = cv2.undistort(color_data, K, self.distortion)
+
+        color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        color_data = color_data / 255.
+        depth_data = depth_data.astype(np.float32) / self.png_depth_scale
+        H, W = depth_data.shape
+        color_data = cv2.resize(color_data, (W, H))
+        color_data = torch.from_numpy(color_data)
+        depth_data = torch.from_numpy(depth_data)*self.scale
+        if self.crop_size is not None:
+            # follow the pre-processing step in lietorch, actually is resize
+            color_data = color_data.permute(2, 0, 1)
+            color_data = F.interpolate(
+                color_data[None], self.crop_size, mode='bilinear', align_corners=True)[0]
+            depth_data = F.interpolate(
+                depth_data[None, None], self.crop_size, mode='nearest')[0, 0]
+            color_data = color_data.permute(1, 2, 0).contiguous()
+
+        edge = self.crop_edge
+        if edge > 0:
+            # crop image edge, there are invalid value on the edge of the color image
+            color_data = color_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]
+        pose = self.poses[index]
+        pose[:3, 3] *= self.scale
+        return index, color_data.to(self.device), depth_data.to(self.device), pose.to(self.device)
+
+    
+
+
+class Replica(BaseDataset):
+
+    #-------------------added-----------------------------------------------
+    semantic_frames = []
+    id_counter = 0
+    sam = create_instance_seg.create_sam('cpu')
+
+    #shared_lock_frames = mp.Lock()
+    #shared_lock_sam = mp.Lock()
+
+    #------------------end-added-----------------------------------------------
+
+    def __init__(self, cfg, args, scale, device='cuda:0', tracker = False, slam = None
+                 ):
+        super(Replica, self).__init__(cfg, args, scale, device)
+        
+        self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
+        self.depth_paths = sorted(
+            glob.glob(f'{self.input_folder}/results/depth*.png'))
+        #-------------------added-----------------------------------------------
+        self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
+        self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.every_frame = cfg['mapping']['every_frame']
+        self.istracker = tracker
+        self.points_per_instance = cfg['mapping']['points_per_instance']
+        self.slam = slam
+        self.lock = None
+        #-------------------end added-----------------------------------------------
+        self.n_img = len(self.color_paths)
+        self.load_poses(f'{self.input_folder}/traj.txt')
+       
+    def setLock(self, lock): #J: should only be relevant for the Mapper
+        self.lock = lock
 
     def __getitem__(self, index):
+        if self.istracker:
+            return super().__getitem__(index)
+        
         """two scenarios for accessing semanitc index:
         1. index has already been seen -> have list list with seen encodings (dont store them on cuda
         2. index has not been seen yet -> create instance encoding with sam model and backproject to seen ones
@@ -90,13 +173,11 @@ class BaseDataset(Dataset):
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path) 
         #-------------------added-----------------------------------------------
-        semantic_path = self.semantic_paths[index//self.every_frame] #TODO instead have list or numpy array with seen instance encodings (i.e. use this for backprojection)
-        semantic_data = np.load(semantic_path)#.astype(bool)#TODO probably change later to actual semantic data
+        
+            
 
-        # Create one-hot encoding using numpy.eye
-        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data]
-        semantic_data = semantic_data.astype(bool)
-        assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
+
+        
         #-----------------end--added-----------------------------------------------
         if '.png' in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
@@ -107,8 +188,8 @@ class BaseDataset(Dataset):
             # undistortion is only applied on color image, not depth!
             color_data = cv2.undistort(color_data, K, self.distortion) 
 
-        color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB) #J: convertion BGR -> RGB
-        color_data = color_data / 255.
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB) #J: convertion BGR -> RGB, image is passed to sam
+        color_data = image / 255.
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
         #-------------------added-----------------------------------------------
@@ -118,8 +199,62 @@ class BaseDataset(Dataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
+        
+        with self.lock:
+            print('acquired lock')
+            if index == 0 and len(Replica.semantic_frames) == 0:
 
+                print("start sam by ", threading.current_thread().getName())
+                masks = Replica.sam.generate(image)
+                print("end sam")
+                    
+                semantic_data = id_generation.generateIds(masks)
+                Replica.semantic_frames.append(semantic_data)
+                print(f"segmenation on curretn frame {index}: ", semantic_data)
+                print(f"unique ids on current frame: {index}", np.unique(semantic_data))
+            
+            elif index//self.every_frame < len(Replica.semantic_frames):
+                semantic_data = Replica.semantic_frames[index//self.every_frame]
+            
+                
+            else:
+                #create instance encoding with sam model and backproject to seen ones
+                
+                print("start sam")
+                masks = Replica.sam.generate(image)
+                print("end sam")
+                
+                semantic_data = id_generation.generateIds(masks)
+                semantic_frames = Replica.semantic_frames
+                id_counter = Replica.id_counter
+                while(len(self.slam.estimate_c2w_list)<=index):
+                    print("wait for tracker to catch up")
+                    time.sleep(0.1)
+                map , id_counter= id_generation.create_complete_mapping_of_current_frame(
+                    semantic_data,
+                    index,
+                    np.arange(index)[0:(index-1):self.every_frame],  # Corrected slice notation
+                    self.slam.estimate_c2w_list,
+                    self.K,
+                    self.depth_paths,
+                    semantic_frames,
+                    id_counter,
+                    points_per_instance=self.points_per_instance  # Corrected parameter name
+                )
+                semantic_data = id_generation.update_current_frame(semantic_data, map)
+                Replica.id_counter = id_counter
+                Replica.semantic_frames.append(semantic_data)
+                print(f"segmenation on curretn frame {index}: ", semantic_data)
+                print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
+                print('release lock')
+
+        # Create one-hot encoding using numpy.eye
+        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
+ 
+        assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
         semantic_data = torch.from_numpy(semantic_data)
+
+        
 
         #----------------------
         if self.crop_size is not None: #TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
@@ -143,23 +278,6 @@ class BaseDataset(Dataset):
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
         return index, color_data.to(self.device), depth_data.to(self.device), pose.to(self.device), semantic_data.to(self.device) #Done: add return semantics
-
-
-class Replica(BaseDataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
-        super(Replica, self).__init__(cfg, args, scale, device)
-        
-        self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
-        self.depth_paths = sorted(
-            glob.glob(f'{self.input_folder}/results/depth*.png'))
-        #-------------------added-----------------------------------------------
-        self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
-        self.output_dimension_semantic = cfg['output_dimension_semantic']
-        self.every_frame = cfg['mapping']['every_frame']
-        #-------------------end added-----------------------------------------------
-        self.n_img = len(self.color_paths)
-        self.load_poses(f'{self.input_folder}/traj.txt')
 
     def load_poses(self, path):
         self.poses = []

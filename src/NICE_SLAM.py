@@ -92,10 +92,10 @@ class NICE_SLAM():
         self.shared_decoders = self.shared_decoders.to(
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
-        self.renderer = Renderer(cfg, args, self) #J: changed from default in renderer constructor, thisis the train renderer
-        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=200000, ray_batch_size=20000)
+        self.renderer = Renderer(cfg, args, self,  points_batch_size=100000, ray_batch_size=10000) #J: changed from default in renderer constructor, thisis the train renderer
+        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
 
-        self.mesher = Mesher(cfg, args, self, points_batch_size=200000, ray_batch_size=20000)
+        self.mesher = Mesher(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
         self.logger = Logger(cfg, args, self)
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
@@ -292,25 +292,25 @@ class NICE_SLAM():
 
         self.tracker.run()
 
-    def mapping(self, rank):
+    def mapping(self, rank, lock):
         """
         Mapping Thread. (updates middle, fine, and color level)
 
         Args:
             rank (int): Thread ID.
         """
+        print('Mapping Thread Started ', rank)
+        self.mapper.run(lock)
 
-        self.mapper.run()
-
-    def coarse_mapping(self, rank):
+    def coarse_mapping(self, rank, lock):
         """
         Coarse mapping Thread. (updates coarse level)
 
         Args:
             rank (int): Thread ID.
         """
-
-        self.coarse_mapper.run()
+        print('Mapping Thread Started ', rank)
+        self.coarse_mapper.run(lock)
 
     def run(self):
         """
@@ -318,17 +318,18 @@ class NICE_SLAM():
         """
 
         processes = []
+        lock = mp.Lock() #for locking the access to the segmentation list
         for rank in range(3):
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank, ))
             elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank, )) 
+                p = mp.Process(target=self.mapping, args=(rank,  lock)) 
             elif rank == 2:
                 if self.coarse:
-                    p = mp.Process(target=self.coarse_mapping, args=(rank, ))
+                    p = mp.Process(target=self.coarse_mapping, args=(rank, lock))
                 else:
                     continue
-            print('Started Thread: ', rank)
+            #print('Started Thread: ', rank)
             p.start()
             processes.append(p)
         for p in processes:

@@ -60,7 +60,7 @@ class Tracker(object):
 
         self.prev_mapping_idx = -1
         self.frame_reader = get_dataset(
-            cfg, args, self.scale, device=self.device)
+            cfg, args, self.scale, device=self.device, tracker=True)
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
             self.frame_reader, batch_size=1, shuffle=False, num_workers=1) #changed to 0 original num_workers = 1
@@ -146,13 +146,13 @@ class Tracker(object):
     def run(self):
         device = self.device
         self.c = {}
-        if self.verbose:
+        if ~self.verbose: #J: added ~
             pbar = self.frame_loader
         else:
             pbar = tqdm(self.frame_loader)
 
         #TODO maybe add semantic loss for tracking later
-        for idx, gt_color, gt_depth, gt_c2w, _ in pbar:
+        for idx, gt_color, gt_depth, gt_c2w in pbar:
             if not self.verbose:
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 
