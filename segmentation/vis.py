@@ -85,4 +85,3 @@ class visualizerForIds:
         # plt.colorbar(ticks=range(100), label='integer values')
         # plt.clim(-0.5, 10000)  # Set colorbar limi
         plt.show()
-        # ax.imshow(img)
