@@ -75,7 +75,7 @@ def backproject(uv, Tf, Tg, K, depthf):
     Tg_inv = T_inv(Tg)
     tmp = np.concatenate([uv, np.ones((1, uv.shape[1]))])
     tmp = K_inv @ tmp
-    tmp = tmp * depthf[uv[1], uv[0]].numpy()  # real world in camera coordinates
+    tmp = tmp * depthf[uv[1].long(), uv[0].long()].numpy()  # real world in camera coordinates
     tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
     tmp = Tf @ tmp  # real world coordinates
 
@@ -87,6 +87,10 @@ def backproject(uv, Tf, Tg, K, depthf):
     tmp = tmp[:2, :]  # uv coordinates of g
 
     return tmp.astype(int), zg  # 1D array for each element of tmp
+
+
+def frontProject(uv, Tf, Tg, K, depthf):
+    return backproject(uv, Tg, Tf, K, depthf)
 
 
 def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
