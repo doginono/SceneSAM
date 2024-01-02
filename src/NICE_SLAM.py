@@ -25,6 +25,10 @@ class NICE_SLAM():
     """
 
     def __init__(self, cfg, args):
+
+        #for groundtruth tracking
+        path_to_traj = cfg['tracking']['path']
+        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         
         #self.writer_path = cfg['writer_path'] #J:added
         self.semantic_frames = []
@@ -74,8 +78,8 @@ class NICE_SLAM():
         
         self.frame_reader = get_dataset(cfg, args, self.scale, slam=self) #J:saves ordered the paths of images, depth masks 
         self.n_img = len(self.frame_reader) 
-        self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
-        self.estimate_c2w_list.share_memory_()
+        #self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
+        #self.estimate_c2w_list.share_memory_()
 
         self.gt_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.gt_c2w_list.share_memory_()
@@ -106,7 +110,7 @@ class NICE_SLAM():
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
-        self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
+        #self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
         self.print_output_desc()
 
     def print_output_desc(self):
@@ -286,7 +290,7 @@ class NICE_SLAM():
         Args:
             rank (int): Thread ID.
         """
-
+        assert False, "should currently not be used"
         # should wait until the mapping of first frame is finished
         while (1):
             if self.mapping_first_frame[0] == 1:
@@ -322,7 +326,7 @@ class NICE_SLAM():
 
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
-        for rank in range(3):
+        for rank in range(1,3):
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank, ))
             elif rank == 1:

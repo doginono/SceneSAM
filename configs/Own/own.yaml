@@ -3,6 +3,7 @@ meshing:
   eval_rec: True
   resolution: 512 # change to 512 for higher resolution geometry
 tracking:
+  path: '/home/koerner/Project/nice-slam/Datasets/generated/room0/traj.txt'
   vis_freq: 50
   vis_inside_freq: 25
   ignore_edge_W: 100

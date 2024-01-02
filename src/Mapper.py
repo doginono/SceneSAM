@@ -28,6 +28,7 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         #-------added------------------
+        self.T_wc = slam.T_wc
         #self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
@@ -62,7 +63,7 @@ class Mapper(object):
         self.mapping_idx = slam.mapping_idx
         self.mapping_cnt = slam.mapping_cnt
         self.decoders = slam.shared_decoders
-        self.estimate_c2w_list = slam.estimate_c2w_list
+        #self.estimate_c2w_list = slam.estimate_c2w_list #for tracker
         self.mapping_first_frame = slam.mapping_first_frame
 
         self.scale = cfg['scale']
@@ -671,30 +672,36 @@ class Mapper(object):
         else: """
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
-        self.estimate_c2w_list[0] = gt_c2w.cpu()
+        #self.estimate_c2w_list[0] = gt_c2w.cpu()
+        
         init = True
         prev_idx = -1
-        while (1):
-            while True:
-                idx = self.idx[0].clone()
-                if idx == self.n_img-1:
-                    break
-                if self.sync_method == 'strict':
-                    if idx % self.every_frame == 0 and idx != prev_idx:
-                        break
 
-                elif self.sync_method == 'loose':
-                    if idx == 0 or idx >= prev_idx+self.every_frame//2:
-                        break
-                elif self.sync_method == 'free':
-                    break
-                time.sleep(0.1)
-            prev_idx = idx
+        while (1):
+            if not init:
+                if self.coarse_mapper:
+                    self.idx[0] = idx+self.every_frame
+                else:
+                    while True: #this is used to ensure that the tracker is faster than the mapper, now we have to make sure that the mappers are roughly in sync
+                        idx = self.idx[0].clone()
+                        if idx == self.n_img-1:
+                            break
+                        if self.sync_method == 'strict':
+                            if idx % self.every_frame == 0 and idx != prev_idx:
+                                break
+
+                        elif self.sync_method == 'loose':
+                            if idx == 0 or idx >= prev_idx+self.every_frame//2:
+                                break
+                        elif self.sync_method == 'free':
+                            break
+                        time.sleep(0.1)
+                    prev_idx = idx
 
             if self.verbose:
                 print(Fore.GREEN)
                 prefix = 'Coarse ' if self.coarse_mapper else ''
-                print(prefix+"Mapping Frame ", idx.item())
+                print(prefix+"Mapping Frame ", idx.item()) #idx.item()
                 print(Style.RESET_ALL)
 
             """if self.coarse_mapper:
@@ -733,10 +740,12 @@ class Mapper(object):
                 lr_factor = cfg['mapping']['lr_first_factor']
                 num_joint_iters = cfg['mapping']['iters_first']
 
-            cur_c2w = self.estimate_c2w_list[idx].to(self.device)
+            #cur_c2w = self.estimate_c2w_list[idx].to(self.device)
+            cur_c2w = torch.from_numpy(self.T_wc[idx]).to(self.device)
             #J: using a unseen frame during training for visualization
             if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >=0:
-                vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
+                #vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
+                vis_c2w = torch.from_numpy(self.T_wc[idx - self.vis_offset]).to(self.device)
             else:
                 vis_c2w = None
             num_joint_iters = num_joint_iters//outer_joint_iters
@@ -750,7 +759,7 @@ class Mapper(object):
                                       gt_c2w, vis_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
-                    self.estimate_c2w_list[idx] = cur_c2w
+                    #self.estimate_c2w_list[idx] = cur_c2w
 
                 # add new frame to keyframe set
                 if outer_joint_iter == outer_joint_iters-1:
@@ -763,7 +772,7 @@ class Mapper(object):
 
             if self.low_gpu_mem:
                 if self.verbose:
-                    print('Clearing GPU cache...')
+                    print('Clearing GPU cache')
                 torch.cuda.empty_cache()
 
             init = False
@@ -782,17 +791,17 @@ class Mapper(object):
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'
-                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
+                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
-                    self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
+                    self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) #mesh on segmentation
                     
 
                 if idx == self.n_img-1:
                     mesh_out_file = f'{self.output}/mesh/final_mesh.ply'
-                    self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.estimate_c2w_list,
+                    self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False)
                     os.system(
@@ -800,12 +809,12 @@ class Mapper(object):
                     if self.eval_rec:
                         mesh_out_file = f'{self.output}/mesh/final_mesh_eval_rec.ply'
                         self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict,
-                                             self.estimate_c2w_list, idx, self.device, show_forecast=False,
+                                             self.T_wc, idx, self.device, show_forecast=False, #instead of estimatee_c2w
                                              clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
                     break
                 
-                writer.close()
+                
 
             if idx == self.n_img-1:
-                
+                writer.close()
                 break

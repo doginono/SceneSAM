@@ -157,6 +157,7 @@ class Replica(BaseDataset):
         self.istracker = tracker
         self.points_per_instance = cfg['mapping']['points_per_instance']
         self.slam = slam
+        self.T_wc = slam.T_wc
         self.lock = None
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.semantic_frames = self.slam.semantic_frames
@@ -243,23 +244,23 @@ class Replica(BaseDataset):
                 
                 semantic_data = id_generation.generateIds(masks)
                 #semantic_frames = Replica.semantic_frames
-                id_counter = Replica.id_counter
-                while(len(self.slam.estimate_c2w_list)<=index):
+                #id_counter = self.id_counter
+                """while(len(self.slam.estimate_c2w_list)<=index):
                     print("wait for tracker to catch up")
-                    time.sleep(0.1)
-                map , id_counter= id_generation.create_complete_mapping_of_current_frame(
+                    time.sleep(0.1)"""#ignored beacause of ground truth c2w tracking
+                map , self.id_counter= id_generation.create_complete_mapping_of_current_frame(
                     semantic_data,
                     index,
                     np.arange(index)[0:(index-1):self.every_frame],  # Corrected slice notation
-                    self.slam.estimate_c2w_list,
+                    self.T_wc,
                     self.K,
                     self.depth_paths,
                     self.semantic_frames,
-                    id_counter,
+                    self.id_counter,
                     points_per_instance=self.points_per_instance  # Corrected parameter name
                 )
                 semantic_data = id_generation.update_current_frame(semantic_data, map)
-                self.id_counter = id_counter
+                #self.id_counter = id_counter
                 self.semantic_frames.append(semantic_data)
                 #self.semantic_frames[index] = semantic_data
                 print(f"segmenation on curretn frame {index}: ", semantic_data)
