@@ -1,5 +1,6 @@
 import glob
 import os
+import pickle
 import time
 
 import cv2
@@ -71,6 +72,8 @@ class BaseDataset(Dataset):
 
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = cfg['cam']['H'], cfg['cam'][
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
+        
+
 
         self.distortion = np.array(
             cfg['cam']['distortion']) if 'distortion' in cfg['cam'] else None
@@ -130,8 +133,8 @@ class BaseDataset(Dataset):
 class Replica(BaseDataset):
 
     #-------------------added-----------------------------------------------
-    semantic_frames = []
-    id_counter = 0
+    #semantic_frames = {}
+    #id_counter = 0
     
 
     #shared_lock_frames = mp.Lock()
@@ -147,13 +150,17 @@ class Replica(BaseDataset):
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
         #-------------------added-----------------------------------------------
-        self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
+        #self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
+        self.mask_paths = sorted(glob.glob(f'{self.input_folder}/results/mask*.pkl'))
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.every_frame = cfg['mapping']['every_frame']
         self.istracker = tracker
         self.points_per_instance = cfg['mapping']['points_per_instance']
         self.slam = slam
         self.lock = None
+        self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+        self.semantic_frames = self.slam.semantic_frames
+        self.id_counter = self.slam.id_counter
         #-------------------end added-----------------------------------------------
         self.n_img = len(self.color_paths)
         self.load_poses(f'{self.input_folder}/traj.txt')
@@ -202,32 +209,40 @@ class Replica(BaseDataset):
         print('try to acquire lock ', threading.current_thread().ident)
         with self.lock:
             print('acquired lock ',  threading.current_thread().ident)
-            if index == 0 and len(Replica.semantic_frames) == 0:
+            print(f'current lenght of lsit is: {len(self.semantic_frames)}')
+            if index == 0 and len(self.semantic_frames) == 0:
 
                 print("start sam by ", threading.current_thread().ident)
-                sam = create_instance_seg.create_sam('cpu')
-                masks = sam.generate(image)
+                #sam = create_instance_seg.create_sam('cpu')
+                #masks = sam.generate(image)
+                with open(self.mask_paths[index], 'rb') as f:
+                    masks = pickle.load(f)
                 print("end sam")
                     
                 semantic_data = id_generation.generateIds(masks)
-                Replica.semantic_frames.append(semantic_data)
+                self.id_counter = semantic_data.max()
+                #self.semantic_frames[index] = semantic_data
+                self.semantic_frames.append(semantic_data)
                 print(f"segmenation on current frame {index}: ", semantic_data)
                 print(f"unique ids on current frame: {index}", np.unique(semantic_data))
             
-            elif index//self.every_frame < len(Replica.semantic_frames):
-                semantic_data = Replica.semantic_frames[index//self.every_frame]
+            elif index//self.every_frame < len(self.semantic_frames):
+                print("read segmentation from list")
+                semantic_data = self.semantic_frames[index//self.every_frame]
             
                 
             else:
                 #create instance encoding with sam model and backproject to seen ones
                 
                 print("start sam")
-                sam = create_instance_seg.create_sam('cpu')
-                masks = sam.generate(image)
+                #sam = create_instance_seg.create_sam('cpu')
+                #masks = sam.generate(image)
+                with open(self.mask_paths[index], 'rb') as f:
+                    masks = pickle.load(f)
                 print("end sam")
                 
                 semantic_data = id_generation.generateIds(masks)
-                semantic_frames = Replica.semantic_frames
+                #semantic_frames = Replica.semantic_frames
                 id_counter = Replica.id_counter
                 while(len(self.slam.estimate_c2w_list)<=index):
                     print("wait for tracker to catch up")
@@ -239,16 +254,17 @@ class Replica(BaseDataset):
                     self.slam.estimate_c2w_list,
                     self.K,
                     self.depth_paths,
-                    semantic_frames,
+                    self.semantic_frames,
                     id_counter,
                     points_per_instance=self.points_per_instance  # Corrected parameter name
                 )
                 semantic_data = id_generation.update_current_frame(semantic_data, map)
-                Replica.id_counter = id_counter
-                Replica.semantic_frames.append(semantic_data)
+                self.id_counter = id_counter
+                self.semantic_frames.append(semantic_data)
+                #self.semantic_frames[index] = semantic_data
                 print(f"segmenation on curretn frame {index}: ", semantic_data)
                 print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
-                print('release lock')
+            print('release lock')
 
         # Create one-hot encoding using numpy.eye
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)

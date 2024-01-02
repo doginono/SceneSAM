@@ -60,7 +60,7 @@ class Tracker(object):
 
         self.prev_mapping_idx = -1
         self.frame_reader = get_dataset(
-            cfg, args, self.scale, device=self.device, tracker=True)
+            cfg, args, self.scale, device=self.device, tracker=True, slam = slam)
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
             self.frame_reader, batch_size=1, shuffle=False, num_workers=1) #changed to 0 original num_workers = 1

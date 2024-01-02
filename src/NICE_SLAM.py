@@ -27,6 +27,9 @@ class NICE_SLAM():
     def __init__(self, cfg, args):
         
         #self.writer_path = cfg['writer_path'] #J:added
+        self.semantic_frames = []
+        self.id_counter = 0
+        #self.semantic_frames
 
         self.cfg = cfg
         self.args = args
@@ -69,7 +72,7 @@ class NICE_SLAM():
         except RuntimeError:
             pass
         
-        self.frame_reader = get_dataset(cfg, args, self.scale) #J:saves ordered the paths of images, depth masks 
+        self.frame_reader = get_dataset(cfg, args, self.scale, slam=self) #J:saves ordered the paths of images, depth masks 
         self.n_img = len(self.frame_reader) 
         self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.estimate_c2w_list.share_memory_()

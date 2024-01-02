@@ -521,10 +521,11 @@ class Mapper(object):
                     gt_depth = cur_gt_depth.to(device)
                     gt_color = cur_gt_color.to(device)
                     #-----------------added-------------------
-                    if self.stage != 'coarse':
+                    """if self.stage != 'coarse':
                         gt_semantic = cur_gt_semantic.to(device)
                     else:
-                        gt_semantic = None
+                        gt_semantic = None"""
+                    gt_semantic = cur_gt_semantic.to(device)
                     #-----------------end-added-------------------
                     if self.BA:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
