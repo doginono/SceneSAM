@@ -48,9 +48,11 @@ class Mapper(object):
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'regular'))"""
         
         #self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
+        self.idx_mapper = slam.idx_mapper
+        self.idx_coarse_mapper = slam.idx_coarse_mapper
         #------end-added------------------
 
-        self.idx = slam.idx
+        #self.idx = slam.idx
         self.nice = slam.nice
         self.c = slam.shared_c
         self.bound = slam.bound
@@ -678,7 +680,9 @@ class Mapper(object):
         prev_idx = -1
 
         while (1):
-            if not init:
+            """if init:
+                self.idx[0] = idx
+            else:
                 if self.coarse_mapper:
                     self.idx[0] = idx+self.every_frame
                 else:
@@ -696,12 +700,29 @@ class Mapper(object):
                         elif self.sync_method == 'free':
                             break
                         time.sleep(0.1)
-                    prev_idx = idx
+                    prev_idx = idx"""
+            if self.coarse_mapper:
+                if not init:
+                    self.idx_coarse_mapper[0] = idx+self.every_frame
+                while True:
+                    idx = self.idx_coarse_mapper[0].clone()
+                    if self.idx_mapper[0] >= idx:
+                        break
+                    time.sleep(0.1)
+            else:
+                if not init:
+                    self.idx_mapper[0] = idx+self.every_frame
+                while True:
+                    idx = self.idx_mapper[0].clone()
+                    if self.idx_coarse_mapper[0] >= idx:
+                        break
+                    time.sleep(0.1)
+
 
             if self.verbose:
                 print(Fore.GREEN)
                 prefix = 'Coarse ' if self.coarse_mapper else ''
-                print(prefix+"Mapping Frame ", idx.item()) #idx.item()
+                print(prefix+"Mapping Frame ", idx) #idx.item()
                 print(Style.RESET_ALL)
 
             """if self.coarse_mapper:

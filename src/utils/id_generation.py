@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
 import torch
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from src.utils import backproject
+from src.utils import backproject, vis
 
 
 def readDepth(filepath):
@@ -87,7 +89,8 @@ def create_complete_mapping_of_current_frame(
     segmentations,
     id_counter,
     every_frame=5,
-    points_per_instance=5
+    points_per_instance=5,
+    verbose = False
 ):
     """creates a mapping of the current ids to the actual ids according to the past frames;
     This is implemented in a way, that some of the function arguments can be replaced by the frame_reader class from nice_slam,
@@ -115,6 +118,7 @@ def create_complete_mapping_of_current_frame(
     max_id = np.max(unique_ids).astype(int)
     map = None
 
+    
     for num in frame_numbers:
         Tg = T[num]
         # starts counting from 0 so the lenght is 1 more than the actual number of frames
@@ -126,11 +130,26 @@ def create_complete_mapping_of_current_frame(
             ids_curr, np.max(unique_ids) + 1, points_per_instance
         )
         for instance in unique_ids:
-            current = samplesFromCurrentMask[:, :, instance]
+            
+            uv = samplesFromCurrentMask[:, :, instance]
+            
+                
+            
 
             backprojectedSamples, zg = backproject.backproject(
-                current, Tf, Tg, K, depthf
+                uv, Tf, Tg, K, depthf
             )
+            counter = 0
+            if verbose and counter <=2 and instance <=2 and num <=2:
+                fig, ax = plt.subplots(1, 2)
+                ax[0].imshow(ids_past)
+                sns.scatterplot(x=uv[0], y=uv[1], ax=ax[1], color = "red")
+                ax[0].set_title(f'{num}')
+                ax[1].imshow(ids_curr)
+                sns.scatterplot(x=backprojectedSamples[0], y=backprojectedSamples[1], ax=ax[0], color = "red")
+                ax[1].set_title(f'{num}')
+                fig.savefig(f'/home/koerner/Project/nice-slam/src/utils/tmp/{instance}_{counter}_{num}.png')
+                counter += 1
             # this overwrites the depthg therefore I calculate it in actual_id # depthg
             actual_id = createMapping(
                 ids_past,

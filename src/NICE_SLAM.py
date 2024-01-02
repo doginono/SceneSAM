@@ -83,8 +83,14 @@ class NICE_SLAM():
 
         self.gt_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.gt_c2w_list.share_memory_()
-        self.idx = torch.zeros((1)).int()
-        self.idx.share_memory_()
+        """self.idx = torch.zeros((1)).int()
+        self.idx.share_memory_()"""
+        self.idx_mapper = torch.zeros((1)).int()
+        self.idx_mapper.share_memory_()
+        self.idx_coarse_mapper = torch.zeros((1)).int()
+        self.idx_coarse_mapper.share_memory_()
+
+        
         self.mapping_first_frame = torch.zeros((1)).int()
         self.mapping_first_frame.share_memory_()
         # the id of the newest frame Mapper is processing
@@ -99,8 +105,8 @@ class NICE_SLAM():
         self.shared_decoders = self.shared_decoders.to(
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
-        self.renderer = Renderer(cfg, args, self,  points_batch_size=100000, ray_batch_size=10000) #J: changed from default in renderer constructor, thisis the train renderer
-        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
+        self.renderer = Renderer(cfg, args, self) #J: changed from default in renderer constructor, thisis the train renderer
+        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=200000, ray_batch_size=20000)
 
         self.mesher = Mesher(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
         self.logger = Logger(cfg, args, self)

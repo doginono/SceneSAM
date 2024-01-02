@@ -221,7 +221,9 @@ class Replica(BaseDataset):
                 print("end sam")
                     
                 semantic_data = id_generation.generateIds(masks)
-                self.id_counter = semantic_data.max()
+                print("0 frame ids: ", np.unique(semantic_data))
+                self.id_counter = semantic_data.max() +1 
+                print("id_counter: ", self.id_counter)
                 #self.semantic_frames[index] = semantic_data
                 self.semantic_frames.append(semantic_data)
                 print(f"segmenation on current frame {index}: ", semantic_data)
@@ -257,9 +259,11 @@ class Replica(BaseDataset):
                     self.depth_paths,
                     self.semantic_frames,
                     self.id_counter,
-                    points_per_instance=self.points_per_instance  # Corrected parameter name
+                    points_per_instance=self.points_per_instance,  # Corrected parameter name
+                    verbose=False
                 )
                 semantic_data = id_generation.update_current_frame(semantic_data, map)
+                print("id_counter: ", self.id_counter)
                 #self.id_counter = id_counter
                 self.semantic_frames.append(semantic_data)
                 #self.semantic_frames[index] = semantic_data

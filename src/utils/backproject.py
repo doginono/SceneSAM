@@ -86,7 +86,7 @@ def backproject(uv, Tf, Tg, K, depthf):
     tmp = K @ tmp
     tmp = tmp[:2, :]  # uv coordinates of g
 
-    return tmp.astype(int), zg  # 1D array for each element of tmp
+    return tmp.astype("long"), zg  # 1D array for each element of tmp
 
 
 def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
@@ -115,7 +115,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
             torch_sampled_indices[:, :, i] = torch.tensor(
                 [indices[j][::-1] for j in sampled_indices]
             ).T
-    return torch_sampled_indices.to(torch.int32)
+    return torch_sampled_indices.to(torch.long)
 
 
 
