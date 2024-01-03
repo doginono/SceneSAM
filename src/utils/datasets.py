@@ -156,15 +156,16 @@ class Replica(BaseDataset):
         self.every_frame = cfg['mapping']['every_frame']
         self.istracker = tracker
         self.points_per_instance = cfg['mapping']['points_per_instance']
-        self.slam = slam
         self.T_wc = slam.T_wc
         self.lock = None
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
-        self.semantic_frames = self.slam.semantic_frames
-        self.id_counter = self.slam.id_counter
+        self.id_counter = slam.id_counter
         #-------------------end added-----------------------------------------------
         self.n_img = len(self.color_paths)
         self.load_poses(f'{self.input_folder}/traj.txt')
+    
+    def __post_init__(self, slam):
+        self.semantic_frames = slam.semantic_frames
        
     def setLock(self, lock): #J: should only be relevant for the Mapper
         self.lock = lock
@@ -271,9 +272,9 @@ class Replica(BaseDataset):
                 print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
             print('release lock')'''
 
-        assert index//self.every_frame < len(self.semantic_frames), "synchronization of threads failed, mapping thread is to fast"
-        semantic_data = self.semantic_frames[index//self.every_frame]
+        semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
         # Create one-hot encoding using numpy.eye
+        print(f"read in semantic data of frame {index}: ", semantic_data)
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
  
         assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"

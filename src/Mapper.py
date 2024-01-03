@@ -115,6 +115,7 @@ class Mapper(object):
         else:"""
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, slam = slam, tracker=False)
+        self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
@@ -675,6 +676,7 @@ class Mapper(object):
         else: """
         while(self.idx_segmenter[0] == 0):
                     time.sleep(0.1)
+        print(f"start mapping, is coarse mapper: {self.coarse_mapper}")
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
         #self.estimate_c2w_list[0] = gt_c2w.cpu()
@@ -735,7 +737,10 @@ class Mapper(object):
                     if self.idx_coarse_mapper[0] >= idx:
                         break
                     time.sleep(0.1)"""
-
+            if self.coarse_mapper:
+                idx = self.idx_coarse_mapper[0].clone()
+            else:
+                idx = self.idx_mapper[0].clone()
 
             if self.verbose:
                 print(Fore.GREEN)
@@ -858,8 +863,9 @@ class Mapper(object):
                 break
 
             #TODO: push the decoders to the cpu 
+            print(f'Mapping frame done, is coarse: {self.coarse_mapper}')
             if self.coarse_mapper:
-                self.idx_coarse_mapper[0] += self.every_frame
+                self.idx_coarse_mapper[0] = idx + self.every_frame
             else:
-                self.idx_mapper[0] += self.every_frame
+                self.idx_mapper[0] = idx + self.every_frame
 

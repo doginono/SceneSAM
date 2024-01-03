@@ -31,10 +31,6 @@ class NICE_SLAM():
         path_to_traj = cfg['tracking']['path']
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         
-        #self.writer_path = cfg['writer_path'] #J:added
-        self.semantic_frames = []
-        self.id_counter = 0
-        #self.semantic_frames
 
         self.cfg = cfg
         self.args = args
@@ -77,11 +73,13 @@ class NICE_SLAM():
         except RuntimeError:
             pass
         
+        self.id_counter = torch.zeros((1)).int()
+        self.id_counter.share_memory_()
         self.frame_reader = get_dataset(cfg, args, self.scale, slam=self) #J:saves ordered the paths of images, depth masks 
         self.n_img = len(self.frame_reader) 
         #self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
         #self.estimate_c2w_list.share_memory_()
-
+        
         self.gt_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.gt_c2w_list.share_memory_()
         """self.idx = torch.zeros((1)).int()
@@ -92,7 +90,12 @@ class NICE_SLAM():
         self.idx_coarse_mapper.share_memory_()
         self.idx_segmenter = torch.zeros((1)).int()
         self.idx_segmenter.share_memory_()
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//cfg['mapping']['every_frame'], self.H, self.W)))
+        self.semantic_frames.share_memory_()
+       
+        self.frame_reader.__post_init__(self)
 
+        
         
         self.mapping_first_frame = torch.zeros((1)).int()
         self.mapping_first_frame.share_memory_()
@@ -343,7 +346,7 @@ class NICE_SLAM():
 
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
-        for rank in range(1,3):
+        for rank in range(0,3):
             if rank == 0:
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))
