@@ -50,6 +50,7 @@ class Mapper(object):
         #self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
         self.idx_mapper = slam.idx_mapper
         self.idx_coarse_mapper = slam.idx_coarse_mapper
+        self.idx_segmenter = slam.idx_segmenter
         #------end-added------------------
 
         #self.idx = slam.idx
@@ -672,6 +673,8 @@ class Mapper(object):
             gt_semantic = None
         #as long as the sematic files are not added like .../Results/sematic*.npy
         else: """
+        while(self.idx_segmenter[0] == 0):
+                    time.sleep(0.1)
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
         #self.estimate_c2w_list[0] = gt_c2w.cpu()
@@ -680,6 +683,21 @@ class Mapper(object):
         prev_idx = -1
 
         while (1):
+
+            #the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
+            #this ensures that the current frame has always been segmented before the mappers start training on it
+            if init:
+                pass
+            elif self.coarse_mapper:
+                while True:
+                    if self.idx_segmenter[0] > self.idx_coarse_mapper[0]:
+                        break
+                    time.sleep(0.1)
+            else: #normal mapper
+                while True:
+                    if self.idx_segmenter[0] > self.idx_mapper[0]:
+                        break
+                    time.sleep(0.1)
             """if init:
                 self.idx[0] = idx
             else:
@@ -701,7 +719,7 @@ class Mapper(object):
                             break
                         time.sleep(0.1)
                     prev_idx = idx"""
-            if self.coarse_mapper:
+            """if self.coarse_mapper:
                 if not init:
                     self.idx_coarse_mapper[0] = idx+self.every_frame
                 while True:
@@ -716,7 +734,7 @@ class Mapper(object):
                     idx = self.idx_mapper[0].clone()
                     if self.idx_coarse_mapper[0] >= idx:
                         break
-                    time.sleep(0.1)
+                    time.sleep(0.1)"""
 
 
             if self.verbose:
@@ -834,8 +852,14 @@ class Mapper(object):
                                              clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
                     break
                 
-                
 
             if idx == self.n_img-1:
                 writer.close()
                 break
+
+            #TODO: push the decoders to the cpu 
+            if self.coarse_mapper:
+                self.idx_coarse_mapper[0] += self.every_frame
+            else:
+                self.idx_mapper[0] += self.every_frame
+

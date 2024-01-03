@@ -207,7 +207,7 @@ class Replica(BaseDataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
-        print('try to acquire lock ', threading.current_thread().ident)
+        '''print('try to acquire lock ', threading.current_thread().ident)
         with self.lock:
             print('acquired lock ',  threading.current_thread().ident)
             print(f'current lenght of lsit is: {len(self.semantic_frames)}')
@@ -269,8 +269,10 @@ class Replica(BaseDataset):
                 #self.semantic_frames[index] = semantic_data
                 print(f"segmenation on curretn frame {index}: ", semantic_data)
                 print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
-            print('release lock')
+            print('release lock')'''
 
+        assert index//self.every_frame < len(self.semantic_frames), "synchronization of threads failed, mapping thread is to fast"
+        semantic_data = self.semantic_frames[index//self.every_frame]
         # Create one-hot encoding using numpy.eye
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
  

@@ -9,6 +9,7 @@ import torch.multiprocessing as mp
 from src import config
 from src.Mapper import Mapper
 from src.Tracker import Tracker
+from src.Segmenter import Segmenter
 from src.utils.datasets import get_dataset
 from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
@@ -89,6 +90,8 @@ class NICE_SLAM():
         self.idx_mapper.share_memory_()
         self.idx_coarse_mapper = torch.zeros((1)).int()
         self.idx_coarse_mapper.share_memory_()
+        self.idx_segmenter = torch.zeros((1)).int()
+        self.idx_segmenter.share_memory_()
 
         
         self.mapping_first_frame = torch.zeros((1)).int()
@@ -113,6 +116,7 @@ class NICE_SLAM():
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
+        self.segmenter = Segmenter(cfg,args, self)
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
@@ -324,6 +328,13 @@ class NICE_SLAM():
         """
         print('Mapping Thread Started ', rank)
         self.coarse_mapper.run(lock)
+    
+    def segmenting(self, rank):
+        """
+        Segmenting Thread. (updates semantic level)
+        """
+        print('Segmenting Thread Started ', rank)
+        self.segmenter.run()
 
     def run(self):
         """
@@ -334,7 +345,8 @@ class NICE_SLAM():
         lock = mp.Lock() #for locking the access to the segmentation list
         for rank in range(1,3):
             if rank == 0:
-                p = mp.Process(target=self.tracking, args=(rank, ))
+                #p = mp.Process(target=self.tracking, args=(rank, ))
+                p = mp.Process(target=self.segmenting, args=(rank, ))
             elif rank == 1:
                 p = mp.Process(target=self.mapping, args=(rank,  lock)) 
             elif rank == 2:
