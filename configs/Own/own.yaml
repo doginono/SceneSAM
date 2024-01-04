@@ -17,21 +17,21 @@ rendering:
   semantic_occupancy_multiplier: 10
 mapping:
   use_vis: True
-  no_vis_on_first_frame: False
+  no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 5
-  vis_freq: 5
-  vis_inside_freq: 999
+  vis_freq: 100
+  vis_inside_freq: 99
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
-  use_mesh: False #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
+  use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 50
+  mesh_freq: 10
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1000 #finetune
-  iters: 100 #finetune
+  iters_first: 12 #finetune
+  iters: 12 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

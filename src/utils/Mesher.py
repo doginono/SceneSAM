@@ -386,7 +386,7 @@ class Mesher(object):
                 whether to use all frames or just keyframes when getting the seen/unseen mask. Defaults to False.
         """
         assert (color and ~semantic) or (~color and semantic), 'color and semantic mesh extraction are mutually exclusive'
-        
+        print('start meshing')
         with torch.no_grad():
 
             grid = self.get_grid_uniform(self.resolution) #gets
@@ -643,4 +643,8 @@ class Mesher(object):
             mesh.export(mesh_out_file)
             if self.verbose:
                 print('Saved mesh at', mesh_out_file)
+            
+            points.cpu()
+
+            
                 

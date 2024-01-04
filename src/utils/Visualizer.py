@@ -46,7 +46,7 @@ class Visualizer(object):
             decoders (nn.module): decoders.
         """
 
-        torch.cuda.empty_cache()
+        #torch.cuda.empty_cache()
         #TODO: render_img is super messy, clean it up
         if (idx % self.freq == 0) and (iter % self.inside_freq == 0) and stage != 'coarse':
             idx = idx - offset

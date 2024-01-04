@@ -835,9 +835,9 @@ class Mapper(object):
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'
-                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
-                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
-                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
+                    #self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
+                    #                     idx,  self.device, show_forecast=self.mesh_coarse_level,
+                    #                     clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
                     self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) #mesh on segmentation
@@ -867,5 +867,12 @@ class Mapper(object):
             if self.coarse_mapper:
                 self.idx_coarse_mapper[0] = idx + self.every_frame
             else:
+                if idx == 10:
+                    try:
+                        torch.cuda.memory._dump_snapshot(f"/home/koerner/Project/nice-slam/logs/memory_usage.pickle")
+                        torch.cuda.memory._record_memory_history(enabled=None)
+                        pass
+                    except Exception as e:
+                        print(f"Failed to capture memory snapshot {e}")
                 self.idx_mapper[0] = idx + self.every_frame
 

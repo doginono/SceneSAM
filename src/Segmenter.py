@@ -19,7 +19,7 @@ class Segmenter(object):
     def __init__(self,cfg, args, slam):
         self.idx = slam.idx_segmenter
         self.T_wc = slam.T_wc
-
+        self.slam = slam
         self.semantic_frames = slam.semantic_frames
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.idx_mapper
@@ -55,6 +55,7 @@ class Segmenter(object):
         semantic_data = id_generation.update_current_frame(semantic_data, map)
         print(f"update id_counter from {self.id_counter[0]} to {id_counter}")
         self.id_counter[0] = id_counter
+        return semantic_data
 
     def segment(self):
         idx = self.idx[0].clone()
@@ -96,6 +97,8 @@ class Segmenter(object):
             while(self.idx.item()>self.idx_mapper.item() or self.idx.item()>self.idx_coarse_mapper.item()):
                 time.sleep(0.1)
             print("start segmenting")
+            self.slam.to_cpu()
+            torch.cuda.empty_cache()
             self.segment()
             
 

@@ -126,6 +126,13 @@ class NICE_SLAM():
         #self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
         self.print_output_desc()
 
+    def to_cpu(self):
+        self.shared_decoders.cpu()
+    
+    def to_gpu(self):
+        self.shared_decoders.to('cuda')
+
+
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
         if 'Demo' in self.output:
@@ -343,7 +350,8 @@ class NICE_SLAM():
         """
         Dispatch Threads.
         """
-
+        torch.cuda.memory._record_memory_history(max_entries=100000000)
+   
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
         for rank in range(0,3):
