@@ -78,16 +78,18 @@ class Visualizer(object):
                         depth_np = depth.detach().cpu().numpy()
                         color_np = color.detach().cpu().numpy()
                         semantic_np = semantic.detach().cpu().numpy() #added
-                        print("SEMANTIC",semantic_np[0,:])
+                        """print("SEMANTIC",semantic_np[0,:])
                         print("SEMANTIC",semantic_np[1,:])
                         print("SEMANTIC TYPE",type(semantic_np))
-                        print("COLOR",color_np[0,0,:])
+                        print("COLOR",color_np[0,0,:])"""
                         depth_residual = np.abs(gt_depth_np - depth_np)
                         depth_residual[gt_depth_np == 0.0] = 0.0
                         color_residual = np.abs(gt_color_np - color_np)
                         color_residual[gt_depth_np == 0.0] = 0.0
                         #------------------added------------------
                         semantic_argmax = np.argmax(semantic_np, axis=2)
+                        print("semantic prediction: ", semantic_argmax)
+                        print("pred. ids: ", np.unique(semantic_argmax))
                         #semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
                         #semantic_pred[gt_depth_np == 0.0] = -1 #not sure what is right here
                         predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance

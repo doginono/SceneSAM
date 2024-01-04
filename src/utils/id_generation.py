@@ -123,7 +123,7 @@ def create_complete_mapping_of_current_frame(
         Tg = T[num]
         # starts counting from 0 so the lenght is 1 more than the actual number of frames
         map_of_frame = np.ones(max_id + 1) * (-1)
-        ids_past = segmentations[int(num / every_frame)]
+        ids_past = segmentations[num // every_frame]
         # this gets overwritten
         depthg = readDepth(depths[num])
         samplesFromCurrentMask = backproject.sample_from_instances(
