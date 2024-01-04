@@ -4,7 +4,7 @@ meshing:
   resolution: 512 # change to 512 for higher resolution geometry
 tracking:
   path: '/home/koerner/Project/nice-slam/Datasets/generated/room0/traj.txt'
-  vis_freq: 50
+  vis_freq: 10
   vis_inside_freq: 25
   ignore_edge_W: 100
   ignore_edge_H: 100
@@ -30,8 +30,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 10 #finetune
-  iters: 10 #finetune
+  iters_first: 1000 #finetune
+  iters: 100 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
