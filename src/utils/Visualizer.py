@@ -133,7 +133,7 @@ class Visualizer(object):
                         axs[2, 0].set_title('Input Instance')
                         axs[2, 0].set_xticks([])
                         axs[2, 0].set_yticks([])
-                        axs[2,1], im = self.visualizerForIds.visualize(gt_semantic_np, ax=axs[2, 1], title='Generated Segmentation')
+                        axs[2,1], im = self.visualizerForIds.visualize(semantic_argmax, ax=axs[2, 1], title='Generated Segmentation')
                         #axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
                         #axs[2, 1].fig
                         axs[2, 1].set_title('Generated Instance')
