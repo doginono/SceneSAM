@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from src.common import get_camera_from_tensor, get_rgb_from_instance_id
+from src.utils.vis import visualizerForIds
 
 
 class Visualizer(object):
@@ -25,6 +26,7 @@ class Visualizer(object):
         #------------------added------------------
         self.iters_first = iters_first
         self.num_iter = num_iter
+        self.visualizerForIds = visualizerForIds()
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
             decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None, offset = 0):
@@ -44,7 +46,7 @@ class Visualizer(object):
             decoders (nn.module): decoders.
         """
 
-        #TODO: find way to make vis work with semantic -> currently cuda out of memory error
+        torch.cuda.empty_cache()
         #TODO: render_img is super messy, clean it up
         if (idx % self.freq == 0) and (iter % self.inside_freq == 0) and stage != 'coarse':
             idx = idx - offset
@@ -125,11 +127,15 @@ class Visualizer(object):
                         axs[1, 2].set_xticks([])
                         axs[1, 2].set_yticks([])
                         #------------------added------------------
-                        axs[2, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
+                        axs[2,0], im = self.visualizerForIds.visualize(gt_semantic_np, ax = axs[2,0], title='Input Segmentation')
+                        #axs[2, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
+                        #axs[2, 0].im
                         axs[2, 0].set_title('Input Instance')
                         axs[2, 0].set_xticks([])
                         axs[2, 0].set_yticks([])
-                        axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
+                        axs[2,1], im = self.visualizerForIds.visualize(gt_semantic_np, ax=axs[2, 1], title='Generated Segmentation')
+                        #axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
+                        #axs[2, 1].fig
                         axs[2, 1].set_title('Generated Instance')
                         axs[2, 1].set_xticks([])
                         axs[2, 1].set_yticks([])

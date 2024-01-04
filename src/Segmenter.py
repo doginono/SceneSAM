@@ -38,13 +38,14 @@ class Segmenter(object):
         color_path = self.color_paths[idx]
         color_data = cv2.imread(color_path)
         image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
-        """sam = create_instance_seg.create_sam('cuda')
-        print("start sam by ")
-        masks = sam.generate(image)"""
-        with open(self.mask_paths[idx], 'rb') as f:
-            masks = pickle.load(f)
+        print("initialize sam")
+        sam = create_instance_seg.create_sam('cuda')
+        print("start mask generation")
+        masks = sam.generate(image)
+        """with open(self.mask_paths[idx], 'rb') as f:
+            masks = pickle.load(f)"""
         print("end sam")
-            
+        del sam
         semantic_data = id_generation.generateIds(masks)
         self.id_counter[0] = semantic_data.max() +1 
         print("id_counter: ", self.id_counter.item())
@@ -54,8 +55,11 @@ class Segmenter(object):
         #del sam
         print(f'idx = {idx} with segmentation {np.unique(semantic_data)}')
         del masks
-        print("segmentation done")
+        torch.cuda.empty_cache()
+        print("segmentation done and clearedmemory")
         self.idx[0] = idx + self.every_frame
+        
+        
 
     def run(self):
         while(True):

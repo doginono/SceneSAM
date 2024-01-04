@@ -91,3 +91,11 @@ class visualizerForIds:
         else:
             ax = plt.figure()
         
+    def visualize(self, anns,ax, title=""):
+    # Create a 2D numpy array
+        ax.set_title(title)
+        im = ax.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors))
+        
+        
+        return ax, im
+            
