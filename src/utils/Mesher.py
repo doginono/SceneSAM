@@ -644,7 +644,8 @@ class Mesher(object):
             if self.verbose:
                 print('Saved mesh at', mesh_out_file)
             
-            points.cpu()
+            del points, z
+            torch.cuda.empty_cache()
 
             
                 

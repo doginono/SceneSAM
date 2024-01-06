@@ -5,4 +5,4 @@ mapping:
 data:
   input_folder: '/home/koerner/nice-slam/Datasets/Replica/room0'
   output: 'output/Own/room0'
-output_dimension_semantic: 120
+output_dimension_semantic: 300

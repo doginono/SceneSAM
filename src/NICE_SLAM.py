@@ -350,7 +350,7 @@ class NICE_SLAM():
         """
         Dispatch Threads.
         """
-        torch.cuda.memory._record_memory_history(max_entries=100000000)
+        #torch.cuda.memory._record_memory_history(max_entries=100000000)
    
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list

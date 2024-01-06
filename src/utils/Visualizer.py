@@ -89,7 +89,7 @@ class Visualizer(object):
                         #------------------added------------------
                         semantic_argmax = np.argmax(semantic_np, axis=2)
                         print("semantic prediction: ", semantic_argmax)
-                        print("pred. ids: ", np.unique(semantic_argmax))
+                        print("predicted ids: ", np.unique(semantic_argmax))
                         #semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
                         #semantic_pred[gt_depth_np == 0.0] = -1 #not sure what is right here
                         predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance

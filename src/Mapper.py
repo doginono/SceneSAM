@@ -869,8 +869,8 @@ class Mapper(object):
             else:
                 if idx == 10:
                     try:
-                        torch.cuda.memory._dump_snapshot(f"/home/koerner/Project/nice-slam/logs/memory_usage.pickle")
-                        torch.cuda.memory._record_memory_history(enabled=None)
+                        #torch.cuda.memory._dump_snapshot(f"/home/koerner/Project/nice-slam/logs/memory_usage.pickle")
+                        #torch.cuda.memory._record_memory_history(enabled=None)
                         pass
                     except Exception as e:
                         print(f"Failed to capture memory snapshot {e}")
