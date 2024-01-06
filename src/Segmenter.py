@@ -17,6 +17,7 @@ from src.utils import backproject, create_instance_seg, id_generation
 class Segmenter(object):
 
     def __init__(self,cfg, args, slam):
+        self.min_area = cfg['mapping']['min_area']
         self.idx = slam.idx_segmenter
         self.T_wc = slam.T_wc
         self.slam = slam
@@ -71,7 +72,7 @@ class Segmenter(object):
             masks = pickle.load(f)"""
         print("end sam")
         del sam
-        semantic_data = id_generation.generateIds(masks)
+        semantic_data = id_generation.generateIds(masks, min_area=self.min_area)
         if idx ==0:
             self.id_counter[0] = semantic_data.max() +1 
         else:

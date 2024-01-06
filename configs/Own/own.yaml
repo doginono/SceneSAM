@@ -3,7 +3,7 @@ meshing:
   eval_rec: True
   resolution: 512 # change to 512 for higher resolution geometry
 tracking:
-  path: '/home/koerner/nice-slam/Datasets/Replica/room0/traj.txt'
+  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt'
   vis_freq: 10
   vis_inside_freq: 25
   ignore_edge_W: 100
@@ -16,6 +16,7 @@ tracking:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
+  min_area: 5000
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
@@ -25,13 +26,13 @@ mapping:
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 10
+  mesh_freq: 50
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 16 #finetune
-  iters: 2 #finetune
+  iters_first: 1600 #finetune
+  iters: 200 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

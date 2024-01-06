@@ -189,8 +189,8 @@ def combineMaps(map):
             assert ~(np.all(tmp[0] - tmp == 0)), "mapping is not consistent"
     return map.T[0]
 
-def generateIds(masks):
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+def generateIds(masks, min_area=0):
+    """sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     ids = np.ones(
         (
             sortedMasks[0]["segmentation"].shape[0],
@@ -204,4 +204,15 @@ def generateIds(masks):
         m = ann["segmentation"]
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
-    return ids.squeeze().astype(np.int32)
+    return ids.squeeze().astype(np.int32)"""
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=False)
+    if min_area > 0:
+        sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
+    segmentations = [sortedMasks[i]['segmentation'] for i in range(len(sortedMasks))]
+    segmentations = np.array(segmentations)
+    missing_entries = np.sum(segmentations, axis=0)>0
+    segmentations = np.argmax(segmentations, axis=0)
+    segmentations[~missing_entries] = -2
+    return segmentations.astype(np.int32)
+    
+

@@ -29,7 +29,7 @@ class Mapper(object):
 
         #-------added------------------
         self.T_wc = slam.T_wc
-        #self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
         self.writer_path = cfg['writer_path'] #J:added
@@ -599,7 +599,14 @@ class Mapper(object):
             #-----------------added-------------------
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
+
+                mask = (batch_gt_semantic != -2)
+                color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
+                batch_gt_semantic = batch_gt_semantic[mask].reshape(-1, self.output_dimension_semantic)
+                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
+                
+                #semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
                 writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0],self.idx_writer)

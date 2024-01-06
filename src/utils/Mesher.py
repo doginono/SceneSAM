@@ -392,6 +392,7 @@ class Mesher(object):
             grid = self.get_grid_uniform(self.resolution) #gets
             points = grid['grid_points']
             points = points.to(device)
+            
 
             if show_forecast:
 
