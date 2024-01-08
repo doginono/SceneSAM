@@ -8,7 +8,7 @@ import torch.multiprocessing as mp
 
 from src import config
 from src.Mapper import Mapper
-from src.Tracker import Tracker
+#from src.Tracker import Tracker
 from src.Segmenter import Segmenter
 from src.utils.datasets import get_dataset
 from src.utils.Logger import Logger
@@ -100,10 +100,10 @@ class NICE_SLAM():
         self.mapping_first_frame = torch.zeros((1)).int()
         self.mapping_first_frame.share_memory_()
         # the id of the newest frame Mapper is processing
-        self.mapping_idx = torch.zeros((1)).int()
-        self.mapping_idx.share_memory_()
-        self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
-        self.mapping_cnt.share_memory_()
+        #self.mapping_idx = torch.zeros((1)).int()
+        #self.mapping_idx.share_memory_()
+        #self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
+        #self.mapping_cnt.share_memory_()
         for key, val in self.shared_c.items(): #J:shared_c contains the grids for the different decoders
             val = val.to(self.cfg['mapping']['device'])
             val.share_memory_()

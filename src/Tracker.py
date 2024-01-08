@@ -1,4 +1,4 @@
-import copy
+'''import copy
 import os
 import time
 
@@ -36,8 +36,8 @@ class Tracker(object):
         self.renderer = slam.renderer
         self.gt_c2w_list = slam.gt_c2w_list
         self.low_gpu_mem = slam.low_gpu_mem
-        self.mapping_idx = slam.mapping_idx
-        self.mapping_cnt = slam.mapping_cnt
+        #self.mapping_idx = slam.mapping_idx
+        #self.mapping_cnt = slam.mapping_cnt
         self.shared_decoders = slam.shared_decoders
         self.estimate_c2w_list = slam.estimate_c2w_list
 
@@ -259,3 +259,4 @@ class Tracker(object):
             self.idx[0] = idx
             if self.low_gpu_mem:
                 torch.cuda.empty_cache()
+'''

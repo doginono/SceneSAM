@@ -114,7 +114,7 @@ def create_complete_mapping_of_current_frame(
     map = []
     Tf = T[curr_frame_number]
     depthf = readDepth(depths[curr_frame_number])
-    unique_ids = np.unique(ids_curr).astype(int)
+    unique_ids = np.unique(ids_curr[ids_curr >=0]).astype(int)
     max_id = np.max(unique_ids).astype(int)
     map = None
 

@@ -63,8 +63,8 @@ class Mapper(object):
         self.verbose = slam.verbose
         self.renderer = slam.vis_renderer #J: added to use smaller batch size for visualization
         self.low_gpu_mem = slam.low_gpu_mem
-        self.mapping_idx = slam.mapping_idx
-        self.mapping_cnt = slam.mapping_cnt
+        #self.mapping_idx = slam.mapping_idx
+        #self.mapping_cnt = slam.mapping_cnt
         self.decoders = slam.shared_decoders
         #self.estimate_c2w_list = slam.estimate_c2w_list #for tracker
         self.mapping_first_frame = slam.mapping_first_frame
@@ -837,8 +837,8 @@ class Mapper(object):
                                     selected_keyframes=self.selected_keyframes
                                     if self.save_selected_keyframes_info else None)
 
-                self.mapping_idx[0] = idx
-                self.mapping_cnt[0] += 1
+                #self.mapping_idx[0] = idx
+                #self.mapping_cnt[0] += 1
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'

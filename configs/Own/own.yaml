@@ -16,23 +16,23 @@ tracking:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
-  min_area: 5000
+  min_area: 500
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 5
   vis_freq: 5
-  vis_inside_freq: 199
+  vis_inside_freq: 1599
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 50
+  mesh_freq: 10
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1600 #finetune
-  iters: 200 #finetune
+  iters_first: 1200 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -47,10 +47,10 @@ mapping:
       color_lr: 0.005
       semantic_lr: 0.0
     semantic: #finetune
-      decoders_lr: 0.005
+      decoders_lr: 0.0
       coarse_lr: 0.0
-      middle_lr: 0.005
-      fine_lr: 0.005
+      middle_lr: 0.0
+      fine_lr: 0.0
       color_lr: 0.0
       semantic_lr: 0.4 #original: 0.005
 
