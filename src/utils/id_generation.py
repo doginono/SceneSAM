@@ -210,9 +210,9 @@ def generateIds(masks, min_area=0):
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
     segmentations = [sortedMasks[i]['segmentation'] for i in range(len(sortedMasks))]
     segmentations = np.array(segmentations)
-    missing_entries = np.sum(segmentations, axis=0)>0
+    non_missing_entries = np.sum(segmentations, axis=0)>0
     segmentations = np.argmax(segmentations, axis=0)
-    segmentations[~missing_entries] = -2
+    segmentations[~non_missing_entries] = -2
     return segmentations.astype(np.int32)
     
 
