@@ -1,6 +1,8 @@
 import os
 import time
 
+import matplotlib.pyplot as plt
+
 import cv2
 import numpy as np
 import torch
@@ -11,6 +13,7 @@ from src.common import (get_camera_from_tensor, get_samples,
                         get_tensor_from_camera, random_select)
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
+from src.utils import backproject
 
 from torch.utils.tensorboard import SummaryWriter #J: added
 
@@ -587,13 +590,13 @@ class Mapper(object):
             if writer is not None:
                 """if joint_iter == num_joint_iters +inc -1:
                     depth_loss_writer = loss.item()/torch.sum(depth_mask)"""
-                writer.add_scalar(f'Loss/depth', loss.item()/torch.sum(depth_mask),self.idx_writer)
+                writer.add_scalar(f'Loss/depth', loss.item(),self.idx_writer)
             if (self.stage == 'color'): #J: changed it from condition not self.nice or self.stage == 'color'
                 color_loss = torch.abs(batch_gt_color - color_semantics).sum()
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
-                writer.add_scalar(f'Loss/color', color_loss.item()/color_semantics.shape[0],self.idx_writer)
+                writer.add_scalar(f'Loss/color', color_loss.item(),self.idx_writer)
                 weighted_color_loss = self.w_color_loss*color_loss
                 loss += weighted_color_loss
             #-----------------added-------------------
@@ -609,7 +612,7 @@ class Mapper(object):
                 #semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]""" 
-                writer.add_scalar(f'Loss/semantic', semantic_loss.item()/color_semantics.shape[0],self.idx_writer)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item(),self.idx_writer)
                 weighted_semantic_loss = self.w_semantic_loss*semantic_loss
                 loss += weighted_semantic_loss
             #-----------------end-added-------------------
@@ -792,11 +795,19 @@ class Mapper(object):
                 num_joint_iters = cfg['mapping']['iters_first']
 
             #cur_c2w = self.estimate_c2w_list[idx].to(self.device)
-            cur_c2w = torch.from_numpy(self.T_wc[idx]).to(self.device)
+            #cur_c2w = torch.from_numpy(self.T_wc[idx]).to(self.device)
+            cur_c2w = gt_c2w#torch.from_numpy(backproject.T_inv(self.T_wc[idx])).to(self.device)
+            #cur_c2w = gt_c2w.clone().to(self.device)
             #J: using a unseen frame during training for visualization
+            print(f'pose of frame {idx} is {gt_c2w}')
             if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >=0:
                 #vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
-                vis_c2w = torch.from_numpy(self.T_wc[idx - self.vis_offset]).to(self.device)
+                #vis_c2w = torch.from_numpy(self.T_wc[idx - self.vis_offset]).to(self.device)
+                vis_c2w =gt_c2w# torch.from_numpy(backproject.T_inv(self.T_wc[idx - self.vis_offset])).to(self.device)
+                """if self.vis_offset == 0:
+                    print("ATTENTION; ATTEMPTING TO VISUALIZE CURRENT FRAME")
+                    print("vis_c2w == gt_c2w: ",np.all(gt_c2w.cpu().numpy() == vis_c2w.cpu().numpy()))
+                    print("vis_c2w == cur_c2w: ",np.all(cur_c2w.cpu().numpy() == vis_c2w.cpu().numpy()))"""
             else:
                 vis_c2w = None
             num_joint_iters = num_joint_iters//outer_joint_iters
@@ -804,6 +815,19 @@ class Mapper(object):
 
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
+                if ~self.coarse_mapper:
+                    gt_depth_np = gt_depth.cpu().numpy()
+                    gt_color_np = gt_color.cpu().numpy() #TODO add semantics
+                    semantic_np = gt_semantic.detach().cpu().numpy()
+                    semantic_argmax = np.argmax(semantic_np, axis=2)
+                    fig, axs = plt.subplots(3) #previously 2,3
+                    fig.suptitle(f'frame {idx}')
+                    fig.tight_layout()
+                    axs[0].imshow(gt_depth_np, cmap="plasma",
+                                            vmin=0, vmax=np.max(gt_depth_np))
+                    axs[1].imshow(gt_color_np, cmap="plasma")
+                    axs[2].imshow(semantic_argmax, cmap="plasma")
+                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 

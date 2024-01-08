@@ -172,6 +172,7 @@ class Replica(BaseDataset):
 
     def __getitem__(self, index):
         if self.istracker:
+            assert False, "should not be entered, not upto date"
             return super().__getitem__(index)
         
         """two scenarios for accessing semanitc index:
