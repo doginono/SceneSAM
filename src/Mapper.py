@@ -64,7 +64,8 @@ class Mapper(object):
         self.mesher = slam.mesher
         self.output = slam.output
         self.verbose = slam.verbose
-        self.renderer = slam.vis_renderer #J: added to use smaller batch size for visualization
+        self.vis_renderer = slam.vis_renderer #J: added to use smaller batch size for visualization
+        self.renderer = slam.renderer
         self.low_gpu_mem = slam.low_gpu_mem
         #self.mapping_idx = slam.mapping_idx
         #self.mapping_cnt = slam.mapping_cnt
@@ -122,7 +123,7 @@ class Mapper(object):
         self.n_img = len(self.frame_reader)
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
-                                         vis_dir=os.path.join(self.output, 'mapping_vis'), renderer=self.renderer,
+                                         vis_dir=os.path.join(self.output, 'mapping_vis'), renderer=self.vis_renderer,
                                          verbose=self.verbose, device=self.device, iters_first=cfg['mapping']['iters_first'], num_iter=cfg['mapping']['iters'], input_dimension_semantic=cfg['output_dimension_semantic'])
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
 
@@ -499,6 +500,7 @@ class Mapper(object):
                 _,gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic   = self.frame_reader[idx - self.vis_offset]
                 self.visualizer.vis(
                     idx, joint_iter, gt_vis_depth, gt_vis_color, vis_c2w, self.c, self.decoders, gt_vis_semantic, only_semantic=False, stage=self.stage, writer = writer, offset = self.vis_offset)
+                torch.cuda.empty_cache()
 
             optimizer.zero_grad()
             batch_rays_d_list = []
