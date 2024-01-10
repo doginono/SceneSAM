@@ -648,5 +648,7 @@ class Mesher(object):
             del points, z
             torch.cuda.empty_cache()
 
+            print('finish meshing')
+
             
                 

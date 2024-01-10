@@ -22,7 +22,7 @@ mapping:
   every_frame: 5
   points_per_instance: 5
   vis_freq: 5
-  vis_inside_freq: 199
+  vis_inside_freq: 30
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
@@ -30,9 +30,9 @@ mapping:
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
-  pixels: 10
-  iters_first: 1600 #finetune
-  iters: 200 #finetune
+  pixels: 1000
+  iters_first: 1500 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

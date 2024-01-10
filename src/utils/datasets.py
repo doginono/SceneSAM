@@ -273,7 +273,7 @@ class Replica(BaseDataset):
                 print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
             print('release lock')'''
 
-        semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+        semantic_data = self.semantic_frames[index].clone().int()
         # Create one-hot encoding using numpy.eye
         print(f"read in semantic data of frame {index}: ", semantic_data)
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)

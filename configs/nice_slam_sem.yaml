@@ -51,7 +51,7 @@ mapping:
   fine_iter_ratio: 0.6 #0.6
   semantic_iter_ratio: 0.4 #0.4
   every_frame: 5
-  BA: True
+  BA: False
   BA_cam_lr: 0.001
   fix_fine: True
   fix_color: False

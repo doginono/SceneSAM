@@ -58,8 +58,8 @@ class Segmenter(object):
         self.id_counter[0] = id_counter
         return semantic_data
 
-    def segment(self):
-        idx = self.idx[0].clone()
+    def segment(self,idx):
+        #idx = self.idx[0].clone()
         print("called segment on idx ", idx)
         color_path = self.color_paths[idx]
         color_data = cv2.imread(color_path)
@@ -80,7 +80,7 @@ class Segmenter(object):
             semantic_data = self.update(semantic_data, id_counter, idx)
         
 
-        self.semantic_frames[idx//self.every_frame]=torch.from_numpy(semantic_data)
+        self.semantic_frames[idx]=torch.from_numpy(semantic_data)
         #TODO visualize semantic_data and store to file
         print(f'idx = {idx} with segmentation {np.unique(semantic_data)}')
         del masks
@@ -91,7 +91,12 @@ class Segmenter(object):
         
 
     def run(self):
-        while(True):
+        index_frames = np.arange(0, self.n_img, self.every_frame)
+        for idx in index_frames:
+            self.segment(idx)
+            
+        
+        """while(True):
             if self.idx.item() + self.every_frame > self.n_img-1:
                 return
             
@@ -100,6 +105,6 @@ class Segmenter(object):
             print("start segmenting")
             self.slam.to_cpu()
             torch.cuda.empty_cache()
-            self.segment()
+            self.segment()"""
             
 

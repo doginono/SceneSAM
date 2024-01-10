@@ -90,7 +90,7 @@ class NICE_SLAM():
         self.idx_coarse_mapper.share_memory_()
         self.idx_segmenter = torch.zeros((1)).int()
         self.idx_segmenter.share_memory_()
-        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//cfg['mapping']['every_frame'], self.H, self.W)))
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img, self.H, self.W)))
         self.semantic_frames.share_memory_()
        
         self.frame_reader.__post_init__(self)
@@ -354,7 +354,8 @@ class NICE_SLAM():
    
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
-        for rank in range(0,3):
+        self.segmenter.run()
+        for rank in range(1,3):
             if rank == 0:
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))

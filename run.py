@@ -53,7 +53,7 @@ def main():
     writer.close()
     print('read in hparams')
     #-----------------------------------------------------------------------------------
-
+    
     slam = NICE_SLAM(cfg, args)
 
     slam.run()
