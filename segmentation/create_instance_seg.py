@@ -25,12 +25,13 @@ def create_sam():
     sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
     model_type = "vit_b"
 
-    device = "cuda"
+    device = "cpu"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)
 
     mask_generator = SamAutomaticMaskGenerator(sam)
+
     return mask_generator
 
 
