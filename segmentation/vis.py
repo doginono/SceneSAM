@@ -74,7 +74,10 @@ def vis(path_to_image, masks, uv=None):
 class visualizerForIds:
     def __init__(self, seed=123):
         np.random.seed(seed)
-        self.colors = [np.random.random(3) for i in range(-2,1000)]
+        self.colors = [np.random.random(3) for i in range(0,100)]
+        
+        self.colors.insert(0,[1,1,1])
+        self.colors.insert(0,[0,0,0])
         self.cmap = mcolors.ListedColormap(self.colors)
 
     def visualizer(self, anns, title=""):

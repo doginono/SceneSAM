@@ -170,7 +170,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
     return torch_sampled_indices.to(torch.int32)
 
 #id list better
-def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
+def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1, onlyForOneId = False):
     """samples uv from the instances
 
     Args:
@@ -187,7 +187,7 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
         )
     )
     # sampled= [1,2,x][2,3,x]
-    
+        
     temp=np.unique(ids)
     for i,element in enumerate(list(temp.astype(int))):
         if element == -2:

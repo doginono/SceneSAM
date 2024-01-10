@@ -5,7 +5,7 @@ import torch
 import math
 import backproject
 from scipy import signal
-
+import torch.nn.functional as F 
 
 def readDepth(filepath):
     depth = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
@@ -303,19 +303,9 @@ def createReverseMappingCombined(
     Return:
         np.array (2, #num ids in curr_mask): mapping of the current ids to the actual ids according to the past frames
     """
-    '''T_current = T[curr_frame_number]
-    depthf = readDepth(depths[curr_frame_number])
-    
-    masks = np.full((current_frame.shape[0], current_frame.shape[1]), -1)'''
-    #for num in earlier_frame_numbers:
-    #print("earlierFrame", earlier_frame_numbers)
     T_current = T[curr_frame_number]
     depthf = readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -1)
-    '''samplesFromEarlier = sample_from_instances(
-            ids_past, np.max(unique_ids) + 1, points_per_instance
-        )
-        '''
     
     predictor.set_image(current_frame)
     
@@ -325,11 +315,10 @@ def createReverseMappingCombined(
     )
     
     frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
-    
+    #check if all points lie on the same but different mask
     unique_ids = np.unique(samples[2:,:].astype(int))
     unique_ids = unique_ids[::-1]
-    #print("unique_ids", unique_ids)
-    #print("frontProjectedSamples", frontProjectedSamples.shape)
+    
     count=0
     import matplotlib.pyplot as plt
     import fpsample
@@ -347,7 +336,7 @@ def createReverseMappingCombined(
            
             theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
             #nonRelevant=np.array(list(zip(otherInstancesId[0].tolist(), otherInstancesId[1].tolist())))
-            fps=fpsample.fps_sampling(theRelevant, min(5,len(theRelevant)))
+            fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
             #fpsNon=fpsample.fps_sampling(nonRelevant, 10)
             sampledPositive=[1]*len(fps) 
             #np.concatenate((theRelevant[fps],nonRelevant[fpsNon]))
@@ -357,6 +346,7 @@ def createReverseMappingCombined(
                 point_labels=sampledPositive,
                 multimask_output=False,
             )
+            '''
             # coarse to fine
             # backproject majority vote
             # when with automaticsam generator ratio of in points!!!
@@ -364,7 +354,7 @@ def createReverseMappingCombined(
             " After creating the mask backproject all ids into it and give according to the projected majority vote "
             #check if inside mask
             #take majority vote
-            '''if instance==2:
+            if instance==2:
                 plt.figure(figsize=(20,20))
                 plt.imshow(current_frame)
                 for i in range(instanceId.shape[1]):
@@ -379,14 +369,17 @@ def createReverseMappingCombined(
     max_id = np.max(unique_ids).astype(int)
     
     #sample from the right side
-    
-    
-    unique_ids = np.unique(masks).astype(int)
-    kernel_size=40
-    kernel = np.ones((kernel_size, kernel_size))
-    # this should be faster
-    result = signal.convolve2d(masks, kernel, mode='same')
-    indices = np.array(np.where(result == ((kernel_size**2)*-1))).T
+   
+    nb_channels = 1
+    h, w = 40, 40
+    weights = torch.ones(h, w)
+    weights = weights.view(1, 1, h, w).repeat(1, nb_channels, 1, 1)
+    torch_masks=torch.from_numpy(masks).float()
+    result = F.conv2d(torch_masks.unsqueeze(0), weights,padding="same")
+    result = result.cpu().numpy()  # convert to numpy array
+    result=result.squeeze()
+    print("result.shape",result.shape)
+    indices = np.array(np.where(result == ((h*w)*-1))).T
     print("indices.shape",indices.shape)
     
     counter=0
@@ -403,16 +396,28 @@ def createReverseMappingCombined(
             multimask_output=False,
         )
         masks[mask.squeeze()] = max_id + counter
+        #need to sample more in the first time I found the new id
         plt.figure(figsize=(20,20))
         plt.imshow(current_frame)
-        
-            #print(instanceId[0,i],instanceId[1,i])
+        #print(instanceId[0,i],instanceId[1,i])
         plt.scatter(random_index[1],random_index[0],c="yellow",s=500,marker='o')
-    
         plt.axis('off')
         plt.show()
-        #counter += 1
-        #print("Negative")
+        oneNewMask=masks.copy()
+        oneNewMask[oneNewMask!=max_id + counter]=-1
+        print("onemask",np.unique(oneNewMask))
+        samplesFromCurrent = sample_from_instances_with_ids(
+            oneNewMask, 
+            max_id + counter, 
+            points_per_instance=100
+        )
+        
+        realWorldProjectCurr = backproject.realWorldProject(
+            samplesFromCurrent[:2,:],T[curr_frame_number], K, depthf
+        )
+        realWorldProjectCurr = np.concatenate((realWorldProjectCurr,samplesFromCurrent[2:,:]),axis=0)
+        samples=np.concatenate((samples,realWorldProjectCurr),axis=1)
+        
     
     for i in range(max_id + counter):
         num_elements = np.count_nonzero(masks == i)
@@ -420,10 +425,11 @@ def createReverseMappingCombined(
             masks[masks == i] = -2
     
     max_id = max_id + counter
+    
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         max_id + counter, 
-        points_per_instance=points_per_instance
+        points_per_instance=10
     )
     
     realWorldProjectCurr = backproject.realWorldProject(
