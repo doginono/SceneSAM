@@ -190,6 +190,8 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     
     temp=np.unique(ids)
     for i,element in enumerate(list(temp.astype(int))):
+        if element == -2:
+            continue
         labels = np.where(ids == element)
         indices = list(zip(labels[0], labels[1]))
         if len(indices) > 0:  # Check if there are any True pixels
@@ -208,9 +210,8 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
 
 
 
-def generateIds(masks):
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
-    
+def generateIds(masks, min_area=10000):
+    """sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     ids = np.ones(
         (
             sortedMasks[0]["segmentation"].shape[0],
@@ -224,7 +225,23 @@ def generateIds(masks):
         m = ann["segmentation"]
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
-    return ids.squeeze().astype(np.int32)
+    return ids.squeeze().astype(np.int32)"""
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+    if min_area > 0:
+        sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
+    segmentations = [sortedMasks[i]['segmentation'] for i in range(len(sortedMasks))]
+    segmentations = np.array(segmentations)
+    non_missing_entries = np.sum(segmentations, axis=0)>0
+    segmentations = np.argmax(segmentations, axis=0)
+    segmentations[~non_missing_entries] = -2
+    segmentations=segmentations.astype(np.int32)
+    '''for i in range(len(sortedMasks)):
+        num_elements = np.count_nonzero(segmentations == i)
+        if num_elements < 1000:
+            segmentations[segmentations == i] = -2'''
+    return segmentations
+
+
 
 def generateIdsNew(masks):
     sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)

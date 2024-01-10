@@ -2,8 +2,9 @@ from backproject import *
 import numpy as np
 import cv2
 import torch
-
+import math
 import backproject
+from scipy import signal
 
 
 def readDepth(filepath):
@@ -230,7 +231,7 @@ def createReverseMapping(
             ids_past, np.max(unique_ids) + 1, points_per_instance
         )
         predictor.set_image(current_frame)
-        
+        print(unique_ids)
         for instance in unique_ids:
             earlierFrame = samplesFromEarlier[:, :, instance]
                 
@@ -282,7 +283,6 @@ def createReverseMappingCombined(
     points_per_instance=5,
     current_frame=None,
     samples=None,
-    bbox=None,
 ):
     """creates a mapping of the current ids to the actual ids according to the past frames;
     This is implemented in a way, that some of the function arguments can be replaced by the frame_reader class from nice_slam,
@@ -312,13 +312,13 @@ def createReverseMappingCombined(
     T_current = T[curr_frame_number]
     depthf = readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -1)
-    bboxCam = None
     '''samplesFromEarlier = sample_from_instances(
             ids_past, np.max(unique_ids) + 1, points_per_instance
         )
         '''
     
     predictor.set_image(current_frame)
+    
     #projected to current camera frame, they also have ids
     frontProjectedSamples, projDepth = backproject.camProject(
         samples, T_current, K
@@ -327,30 +327,44 @@ def createReverseMappingCombined(
     frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
     
     unique_ids = np.unique(samples[2:,:].astype(int))
+    unique_ids = unique_ids[::-1]
     #print("unique_ids", unique_ids)
     #print("frontProjectedSamples", frontProjectedSamples.shape)
     count=0
     import matplotlib.pyplot as plt
-    
+    import fpsample
+    print("unique_ids", unique_ids)
     for instance in unique_ids:
+        #print(instance)
         #sample same id points from from frontProjectedSamples
         filtre = (frontProjectedSamples[2,:,:] == instance)
         #print(count,frontProjectedSamples.shape)
         instanceId = frontProjectedSamples[:, filtre]
-        #print(count,instanceId.shape)
+        other_instances_mask = (frontProjectedSamples[2,:,:] != instance)
+        otherInstancesId = frontProjectedSamples[:, other_instances_mask]        #print(count,instanceId.shape)
         count+=1
-        #print(bbox)
-        '''if instance in bbox:
-            bboxCam, _= backproject.camProjectBoundingBoxes(bbox[instance],T_current,K)'''
-            #bboxCam2, _= backproject.camProject(bbox[instance][:,1],T_current,K)
-        if instanceId.size is not 0:
+        if instanceId.size is not 0 and instanceId[2,0]>=0:
+           
+            theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
+            #nonRelevant=np.array(list(zip(otherInstancesId[0].tolist(), otherInstancesId[1].tolist())))
+            fps=fpsample.fps_sampling(theRelevant, min(5,len(theRelevant)))
+            #fpsNon=fpsample.fps_sampling(nonRelevant, 10)
+            sampledPositive=[1]*len(fps) 
+            #np.concatenate((theRelevant[fps],nonRelevant[fpsNon]))
+            #bumbum.extend([0]*len(nonRelevant[fpsNon]))
             mask, _, _ = predictor.predict(
-                point_coords=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist()))),
-                point_labels=len(instanceId[0]) * [1],
+                point_coords=theRelevant[fps],
+                point_labels=sampledPositive,
                 multimask_output=False,
             )
-            
-            if instance==1:
+            # coarse to fine
+            # backproject majority vote
+            # when with automaticsam generator ratio of in points!!!
+            # reset the samples 
+            " After creating the mask backproject all ids into it and give according to the projected majority vote "
+            #check if inside mask
+            #take majority vote
+            '''if instance==2:
                 plt.figure(figsize=(20,20))
                 plt.imshow(current_frame)
                 for i in range(instanceId.shape[1]):
@@ -358,18 +372,57 @@ def createReverseMappingCombined(
                     plt.scatter(instanceId[0,i],instanceId[1,i],c="red",s=500,marker='o')
             
                 plt.axis('off')
-                plt.show()
+                plt.show()'''
             masks[mask.squeeze()] = instance
-
-            
-    counter=1
+    
+    unique_ids = np.unique(masks).astype(int)
+    max_id = np.max(unique_ids).astype(int)
+    
+    #sample from the right side
     
     
     unique_ids = np.unique(masks).astype(int)
+    kernel_size=40
+    kernel = np.ones((kernel_size, kernel_size))
+    # this should be faster
+    result = signal.convolve2d(masks, kernel, mode='same')
+    indices = np.array(np.where(result == ((kernel_size**2)*-1))).T
+    print("indices.shape",indices.shape)
     
+    counter=0
+    if len(indices)>0:
+        counter=1
+        
+        random_index = indices[np.random.choice(len(indices))]
+        point_coords = np.array([random_index[1],random_index[0]])
+        point_coords = point_coords.reshape(1, -1)
+        print(point_coords)
+        mask, _, _ = predictor.predict(
+            point_coords=point_coords,
+            point_labels=np.array([1]),
+            multimask_output=False,
+        )
+        masks[mask.squeeze()] = max_id + counter
+        plt.figure(figsize=(20,20))
+        plt.imshow(current_frame)
+        
+            #print(instanceId[0,i],instanceId[1,i])
+        plt.scatter(random_index[1],random_index[0],c="yellow",s=500,marker='o')
+    
+        plt.axis('off')
+        plt.show()
+        #counter += 1
+        #print("Negative")
+    
+    for i in range(max_id + counter):
+        num_elements = np.count_nonzero(masks == i)
+        if num_elements < 1000:
+            masks[masks == i] = -2
+    
+    max_id = max_id + counter
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
-        len(unique_ids), 
+        max_id + counter, 
         points_per_instance=points_per_instance
     )
     
@@ -379,24 +432,6 @@ def createReverseMappingCombined(
     realWorldProjectCurr = np.concatenate((realWorldProjectCurr,samplesFromCurrent[2:,:]),axis=0)
     samples=np.concatenate((samples,realWorldProjectCurr),axis=1)
     
-    # print("samples", samples.shape)
-    '''
-    unique_ids = np.unique(masks).astype(int)
-    max_id = np.max(unique_ids).astype(int)
-    if masks[masks==-1].size is not 0:
-        while np.isin(-1, masks):
-            indices = np.array(np.where(masks == -1)).T
-            random_index = indices[np.random.choice(len(indices))]
-            mask, _, _ = predictor.predict(
-                point_coords=np.array([random_index]),
-                point_labels=[1],
-                multimask_output=False,
-            )
-            masks[mask.squeeze()] = max_id + counter
-            counter += 1
-            print(max_id + counter)
-            print(np.count_nonzero(masks == -1))
-            #print("Negative")'''
     return masks,samples
 
 
