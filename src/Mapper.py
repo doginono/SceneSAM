@@ -13,7 +13,7 @@ from src.common import (get_camera_from_tensor, get_samples,
                         get_tensor_from_camera, random_select)
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
-from src.utils import backproject
+from src.utils import backproject1
 
 from torch.utils.tensorboard import SummaryWriter #J: added
 

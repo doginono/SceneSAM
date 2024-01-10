@@ -16,13 +16,13 @@ tracking:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
-  min_area: 5000
+  first_min_area: 5000
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
-  points_per_instance: 5
-  vis_freq: 5
-  vis_inside_freq: 30
+  points_per_instance: 100
+  vis_freq: 30
+  vis_inside_freq: 70
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True

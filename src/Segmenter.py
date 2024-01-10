@@ -12,12 +12,12 @@ from torch.utils.data import Dataset
 import threading
 
 import torch.multiprocessing as mp
-from src.utils import backproject, create_instance_seg, id_generation
+from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
     def __init__(self,cfg, args, slam):
-        self.min_area = cfg['mapping']['min_area']
+        self.first_min_area = cfg['mapping']['first_min_area']
         self.idx = slam.idx_segmenter
         self.T_wc = slam.T_wc
         self.slam = slam
@@ -37,6 +37,11 @@ class Segmenter(object):
             self.input_folder = args.input_folder
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(glob.glob(f'{self.input_folder}/results/depth*.png')) 
+        
+        self.new_id = 0
+        self.visualizer = vis.visualizerForIds()
+        self.frame_numbers = []
+        self.samples = []
 
 
     def update(self, semantic_data, id_counter, index):
@@ -58,8 +63,8 @@ class Segmenter(object):
         self.id_counter[0] = id_counter
         return semantic_data
 
-    def segment(self,idx):
-        #idx = self.idx[0].clone()
+    def segment(self):
+        idx = self.idx[0].clone()
         print("called segment on idx ", idx)
         color_path = self.color_paths[idx]
         color_data = cv2.imread(color_path)
@@ -72,7 +77,7 @@ class Segmenter(object):
             masks = pickle.load(f)"""
         print("end sam")
         del sam
-        semantic_data = id_generation.generateIds(masks, min_area=self.min_area)
+        semantic_data = id_generation.generateIds(masks, min_area=self.first_min_area)
         if idx ==0:
             self.id_counter[0] = semantic_data.max() +1 
         else:
@@ -88,15 +93,41 @@ class Segmenter(object):
         print("segmentation done and cleared memory")
         self.idx[0] = idx + self.every_frame
         
+    """def segment(self,idx):
+        img  = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, id_counter = self.new_id, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=samples)
+        self.semantic_frames[idx]=torch.from_numpy(masksCreated)
         
 
+    def segment_first(self):
+        color_path = self.color_paths[0]
+        color_data = cv2.imread(color_path)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        sam = create_instance_seg.create_sam('cuda')
+        masks = sam.generate(image)
+        del sam
+        torch.empty_cache()
+
+        ids = id_generation.generateIds(masks, min_area=self.first_min_area)
+        self.semantic_frames[0]=torch.from_numpy(ids)
+        self.frame_numbers.append(0)
+        self.new_id = ids.max() +1
+
+        samplesFromCurrent = backproject.sample_from_instances_with_ids(
+            ids,
+            self.new_id,
+            points_per_instance=self.points_per_instance
+        )
+        realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
+        realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
+        self.samples = realWorldSamples"""
+
+
     def run(self):
-        index_frames = np.arange(0, self.n_img, self.every_frame)
-        for idx in index_frames:
-            self.segment(idx)
-            
         
-        """while(True):
+        #----------end zero frame------------------
+        while(True):
             if self.idx.item() + self.every_frame > self.n_img-1:
                 return
             
@@ -105,6 +136,16 @@ class Segmenter(object):
             print("start segmenting")
             self.slam.to_cpu()
             torch.cuda.empty_cache()
-            self.segment()"""
+            self.segment()
+        """self.segment_first()
+        self.predictor = create_instance_seg.create_predictor('cuda')
+        index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+        for idx in index_frames:
+            self.segment(idx)
+            for over ids
+                point in samples with this id """
+            
+        
+        
             
 

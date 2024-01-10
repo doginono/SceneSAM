@@ -30,6 +30,7 @@ class NICE_SLAM():
         #for groundtruth tracking
         path_to_traj = cfg['tracking']['path']
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        self.T_wc[:,1:3] *= -1
         
 
         self.cfg = cfg
@@ -354,8 +355,8 @@ class NICE_SLAM():
    
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
-        self.segmenter.run()
-        for rank in range(1,3):
+        #self.segmenter.run()
+        for rank in range(0,3):
             if rank == 0:
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))
