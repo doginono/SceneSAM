@@ -312,7 +312,7 @@ def createReverseMappingCombined(
     
     import matplotlib.pyplot as plt
     import fpsample
-    print("unique_ids", unique_ids)
+    #print("unique_ids", unique_ids)
     #temp=[]
     for instance in unique_ids:
         
@@ -346,10 +346,10 @@ def createReverseMappingCombined(
         if np.all(masks[np.ix_(instanceId[1,:].astype(int), instanceId[0,:].astype(int))] != instance):
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
+            #print("REMOVED", instance)
     
             
-    print(max_id)
+    #print(max_id)
     visualizerForId = visualizerForIds()
     visualizerForId.visualizer(masks)
 
@@ -385,12 +385,12 @@ def createReverseMappingCombined(
 
         masks[condition] = max_id + counter
         #need to sample more in the first time I found the new id
-        plt.figure(figsize=(20,20))
+        """plt.figure(figsize=(20,20))
         plt.imshow(current_frame)
         #print(instanceId[0,i],instanceId[1,i])
         plt.scatter(random_index[1],random_index[0],c="yellow",s=500,marker='o')
         plt.axis('off')
-        plt.show()
+        plt.show()"""
         
 
     max_id = max_id + counter
@@ -426,8 +426,8 @@ def cleanSamples(samples,T_current, K, depthf, masks):
         if instance_data.shape[0]==frontProjectedSamples.shape[0]:
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
-    print("samples",np.unique(samples[3,:]))
+            #print("REMOVED", instance)
+    #print("samples",np.unique(samples[3,:]))
     
     
     return samples

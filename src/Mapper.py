@@ -13,7 +13,7 @@ from src.common import (get_camera_from_tensor, get_samples,
                         get_tensor_from_camera, random_select)
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
-from src.utils import backproject1
+from src.utils import backproject
 
 from torch.utils.tensorboard import SummaryWriter #J: added
 
@@ -606,7 +606,7 @@ class Mapper(object):
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
 
-                mask = (batch_gt_semantic != -2)
+                mask = (batch_gt_semantic >= 0)
                 color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
                 batch_gt_semantic = batch_gt_semantic[mask].reshape(-1, self.output_dimension_semantic)
                 assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"

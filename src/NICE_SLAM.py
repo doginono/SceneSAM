@@ -120,7 +120,7 @@ class NICE_SLAM():
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
-        self.segmenter = Segmenter(cfg,args, self)
+        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(self.output, 'segmentation'))
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
@@ -356,7 +356,9 @@ class NICE_SLAM():
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
         if not self.mask_generator:
+            print('start segmenter')
             self.segmenter.run()
+            print('segmenter finished')
             start = 1
         else:
             start = 0

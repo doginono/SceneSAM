@@ -82,6 +82,20 @@ class visualizerForIds:
     
     def get_colors(self, ids):
         return self.cmap(ids)
+    
+    def visualize(self, anns,path = None, ax=None, title=""):
+        if path is not None:
+            plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors)-1)
+            plt.savefig(path)
+            return
+        if ax is None:
+                im = plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors)-1)
+                return im
+        ax.set_title(title)
+        im = ax.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors)-1)
+        
+        
+        return ax, im
 
     def visualizer(self, anns, title=""):
         # Create a 2D numpy array

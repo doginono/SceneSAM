@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 import threading
 
 import torch.multiprocessing as mp
-import backproject, create_instance_seg, id_generation
+
 
 
 def readEXR_onlydepth(filename):

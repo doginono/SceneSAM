@@ -2,7 +2,7 @@ import glob
 import os
 import pickle
 import time
-
+import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import torch
@@ -17,7 +17,13 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self,cfg, args, slam):
+    def __init__(self,cfg, args, slam, store_directory):
+        self.store_directory = store_directory
+        self.store = cfg['Segmenter']['store']
+        self.store_vis = cfg['Segmenter']['store_vis']
+        if self.store or self.store_vis:
+            os.makedirs(f'{store_directory}', exist_ok=True)
+
         self.mask_generator = cfg['Segmenter']['mask_generator']
         self.first_min_area = cfg['mapping']['first_min_area']
         self.idx = slam.idx_segmenter
@@ -98,7 +104,7 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, id_counter = self.new_id, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=samples)
+        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40)
         self.semantic_frames[idx]=torch.from_numpy(masksCreated)
         
 
@@ -119,7 +125,7 @@ class Segmenter(object):
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids,
             self.new_id,
-            points_per_instance=self.points_per_instance
+            points_per_instance=100
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
@@ -148,9 +154,20 @@ class Segmenter(object):
             index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)[:50]
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
-                
             
-        
+            #TODO: save self.semantic_frames to file
+            del self.predictor
+            torch.cuda.empty_cache()
+
+            if self.store:
+                for index in [0]+list(index_frames):
+                    path = os.path.join(self.store_directory, f'frame_{index}.npy')
+                    np.save(path, self.semantic_frames[index].numpy())
+            if self.store_vis:
+                for index in [0]+list(index_frames):
+                    path = os.path.join(self.store_directory, f'frame_{index}.png')
+                    self.visualizer.visualize(self.semantic_frames[index].numpy(), path = path)
+                    
         
             
 
