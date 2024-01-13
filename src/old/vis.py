@@ -74,12 +74,9 @@ def vis(path_to_image, masks, uv=None):
 class visualizerForIds:
     def __init__(self, seed=123):
         np.random.seed(seed)
-        self.colors = [np.random.random(3) for i in range(0,100)]
-        
-        self.colors.insert(0,[1,1,1])
-        self.colors.insert(0,[0,0,0])
+        self.colors = [np.random.random(3) for i in range(1000)]
         self.cmap = mcolors.ListedColormap(self.colors)
-    
+
     def get_colors(self, ids):
         return self.cmap(ids)
 
@@ -89,3 +86,15 @@ class visualizerForIds:
         plt.figure(figsize=(20, 20))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         plt.show()
+        
+    def visualize(self, anns,ax=None, title=""):
+        if ax is None:
+                plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors))
+                plt.show()
+                return
+        ax.set_title(title)
+        im = ax.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors))
+        
+        
+        return ax, im
+            
