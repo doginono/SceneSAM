@@ -7,7 +7,8 @@ import backproject
 from scipy import signal
 import torch.nn.functional as F 
 from vis import visualizerForIds
-
+import matplotlib.pyplot as plt
+import fpsample
 def readDepth(filepath):
     depth = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
     depth_data = depth.astype(np.float32) / 6553.5
@@ -310,8 +311,6 @@ def createReverseMappingCombined(
     #check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
     
-    import matplotlib.pyplot as plt
-    import fpsample
     print("unique_ids", unique_ids)
     #temp=[]
     for instance in unique_ids:
@@ -349,7 +348,6 @@ def createReverseMappingCombined(
             print("REMOVED", instance)
     
             
-    print(max_id)
     visualizerForId = visualizerForIds()
     visualizerForId.visualizer(masks)
 
@@ -400,15 +398,38 @@ def createReverseMappingCombined(
         numberOfMasks, 
         points_per_instance=5
     )
-    
+    #3d
     realWorldProjectCurr = backproject.realWorldProject(
         samplesFromCurrent[:2,:],T[curr_frame_number], K, depthf
     )
+    #add the ids 4d
     realWorldProjectCurr = np.concatenate((realWorldProjectCurr,samplesFromCurrent[2:,:]),axis=0)
     samples=np.concatenate((samples,realWorldProjectCurr),axis=1)
-    
+    '''
+    unique_ids = np.unique(masks).astype(int)
+    allsampled=[]
+    for i in unique_ids:
+        temp = samples[:3, samples[3, :] == i]
+
+        if samples[:2, samples[3, :] == i].size != 0:
+            theRelevant = np.array(list(zip(temp[0].tolist(), temp[1].tolist(), temp[2].tolist())))
+            fps_indices = fpsample.fps_sampling(theRelevant, min(200, len(theRelevant)))
+            fps_samples = theRelevant[fps_indices]
+            allsampled.append(fps_samples)
+
+    allsampled = np.concatenate(allsampled, axis=0)
+    # Create a mask that checks if each sample in samples is in fps_samples
+    mask = np.isin(samples[:3, :].T, allsampled).all(axis=1)
+    # Use the mask to index samples
+    # samples = samples[:, mask]
     #fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
     #samples=cleanSamples(samples, T_current, K, depthf, masks)
+    print(allsampled.shape)
+    print(allsampled)
+    #samples=samples[:,allsampled.astype(int)]
+    '''
+    print(samples.shape)
+    
     return masks,samples
 
 def cleanSamples(samples,T_current, K, depthf, masks):
