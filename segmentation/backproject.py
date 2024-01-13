@@ -170,7 +170,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
     return torch_sampled_indices.to(torch.int32)
 
 #id list better
-def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1, onlyForOneId = False):
+def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """samples uv from the instances
 
     Args:
@@ -180,37 +180,30 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1, on
         uv (numpy.array): shape(2,points_per_instance, len(instances))
 
     """
-    torch_sampled_indices = torch.zeros(
-        (
-            3,  # 2D
-            points_per_instance*numberOfMasks,  # number of points per instance
-        )
-    )
-    # sampled= [1,2,x][2,3,x]
-        
+    tensors = []
+
     temp=np.unique(ids)
     for i,element in enumerate(list(temp.astype(int))):
-        if element == -2:
-            continue
-        labels = np.where(ids == element)
-        indices = list(zip(labels[0], labels[1]))
-        if len(indices) > 0:  # Check if there are any True pixels
-            sampled_indices = np.random.choice(len(indices), points_per_instance)
-            sampled_tensor = torch.tensor(
-            [indices[j][::-1] for j in sampled_indices]
-            ).T
-            #print(element)
-            element_tensor = torch.full((sampled_tensor.shape[1],), element)
-            
-            element_tensor = element_tensor.unsqueeze(0)
-            
-            torch_sampled_indices[:, points_per_instance*(i):points_per_instance*(i+1)] = torch.concat((sampled_tensor, element_tensor),axis = 0)
-            
+        if element >=0:            
+            labels = np.where(ids == element)
+            indices = list(zip(labels[0], labels[1]))
+            if len(indices) > points_per_instance:  # Check if there are any True pixels
+                sampled_indices = np.random.choice(len(indices), points_per_instance,replace=False)
+                sampled_tensor = torch.tensor(
+                [indices[j][::-1] for j in sampled_indices]
+                ).T
+                element_tensor = torch.full((sampled_tensor.shape[1],), element)
+                
+                element_tensor = element_tensor.unsqueeze(0)
+                
+                tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
+
+    torch_sampled_indices = torch.cat(tensors, axis=1)
     return torch_sampled_indices.to(torch.int32)
 
 
 
-def generateIds(masks, min_area=10000):
+def generateIds(masks, min_area=1000):
     """sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     ids = np.ones(
         (
@@ -226,20 +219,22 @@ def generateIds(masks, min_area=10000):
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
     return ids.squeeze().astype(np.int32)"""
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=False)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
-    segmentations = [sortedMasks[i]['segmentation'] for i in range(len(sortedMasks))]
-    segmentations = np.array(segmentations)
-    non_missing_entries = np.sum(segmentations, axis=0)>0
-    segmentations = np.argmax(segmentations, axis=0)
-    segmentations[~non_missing_entries] = -2
-    segmentations=segmentations.astype(np.int32)
-    '''for i in range(len(sortedMasks)):
-        num_elements = np.count_nonzero(segmentations == i)
-        if num_elements < 1000:
-            segmentations[segmentations == i] = -2'''
-    return segmentations
+    ids = np.full(
+            (sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1]),
+            -100,
+        )
+    for i, ann in enumerate(sortedMasks):
+        m = ann["segmentation"]
+        ids[m] = i
+    unique_ids,counts = np.unique(ids, return_counts=True)
+    for i in range(len(unique_ids)):
+        if counts[i] < min_area:
+            ids[ids == unique_ids[i]] = -100
+    return ids
 
 
 
