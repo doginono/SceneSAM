@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
+from tqdm import tqdm
 
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
@@ -108,7 +109,7 @@ class Segmenter(object):
         sam = create_instance_seg.create_sam('cuda')
         masks = sam.generate(image)
         del sam
-        torch.empty_cache()
+        torch.cuda.empty_cache()
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
         self.semantic_frames[0]=torch.from_numpy(ids)
@@ -141,10 +142,11 @@ class Segmenter(object):
                 torch.cuda.empty_cache()
                 self.segment()
         else:
+            print('segment first frame')
             self.segment_first()
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
-            for idx in index_frames:
+            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)[:50]
+            for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 
             

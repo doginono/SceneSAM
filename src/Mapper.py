@@ -31,6 +31,7 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         #-------added------------------
+        self.wait_segmenter = cfg['Segmenter']['mask_generator']
         self.T_wc = slam.T_wc
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
@@ -686,8 +687,9 @@ class Mapper(object):
             gt_semantic = None
         #as long as the sematic files are not added like .../Results/sematic*.npy
         else: """
-        while(self.idx_segmenter[0] == 0):
-                    time.sleep(0.1)
+        if self.wait_segmenter:
+            while(self.idx_segmenter[0] == 0):
+                        time.sleep(0.1)
         print(f"start mapping, is coarse mapper: {self.coarse_mapper}")
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
@@ -700,18 +702,30 @@ class Mapper(object):
 
             #the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
             #this ensures that the current frame has always been segmented before the mappers start training on it
-            if init:
-                pass
-            elif self.coarse_mapper:
-                while True:
-                    if self.idx_segmenter[0] > self.idx_coarse_mapper[0]:
-                        break
-                    time.sleep(0.1)
-            else: #normal mapper
-                while True:
-                    if self.idx_segmenter[0] > self.idx_mapper[0]:
-                        break
-                    time.sleep(0.1)
+            if self.wait_segmenter:
+                if init:
+                    pass
+                elif self.coarse_mapper:
+                    while True:
+                        if self.idx_segmenter[0] > self.idx_coarse_mapper[0]:
+                            break
+                        time.sleep(0.1)
+                else: #normal mapper
+                    while True:
+                        if self.idx_segmenter[0] > self.idx_mapper[0]:
+                            break
+                        time.sleep(0.1)
+            else:#such that coarse mapper and normal mapper stay roughly in sync
+                if self.coarse_mapper:
+                    while True:
+                        if self.idx_mapper[0] +3 > self.idx_coarse_mapper[0]:
+                            break
+                        time.sleep(0.1)
+                else: #normal mapper
+                    while True:
+                        if self.idx_coarse_mapper[0] +3 > self.idx_mapper[0]:
+                            break
+                        time.sleep(0.1)
             """if init:
                 self.idx[0] = idx
             else:
