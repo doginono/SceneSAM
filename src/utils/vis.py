@@ -77,6 +77,9 @@ class visualizerForIds:
         self.colors = [np.random.random(3) for i in range(1000)]
         self.cmap = mcolors.ListedColormap(self.colors)
 
+    def get_colors(self, ids):
+        return self.cmap(ids)
+
     def visualizer(self, anns, ax=None, title=""):
         # Create a 2D numpy array
         plt.figure(figsize=(10,10))

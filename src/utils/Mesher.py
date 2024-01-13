@@ -7,6 +7,7 @@ import trimesh
 from packaging import version
 from src.utils.datasets import get_dataset
 from src.common import  get_rgb_from_instance_id #J:added
+from src.utils.vis import visualizerForIds #J:added
 
 
 class Mesher(object):
@@ -42,6 +43,8 @@ class Mesher(object):
         self.bound = slam.bound
         self.nice = slam.nice
         self.verbose = slam.verbose
+
+        self.visualizer = visualizerForIds()
 
         self.marching_cubes_bound = torch.from_numpy(
             np.array(cfg['mapping']['marching_cubes_bound']) * self.scale)
@@ -388,8 +391,9 @@ class Mesher(object):
         assert (color and ~semantic) or (~color and semantic), 'color and semantic mesh extraction are mutually exclusive'
         print('start meshing')
         with torch.no_grad():
-
+            print('set grid points with resolutiojn', self.resolution)
             grid = self.get_grid_uniform(self.resolution) #gets
+            print('finish set grid points')
             points = grid['grid_points']
             points = points.to(device)
             
@@ -442,6 +446,7 @@ class Mesher(object):
 
                 z = np.concatenate(z, axis=0)
                 z[~mask] = 100
+                print(np.unique(z))
 
             z = z.astype(np.float32)
 
@@ -622,8 +627,9 @@ class Mesher(object):
 
                 num_instances = vertex_id.shape[-1]
                 vertex_id = torch.argmax(vertex_id, dim=1).numpy() #get instance id
-                vertex_colors = get_rgb_from_instance_id(vertex_id, num_instances) #add colormap to map instance id to color
+                vertex_colors = self.visualizer.get_colors(vertex_id) #J:added
                 vertex_colors = np.clip(vertex_colors, 0, 1) * 255 #add colormap to map instance id to color
+                
                 vertex_colors = vertex_colors.astype(np.uint8) #J: name it to colors to be able to reuse the end of the function
 
                 # cyan color for forecast region

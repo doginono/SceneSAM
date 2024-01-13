@@ -17,6 +17,7 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 class Segmenter(object):
 
     def __init__(self,cfg, args, slam):
+        self.mask_generator = cfg['Segmenter']['mask_generator']
         self.first_min_area = cfg['mapping']['first_min_area']
         self.idx = slam.idx_segmenter
         self.T_wc = slam.T_wc
@@ -56,7 +57,7 @@ class Segmenter(object):
             self.semantic_frames,
             id_counter,
             points_per_instance=self.points_per_instance,  # Corrected parameter name
-            verbose=False
+            #verbose=False
         )
         semantic_data = id_generation.update_current_frame(semantic_data, map)
         print(f"update id_counter from {self.id_counter[0]} to {id_counter}")
@@ -77,7 +78,7 @@ class Segmenter(object):
             masks = pickle.load(f)"""
         print("end sam")
         del sam
-        semantic_data = id_generation.generateIds(masks, min_area=self.first_min_area)
+        semantic_data = backproject.generateIds(masks, min_area=self.first_min_area)
         if idx ==0:
             self.id_counter[0] = semantic_data.max() +1 
         else:
@@ -93,7 +94,7 @@ class Segmenter(object):
         print("segmentation done and cleared memory")
         self.idx[0] = idx + self.every_frame
         
-    """def segment(self,idx):
+    def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, id_counter = self.new_id, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=samples)
@@ -121,29 +122,31 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
-        self.samples = realWorldSamples"""
+        self.samples = realWorldSamples
 
 
     def run(self):
         
+
         #----------end zero frame------------------
-        while(True):
-            if self.idx.item() + self.every_frame > self.n_img-1:
-                return
-            
-            while(self.idx.item()>self.idx_mapper.item() or self.idx.item()>self.idx_coarse_mapper.item()):
-                time.sleep(0.1)
-            print("start segmenting")
-            self.slam.to_cpu()
-            torch.cuda.empty_cache()
-            self.segment()
-        """self.segment_first()
-        self.predictor = create_instance_seg.create_predictor('cuda')
-        index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
-        for idx in index_frames:
-            self.segment(idx)
-            for over ids
-                point in samples with this id """
+        if self.mask_generator:
+            while(True):
+                if self.idx.item() + self.every_frame > self.n_img-1:
+                    return
+                
+                while(self.idx.item()>self.idx_mapper.item() or self.idx.item()>self.idx_coarse_mapper.item()):
+                    time.sleep(0.1)
+                print("start segmenting")
+                self.slam.to_cpu()
+                torch.cuda.empty_cache()
+                self.segment()
+        else:
+            self.segment_first()
+            self.predictor = create_instance_seg.create_predictor('cuda')
+            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+            for idx in index_frames:
+                self.segment_idx(idx)
+                
             
         
         

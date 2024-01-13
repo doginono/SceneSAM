@@ -149,7 +149,7 @@ def create_complete_mapping_of_current_frame(
         ids_past = segmentations[int(num / points_per_instance)]
         # this gets overwritt‚en
         depthg = readDepth(depths[num])
-        samplesFromCurrentMask = sample_from_instances(
+        samplesFromCurrentMask = backproject.sample_from_instances(
             ids_curr, np.max(unique_ids) + 1, points_per_instance
         )
         for instance in unique_ids:
