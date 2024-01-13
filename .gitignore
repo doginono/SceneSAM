@@ -5,10 +5,13 @@ output
 .vscode
 3rdparty
 Datasets
+logs*
 logs
+logs0
 segmentation/data
 segmentation/our_gen
 .metals/*
+sam/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -139,6 +142,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+outputs/
+multirun/
 room*
 multirun/
 outputs/

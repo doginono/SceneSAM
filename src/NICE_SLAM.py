@@ -8,13 +8,13 @@ import torch.multiprocessing as mp
 
 from src import config
 from src.Mapper import Mapper
-from src.Tracker import Tracker
+#from src.Tracker import Tracker
+from src.Segmenter import Segmenter
 from src.utils.datasets import get_dataset
 from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
-from torch.utils.tensorboard import SummaryWriter #J: added
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -26,8 +26,12 @@ class NICE_SLAM():
     """
 
     def __init__(self, cfg, args):
-        
-        #self.writer_path = cfg['writer_path'] #J:added
+
+        #for groundtruth tracking
+        path_to_traj = cfg['tracking']['path']
+        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        self.T_wc[:,1:3] *= -1
+        self.mask_generator = cfg['Segmenter']['mask_generator']
 
         self.cfg = cfg
         self.args = args
@@ -70,22 +74,37 @@ class NICE_SLAM():
         except RuntimeError:
             pass
         
-        self.frame_reader = get_dataset(cfg, args, self.scale) #J:saves ordered the paths of images, depth masks 
+        self.id_counter = torch.zeros((1)).int()
+        self.id_counter.share_memory_()
+        self.frame_reader = get_dataset(cfg, args, self.scale, slam=self) #J:saves ordered the paths of images, depth masks 
         self.n_img = len(self.frame_reader) 
-        self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
-        self.estimate_c2w_list.share_memory_()
-
+        #self.estimate_c2w_list = torch.zeros((self.n_img, 4, 4))
+        #self.estimate_c2w_list.share_memory_()
+        
         self.gt_c2w_list = torch.zeros((self.n_img, 4, 4))
         self.gt_c2w_list.share_memory_()
-        self.idx = torch.zeros((1)).int()
-        self.idx.share_memory_()
+        """self.idx = torch.zeros((1)).int()
+        self.idx.share_memory_()"""
+        self.idx_mapper = torch.zeros((1)).int()
+        self.idx_mapper.share_memory_()
+        self.idx_coarse_mapper = torch.zeros((1)).int()
+        self.idx_coarse_mapper.share_memory_()
+        self.idx_segmenter = torch.zeros((1)).int()
+        self.idx_segmenter.share_memory_()
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img, self.H, self.W)))
+        self.semantic_frames.share_memory_()
+       
+        self.frame_reader.__post_init__(self)
+
+        
+        
         self.mapping_first_frame = torch.zeros((1)).int()
         self.mapping_first_frame.share_memory_()
         # the id of the newest frame Mapper is processing
-        self.mapping_idx = torch.zeros((1)).int()
-        self.mapping_idx.share_memory_()
-        self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
-        self.mapping_cnt.share_memory_()
+        #self.mapping_idx = torch.zeros((1)).int()
+        #self.mapping_idx.share_memory_()
+        #self.mapping_cnt = torch.zeros((1)).int()  # counter for mapping
+        #self.mapping_cnt.share_memory_()
         for key, val in self.shared_c.items(): #J:shared_c contains the grids for the different decoders
             val = val.to(self.cfg['mapping']['device'])
             val.share_memory_()
@@ -94,18 +113,26 @@ class NICE_SLAM():
             self.cfg['mapping']['device'])
         self.shared_decoders.share_memory()
         self.renderer = Renderer(cfg, args, self) #J: changed from default in renderer constructor, thisis the train renderer
-        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=200000, ray_batch_size=20000)
+        self.vis_renderer = Renderer(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
 
-        self.mesher = Mesher(cfg, args, self)
+        self.mesher = Mesher(cfg, args, self, points_batch_size=100000, ray_batch_size=10000)
         self.logger = Logger(cfg, args, self)
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
-        #TODO mapper has some attributes related to color, which are not clear to me: color_refine, w_color_loss, fix_color 
+        #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
+        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(self.output, 'segmentation'))
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
-        self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
+        #self.tracker = Tracker(cfg, args, self) #TODO, returns will be different -> small changes in Tracker function, not in initialization
         self.print_output_desc()
+
+    def to_cpu(self):
+        self.shared_decoders.cpu()
+    
+    def to_gpu(self):
+        self.shared_decoders.to('cuda')
+
 
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
@@ -284,7 +311,7 @@ class NICE_SLAM():
         Args:
             rank (int): Thread ID.
         """
-
+        assert False, "should currently not be used"
         # should wait until the mapping of first frame is finished
         while (1):
             if self.mapping_first_frame[0] == 1:
@@ -293,43 +320,61 @@ class NICE_SLAM():
 
         self.tracker.run()
 
-    def mapping(self, rank):
+    def mapping(self, rank, lock):
         """
         Mapping Thread. (updates middle, fine, and color level)
 
         Args:
             rank (int): Thread ID.
         """
+        print('Mapping Thread Started ', rank)
+        self.mapper.run(lock)
 
-        self.mapper.run()
-
-    def coarse_mapping(self, rank):
+    def coarse_mapping(self, rank, lock):
         """
         Coarse mapping Thread. (updates coarse level)
 
         Args:
             rank (int): Thread ID.
         """
-
-        self.coarse_mapper.run()
+        print('Mapping Thread Started ', rank)
+        self.coarse_mapper.run(lock)
+    
+    def segmenting(self, rank):
+        """
+        Segmenting Thread. (updates semantic level)
+        """
+        print('Segmenting Thread Started ', rank)
+        self.segmenter.run()
 
     def run(self):
         """
         Dispatch Threads.
         """
-
+        #torch.cuda.memory._record_memory_history(max_entries=100000000)
+   
         processes = []
-        for rank in range(3):
+        lock = mp.Lock() #for locking the access to the segmentation list
+        if not self.mask_generator:
+            print('start segmenter')
+            self.segmenter.run()
+            print('segmenter finished')
+            start = 1
+        else:
+            start = 0
+        
+        for rank in range(start,3):
             if rank == 0:
-                p = mp.Process(target=self.tracking, args=(rank, ))
+                #p = mp.Process(target=self.tracking, args=(rank, ))
+                p = mp.Process(target=self.segmenting, args=(rank, ))
             elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank, )) 
+                p = mp.Process(target=self.mapping, args=(rank,  lock)) 
             elif rank == 2:
                 if self.coarse:
-                    p = mp.Process(target=self.coarse_mapping, args=(rank, ))
+                    p = mp.Process(target=self.coarse_mapping, args=(rank, lock))
                 else:
                     continue
-            print('Started Thread: ', rank)
+            #print('Started Thread: ', rank)
             p.start()
             processes.append(p)
         for p in processes:

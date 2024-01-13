@@ -2,6 +2,24 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+import matplotlib.pyplot as plt #J: added
+
+
+#----------------added-------------------
+#function to turn a vector of instance ids into rgb colors
+def get_rgb_from_instance_id(instance_id, num_instances, colormap='tab20'):
+    #instance_id is a vector of shape (N, )
+    #returns a vector of shape (N, 3) with rgb colors
+    cmap = plt.get_cmap(colormap)
+    norm = plt.Normalize(vmin=0, vmax=num_instances)
+    color_mapping = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+
+    # Map each instance ID to a color
+    colors = color_mapping.to_rgba(instance_id)
+
+    return colors
+#------------------------------------------
+
 
 def as_intrinsics_matrix(intrinsics):
     """
@@ -213,7 +231,7 @@ def get_tensor_from_camera(RT, Tquad=False):
     return tensor
 
 
-def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='cuda:0'):
+def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='cuda:0', semantic_occupancy_multiplier=10):
     """
     Transforms model's predictions to semantically meaningful values.
 
@@ -247,7 +265,7 @@ def raw2outputs_nerf_color(stage, raw, z_vals, rays_d, occupancy=False, device='
             raw[..., 3] = torch.sigmoid(10*raw[..., -1])
         else:
             # semantic
-            raw[..., -1] = torch.sigmoid(10*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
+            raw[..., -1] = torch.sigmoid(semantic_occupancy_multiplier*raw[..., -1])#TODO: finetune this, it makes the occupancy map sharper when increased
         alpha = raw[..., -1]
     else:
         #J: never enters here in our case

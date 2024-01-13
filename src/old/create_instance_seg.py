@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
-import backproject
+from src.utils import backproject1
 
 
 def instance_encoding2file(encoding, path):
@@ -16,23 +16,29 @@ def instance_encoding2file(encoding, path):
 
 
 # TODO implement in nice-slam later
-def create_sam():
+def create_sam(device="cpu"):
     """_summary_
 
     Returns:
         SamAutomaticMaskGenerator: An SamAutomaticMaskGenerator object
     """
-    sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
+    sam_checkpoint = '/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth'
     model_type = "vit_b"
-
-    device = "cpu"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)
 
     mask_generator = SamAutomaticMaskGenerator(sam)
-
     return mask_generator
+
+def create_predictor(device="cuda"):
+    sam_checkpoint = '/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth'
+    model_type = "vit_b"
+    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+    sam.to(device=device)
+    predictor = SamPredictor(sam)
+    return predictor
+
 
 
 def create_instance_seg(img_path, store_directory, mask_generator):
@@ -61,4 +67,4 @@ def create_id(image, sam):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     masks = sam.generate(image)
-    return backproject.generateIds(masks)
+    return backproject1.generateIds(masks)

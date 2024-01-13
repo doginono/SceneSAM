@@ -2,7 +2,8 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from src.common import get_camera_from_tensor
+from src.common import get_camera_from_tensor, get_rgb_from_instance_id
+from src.utils.vis import visualizerForIds
 
 
 class Visualizer(object):
@@ -12,17 +13,23 @@ class Visualizer(object):
 
     """
 
-    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0'):
+    def __init__(self, freq, inside_freq, vis_dir, renderer, verbose, device='cuda:0', iters_first=1500, num_iter= 60, input_dimension_semantic = 101):
         self.freq = freq
         self.device = device
         self.vis_dir = vis_dir
         self.verbose = verbose
         self.renderer = renderer
         self.inside_freq = inside_freq
+        self.input_dimension_semantic = input_dimension_semantic #added
         os.makedirs(f'{vis_dir}', exist_ok=True)
+        
+        #------------------added------------------
+        self.iters_first = iters_first
+        self.num_iter = num_iter
+        self.visualizerForIds = visualizerForIds()
 
     def vis(self, idx, iter, gt_depth, gt_color, c2w_or_camera_tensor, c,
-            decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None):
+            decoders, gt_semantic=None, only_semantic=False, stage = "", writer = None, offset = 0):
         """
         Visualization of depth, color images and save to file.
 
@@ -39,12 +46,14 @@ class Visualizer(object):
             decoders (nn.module): decoders.
         """
 
-        #TODO: find way to make vis work with semantic -> currently cuda out of memory error
+        #torch.cuda.empty_cache()
         #TODO: render_img is super messy, clean it up
         if (idx % self.freq == 0) and (iter % self.inside_freq == 0) and stage != 'coarse':
+            idx = idx - offset
             with torch.no_grad():
                 if only_semantic == False:
                     if gt_semantic is not None:
+                        #Carefull, this is the only up to date version of this function
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                         gt_semantic_np = gt_semantic.cpu().numpy()
@@ -69,18 +78,24 @@ class Visualizer(object):
                         depth_np = depth.detach().cpu().numpy()
                         color_np = color.detach().cpu().numpy()
                         semantic_np = semantic.detach().cpu().numpy() #added
-                        print("SEMANTIC",semantic_np[0,:])
+                        """print("SEMANTIC",semantic_np[0,:])
                         print("SEMANTIC",semantic_np[1,:])
                         print("SEMANTIC TYPE",type(semantic_np))
-                        print("COLOR",color_np[0,0,:])
+                        print("COLOR",color_np[0,0,:])"""
                         depth_residual = np.abs(gt_depth_np - depth_np)
                         depth_residual[gt_depth_np == 0.0] = 0.0
                         color_residual = np.abs(gt_color_np - color_np)
                         color_residual[gt_depth_np == 0.0] = 0.0
-                        semantic_residual = np.abs(~(gt_semantic_np == semantic_np)) #added
-                        semantic_residual[gt_depth_np == 0.0] = 0.0 #added
-
+                        #------------------added------------------
+                        semantic_argmax = np.argmax(semantic_np, axis=2)
+                        print("semantic prediction: ", semantic_argmax)
+                        print("predicted ids: ", np.unique(semantic_argmax))
+                        #semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
+                        #semantic_pred[gt_depth_np == 0.0] = -1 #not sure what is right here
+                        predicted_semantic_probs = semantic_np[np.arange(semantic_np.shape[0])[:,None], np.arange(semantic_np.shape[1]), gt_semantic_np] #should contain the predicted probability of the correct instance
+                        #-----------------end-added------------------
                         fig, axs = plt.subplots(3, 3) #previously 2,3
+                        fig.suptitle(f'Frame: {idx:05d}, Iter: {iter:04d}')
                         fig.tight_layout()
                         max_depth = np.max(gt_depth_np)
                         axs[0, 0].imshow(gt_depth_np, cmap="plasma",
@@ -114,30 +129,51 @@ class Visualizer(object):
                         axs[1, 2].set_xticks([])
                         axs[1, 2].set_yticks([])
                         #------------------added------------------
-                        axs[2, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
-                        axs[2, 0].set_title('Input Semantic')
+                        axs[2,0], im = self.visualizerForIds.visualize(gt_semantic_np, ax = axs[2,0], title='Input Segmentation')
+                        #axs[2, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
+                        #axs[2, 0].im
+                        axs[2, 0].set_title('Input Instance')
                         axs[2, 0].set_xticks([])
                         axs[2, 0].set_yticks([])
-                        axs[2, 1].imshow(semantic_np, cmap="plasma", interpolation='nearest')
-                        axs[2, 1].set_title('Generated Semantic')
+                        axs[2,1], im = self.visualizerForIds.visualize(semantic_argmax, ax=axs[2, 1], title='Generated Segmentation')
+                        #axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
+                        #axs[2, 1].fig
+                        axs[2, 1].set_title('Generated Instance')
                         axs[2, 1].set_xticks([])
                         axs[2, 1].set_yticks([])
-                        axs[2, 2].imshow(semantic_residual, cmap="plasma", interpolation='nearest')
-                        axs[2, 2].set_title('Semantic Residual')
+                        img = axs[2, 2].imshow(predicted_semantic_probs, cmap='bwr', vmin=0, vmax=1)
+                        fig.colorbar(img, ax = axs[2,2], label='Class Probability')
+                        axs[2, 2].set_title('Residual Instance')
                         axs[2, 2].set_xticks([])
                         axs[2, 2].set_yticks([])
+                        
+                        """axs[2, 2].imshow(semantic_pred, cmap="plasma", interpolation='nearest')
+                        axs[2, 2].set_title('Correctness of Semantic prediction')
+                        axs[2, 2].set_xticks([])
+                        axs[2, 2].set_yticks([])"""
+                        
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
-                        writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
-                        plt.savefig(
-                            f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
+                        writer.add_figure(f'figure/{idx:05d}_{iter:04d}', fig, idx)
+                        """plt.clf()
+                        fig, ax = plt.subplots()
+                        img = ax.imshow(predicted_semantic_probs, cmap='bwr', vmin=0, vmax=1)
+                        fig.colorbar(img, ax = ax, label='Class Probability')
+                        ax.set_title('Predicted Probability of Correct Instance')
+                        ax.set_xticks([])
+                        ax.set_yticks([])
+                        writer.add_figure(f'figure/{idx:05d}_{iter:04d}_probs', fig, idx)"""
+                        #plt.savefig(
+                           # f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
                         
                         plt.clf()
 
                         if self.verbose:
                             print(
-                                f'1Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
+                                f'Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
                     else: #normal execution without semantics 
+                        assert False, "not up to date"
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy()
                         if len(c2w_or_camera_tensor.shape) == 1:
@@ -198,6 +234,7 @@ class Visualizer(object):
                         axs[1, 2].set_xticks([])
                         axs[1, 2].set_yticks([])
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                         writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
@@ -209,6 +246,7 @@ class Visualizer(object):
                                 f'2Saved rendering visualization of color/depth image at {self.vis_dir}/{idx:05d}_{iter:04d}.jpg')
 
                 else: #include semantics ignore color
+                    assert False, "not up to date"
                     if (idx % self.freq == 0) and (iter % self.inside_freq == 0):
                         gt_depth_np = gt_depth.cpu().numpy()
                         gt_color_np = gt_color.cpu().numpy() #Done add semantics
@@ -290,6 +328,7 @@ class Visualizer(object):
                         axs[1, 2].set_yticks([])
                         #-----------------end-added------------------
                         plt.subplots_adjust(wspace=0, hspace=0)
+                        #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                         writer.add_figure(f'{idx:05d}_{iter:04d}', fig, idx)
                         plt.savefig(
                             f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)

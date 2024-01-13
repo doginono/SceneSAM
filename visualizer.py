@@ -38,7 +38,7 @@ if __name__ == '__main__':
     scale = cfg['scale']
     output = cfg['data']['output'] if args.output is None else args.output
     if args.vis_input_frame:
-        frame_reader = get_dataset(cfg, args, scale, device='cpu')
+        frame_reader = get_dataset(cfg, args, scale, device='cpu', tracker=True)
         frame_loader = DataLoader(
             frame_reader, batch_size=1, shuffle=False, num_workers=4)
     ckptsdir = f'{output}/ckpts'

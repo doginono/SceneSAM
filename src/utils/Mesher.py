@@ -6,6 +6,8 @@ import torch.nn.functional as F
 import trimesh
 from packaging import version
 from src.utils.datasets import get_dataset
+from src.common import  get_rgb_from_instance_id #J:added
+from src.utils.vis import visualizerForIds #J:added
 
 
 class Mesher(object):
@@ -25,7 +27,7 @@ class Mesher(object):
         """
         self.points_batch_size = points_batch_size
         self.ray_batch_size = ray_batch_size
-        self.renderer = slam.renderer
+        self.renderer = slam.vis_renderer
         self.coarse = cfg['coarse']
         self.scale = cfg['scale']
         self.occupancy = cfg['occupancy']
@@ -42,10 +44,13 @@ class Mesher(object):
         self.nice = slam.nice
         self.verbose = slam.verbose
 
+        self.visualizer = visualizerForIds()
+
         self.marching_cubes_bound = torch.from_numpy(
             np.array(cfg['mapping']['marching_cubes_bound']) * self.scale)
 
-        self.frame_reader = get_dataset(cfg, args, self.scale, device='cpu')
+        self.frame_reader = get_dataset(cfg, args, self.scale, device='cpu', slam = slam)
+        self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
 
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
@@ -311,8 +316,11 @@ class Mesher(object):
             ret = ret.squeeze(0)
             if len(ret.shape) == 1 and ret.shape[0] == 4:
                 ret = ret.unsqueeze(0)
-
-            ret[~mask, 3] = 100
+                
+            if stage == 'semantic':
+                ret[~mask, -1] = 100 #J:occupancy set high for outside points
+            else:
+                ret[~mask, 3] = 100 #J:occupancy set high
             rets.append(ret)
 
         ret = torch.cat(rets, dim=0)
@@ -356,12 +364,15 @@ class Mesher(object):
                  device='cuda:0',
                  show_forecast=False,
                  color=True,
+                 semantic=False, #J:added
                  clean_mesh=True,
                  get_mask_use_all_frames=False):
         """
         Extract mesh from scene representation and save mesh to file.
 
         Args:
+            semantic (bool, optional): whether to extract semantic mesh. Defaults to False. Mutually exclusive with color
+
             mesh_out_file (str): output mesh filename.
             c (dicts): feature grids.
             decoders (nn.module): decoders.
@@ -377,11 +388,15 @@ class Mesher(object):
             get_mask_use_all_frames (bool, optional): 
                 whether to use all frames or just keyframes when getting the seen/unseen mask. Defaults to False.
         """
+        assert (color and ~semantic) or (~color and semantic), 'color and semantic mesh extraction are mutually exclusive'
+        print('start meshing')
         with torch.no_grad():
-
+            print('set grid points with resolutiojn', self.resolution)
             grid = self.get_grid_uniform(self.resolution) #gets
+            print('finish set grid points')
             points = grid['grid_points']
             points = points.to(device)
+            
 
             if show_forecast:
 
@@ -431,6 +446,7 @@ class Mesher(object):
 
                 z = np.concatenate(z, axis=0)
                 z[~mask] = 100
+                print(np.unique(z))
 
             z = z.astype(np.float32)
 
@@ -490,12 +506,12 @@ class Mesher(object):
                                            process=False)
                     seen_mask, forecast_mask, unseen_mask = self.point_masks(
                         points, keyframe_dict, estimate_c2w_list, idx, device=device, 
-                        get_mask_use_all_frames=get_mask_use_all_frames)
+                        get_mask_use_all_frames=get_mask_use_all_frames) #J: returns the masks for seen, forecast and unseen points during training
                     unseen_mask = ~seen_mask
                     face_mask = unseen_mask[mesh.faces].all(axis=1)
                     mesh.update_faces(~face_mask)
 
-                # get connected components
+                # get connected components; J:means object connected get an own mesh
                 components = mesh.split(only_watertight=False)
                 if self.get_largest_components:
                     areas = np.array([c.area for c in components], dtype=np.float)
@@ -509,14 +525,14 @@ class Mesher(object):
                 vertices = mesh.vertices
                 faces = mesh.faces
 
-            if color:
+            if color: 
                 if self.color_mesh_extraction_method == 'direct_point_query':
                     # color is extracted by passing the coordinates of mesh vertices through the network
                     points = torch.from_numpy(vertices)
                     z = []
                     for i, pnts in enumerate(
                             torch.split(points, self.points_batch_size, dim=0)):
-                        z_color = self.eval_points(
+                        z_color = self.eval_points( 
                             pnts.to(device).float(), decoders, c, 'color',
                             device).cpu()[..., :3]
                         z.append(z_color)
@@ -552,7 +568,7 @@ class Mesher(object):
                     color = torch.cat(color_list, dim=0)
                     vertex_colors = color.cpu().numpy()
 
-                vertex_colors = np.clip(vertex_colors, 0, 1) * 255
+                vertex_colors = np.clip(vertex_colors, 0, 1) * 255 
                 vertex_colors = vertex_colors.astype(np.uint8)
 
                 # cyan color for forecast region
@@ -563,6 +579,68 @@ class Mesher(object):
                     vertex_colors[forecast_mask, 0] = 0
                     vertex_colors[forecast_mask, 1] = 255
                     vertex_colors[forecast_mask, 2] = 255
+            #----------------------------------added for semantic mesh extraction----------------------------------
+            elif semantic: 
+                if self.color_mesh_extraction_method == 'direct_point_query':
+                    # color is extracted by passing the coordinates of mesh vertices through the network
+                    points = torch.from_numpy(vertices)
+                    z = []
+                    for i, pnts in enumerate(
+                            torch.split(points, self.points_batch_size, dim=0)):
+                        z_semantic = self.eval_points( #TODO eval in stage semantic
+                            pnts.to(device).float(), decoders, c, 'semantic',
+                            device).cpu()
+                        z_semantic = z_semantic[..., :-1] #remove occupancy
+                        z.append(z_semantic)
+                    z = torch.cat(z, axis=0)
+                    vertex_id = z
+
+                elif self.color_mesh_extraction_method == 'render_ray_along_normal':
+                    assert False, 'render_ray_along_normal not implemented for semantic mesh extraction'
+                    # for imap*
+                    # render out the color of the ray along vertex normal, and assign it to vertex color
+                    import open3d as o3d
+                    mesh = o3d.geometry.TriangleMesh(
+                        vertices=o3d.utility.Vector3dVector(vertices),
+                        triangles=o3d.utility.Vector3iVector(faces))
+                    mesh.compute_vertex_normals()
+                    vertex_normals = np.asarray(mesh.vertex_normals)
+                    rays_d = torch.from_numpy(vertex_normals).to(device)
+                    sign = -1.0
+                    length = 0.1
+                    rays_o = torch.from_numpy(
+                        vertices+sign*length*vertex_normals).to(device)
+                    color_list = []
+                    batch_size = self.ray_batch_size
+                    gt_depth = torch.zeros(vertices.shape[0]).to(device)
+                    gt_depth[:] = length
+                    for i in range(0, rays_d.shape[0], batch_size):
+                        rays_d_batch = rays_d[i:i+batch_size]
+                        rays_o_batch = rays_o[i:i+batch_size]
+                        gt_depth_batch = gt_depth[i:i+batch_size]
+                        depth, uncertainty, color = self.renderer.render_batch_ray(
+                            c, decoders, rays_d_batch, rays_o_batch, device, 
+                            stage='color', gt_depth=gt_depth_batch)
+                        color_list.append(color)
+                    color = torch.cat(color_list, dim=0)
+                    vertex_colors = color.cpu().numpy()
+
+                num_instances = vertex_id.shape[-1]
+                vertex_id = torch.argmax(vertex_id, dim=1).numpy() #get instance id
+                vertex_colors = self.visualizer.get_colors(vertex_id) #J:added
+                vertex_colors = np.clip(vertex_colors, 0, 1) * 255 #add colormap to map instance id to color
+                
+                vertex_colors = vertex_colors.astype(np.uint8) #J: name it to colors to be able to reuse the end of the function
+
+                # cyan color for forecast region
+                if show_forecast:
+                    seen_mask, forecast_mask, unseen_mask = self.point_masks(
+                        vertices, keyframe_dict, estimate_c2w_list, idx, device=device,
+                        get_mask_use_all_frames=get_mask_use_all_frames)
+                    vertex_colors[forecast_mask, 0] = 0
+                    vertex_colors[forecast_mask, 1] = 255
+                    vertex_colors[forecast_mask, 2] = 255
+            #-------------------------------------------------------------------------------------------------------
 
             else:
                 vertex_colors = None
@@ -572,4 +650,11 @@ class Mesher(object):
             mesh.export(mesh_out_file)
             if self.verbose:
                 print('Saved mesh at', mesh_out_file)
+            
+            del points, z
+            torch.cuda.empty_cache()
+
+            print('finish meshing')
+
+            
                 

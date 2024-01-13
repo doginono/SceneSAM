@@ -1,14 +1,13 @@
-from backproject import *
+from src.utils.backproject import *
 import numpy as np
 import cv2
 import torch
 import math
-import backproject
+from src.utils import backproject
 from scipy import signal
 import torch.nn.functional as F 
-from vis import visualizerForIds
-import matplotlib.pyplot as plt
-import fpsample
+from src.utils.vis import visualizerForIds
+
 def readDepth(filepath):
     depth = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
     depth_data = depth.astype(np.float32) / 6553.5
@@ -311,7 +310,9 @@ def createReverseMappingCombined(
     #check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
     
-    print("unique_ids", unique_ids)
+    import matplotlib.pyplot as plt
+    import fpsample
+    #print("unique_ids", unique_ids)
     #temp=[]
     for instance in unique_ids:
         
@@ -345,9 +346,10 @@ def createReverseMappingCombined(
         if np.all(masks[np.ix_(instanceId[1,:].astype(int), instanceId[0,:].astype(int))] != instance):
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
+            #print("REMOVED", instance)
     
             
+    #print(max_id)
     visualizerForId = visualizerForIds()
     visualizerForId.visualizer(masks)
 
@@ -383,12 +385,12 @@ def createReverseMappingCombined(
 
         masks[condition] = max_id + counter
         #need to sample more in the first time I found the new id
-        plt.figure(figsize=(20,20))
+        """plt.figure(figsize=(20,20))
         plt.imshow(current_frame)
         #print(instanceId[0,i],instanceId[1,i])
         plt.scatter(random_index[1],random_index[0],c="yellow",s=500,marker='o')
         plt.axis('off')
-        plt.show()
+        plt.show()"""
         
 
     max_id = max_id + counter
@@ -398,38 +400,15 @@ def createReverseMappingCombined(
         numberOfMasks, 
         points_per_instance=5
     )
-    #3d
+    
     realWorldProjectCurr = backproject.realWorldProject(
         samplesFromCurrent[:2,:],T[curr_frame_number], K, depthf
     )
-    #add the ids 4d
     realWorldProjectCurr = np.concatenate((realWorldProjectCurr,samplesFromCurrent[2:,:]),axis=0)
     samples=np.concatenate((samples,realWorldProjectCurr),axis=1)
-    '''
-    unique_ids = np.unique(masks).astype(int)
-    allsampled=[]
-    for i in unique_ids:
-        temp = samples[:3, samples[3, :] == i]
-
-        if samples[:2, samples[3, :] == i].size != 0:
-            theRelevant = np.array(list(zip(temp[0].tolist(), temp[1].tolist(), temp[2].tolist())))
-            fps_indices = fpsample.fps_sampling(theRelevant, min(200, len(theRelevant)))
-            fps_samples = theRelevant[fps_indices]
-            allsampled.append(fps_samples)
-
-    allsampled = np.concatenate(allsampled, axis=0)
-    # Create a mask that checks if each sample in samples is in fps_samples
-    mask = np.isin(samples[:3, :].T, allsampled).all(axis=1)
-    # Use the mask to index samples
-    # samples = samples[:, mask]
+    
     #fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
     #samples=cleanSamples(samples, T_current, K, depthf, masks)
-    print(allsampled.shape)
-    print(allsampled)
-    #samples=samples[:,allsampled.astype(int)]
-    '''
-    print(samples.shape)
-    
     return masks,samples
 
 def cleanSamples(samples,T_current, K, depthf, masks):
@@ -447,8 +426,8 @@ def cleanSamples(samples,T_current, K, depthf, masks):
         if instance_data.shape[0]==frontProjectedSamples.shape[0]:
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
-    print("samples",np.unique(samples[3,:]))
+            #print("REMOVED", instance)
+    #print("samples",np.unique(samples[3,:]))
     
     
     return samples
