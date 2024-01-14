@@ -356,9 +356,7 @@ class NICE_SLAM():
         processes = []
         lock = mp.Lock() #for locking the access to the segmentation list
         if not self.mask_generator:
-            print('start segmenter')
             self.segmenter.run()
-            print('segmenter finished')
             start = 1
         else:
             start = 0

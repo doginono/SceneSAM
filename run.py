@@ -40,9 +40,9 @@ def main():
         args.config, 'configs/nice_slam_sem.yaml' if args.nice else 'configs/imap.yaml')
     
     #----------------------------added for tensorboard writer---------------------------
-    num_of_runs = len(os.listdir(cfg["writer_path"])) if os.path.exists(cfg["writer_path"]) else 0
-    path = os.path.join(cfg["writer_path"], f'run_{num_of_runs + 1}')
-    cfg['writer_path'] = path
+    num_of_runs = len(os.listdir(cfg["data"]['logs'])) if os.path.exists(cfg["data"]['logs']) else 0
+    path = os.path.join(cfg["data"]['logs'], f'run_{num_of_runs + 1}')
+    cfg["data"]['logs'] = path
     
     writer = SummaryWriter(path)
     hparams_path = cfg['inherit_from']

@@ -136,7 +136,7 @@ class Segmenter(object):
 
     def run(self):
         if self.use_stored:
-            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)[:50]
+            index_frames = np.arange(0, self.n_img, self.every_frame)
             for index in tqdm(index_frames, desc='Loading stored segmentations'):
                 path = os.path.join(self.store_directory, f'frame_{index}.npy')
                 self.semantic_frames[index] = torch.from_numpy(np.load(path))

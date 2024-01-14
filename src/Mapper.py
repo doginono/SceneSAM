@@ -36,7 +36,7 @@ class Mapper(object):
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
-        self.writer_path = cfg['writer_path'] #J:added
+        self.writer_path = cfg['data']['logs'] #J:added
         self.use_vis = cfg['mapping']['use_vis']
         self.use_mesh = cfg['mapping']['use_mesh']
         self.iters_first = cfg['mapping']['iters_first']
@@ -831,7 +831,7 @@ class Mapper(object):
 
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
-                if ~self.coarse_mapper:
+                """if ~self.coarse_mapper:
                     gt_depth_np = gt_depth.cpu().numpy()
                     gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                     semantic_np = gt_semantic.detach().cpu().numpy()
@@ -843,7 +843,7 @@ class Mapper(object):
                                             vmin=0, vmax=np.max(gt_depth_np))
                     axs[1].imshow(gt_color_np, cmap="plasma")
                     axs[2].imshow(semantic_argmax, cmap="plasma")
-                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")
+                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")"""
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
