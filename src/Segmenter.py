@@ -24,6 +24,8 @@ class Segmenter(object):
         if self.store or self.store_vis:
             os.makedirs(f'{store_directory}', exist_ok=True)
 
+        self.use_stored = cfg['Segmenter']['use_stored']
+
         self.mask_generator = cfg['Segmenter']['mask_generator']
         self.first_min_area = cfg['mapping']['first_min_area']
         self.idx = slam.idx_segmenter
@@ -133,7 +135,12 @@ class Segmenter(object):
 
 
     def run(self):
-        
+        if self.use_stored:
+            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)[:50]
+            for index in tqdm(index_frames, desc='Loading stored segmentations'):
+                path = os.path.join(self.store_directory, f'frame_{index}.npy')
+                self.semantic_frames[index] = torch.from_numpy(np.load(path))
+            return
 
         #----------end zero frame------------------
         if self.mask_generator:
@@ -151,7 +158,7 @@ class Segmenter(object):
             print('segment first frame')
             self.segment_first()
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)[:50]
+            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
             
@@ -160,11 +167,11 @@ class Segmenter(object):
             torch.cuda.empty_cache()
 
             if self.store:
-                for index in [0]+list(index_frames):
+                for index in tqdm([0]+list(index_frames), desc = 'Storing segmentations'):
                     path = os.path.join(self.store_directory, f'frame_{index}.npy')
                     np.save(path, self.semantic_frames[index].numpy())
             if self.store_vis:
-                for index in [0]+list(index_frames):
+                for index in tqdm([0]+list(index_frames), desc = 'Storing visualizations'):
                     path = os.path.join(self.store_directory, f'frame_{index}.png')
                     self.visualizer.visualize(self.semantic_frames[index].numpy(), path = path)
                     

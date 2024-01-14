@@ -28,7 +28,7 @@ class NICE_SLAM():
     def __init__(self, cfg, args):
 
         #for groundtruth tracking
-        path_to_traj = cfg['tracking']['path']
+        path_to_traj = cfg['data']['input_folder']+'/traj.txt'
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
         self.mask_generator = cfg['Segmenter']['mask_generator']

@@ -3,7 +3,6 @@ meshing:
   eval_rec: True
   resolution: 256 # change to 512 for higher resolution geometry
 tracking:
-  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt'
   vis_freq: 10
   vis_inside_freq: 25
   ignore_edge_W: 100
@@ -15,8 +14,10 @@ tracking:
   iters: 10
 Segmenter:
   mask_generator: False
-  store: False
+  store: True
+  use_stored: False
   store_vis: False
+
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
