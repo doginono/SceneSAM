@@ -9,6 +9,9 @@ import torch.nn.functional as F
 from vis import visualizerForIds
 import matplotlib.pyplot as plt
 import fpsample
+from sklearn.cluster import KMeans
+import numpy as np
+
 def readDepth(filepath):
     depth = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
     depth_data = depth.astype(np.float32) / 6553.5
@@ -320,9 +323,17 @@ def createReverseMappingCombined(
         #print(count,frontProjectedSamples.shape)
         instanceId = frontProjectedSamples[:, filtre]
         if instanceId.size is not 0 and instanceId[2,0]>=0:
-           
+            #print("instanceId",instance)
             theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
+            kmeans=KMeans(n_clusters=2, random_state=0).fit(theRelevant)
             fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
+            '''plt.figure(figsize=(20,20))
+            plt.imshow(current_frame)
+            #print(instanceId[0,i],instanceId[1,i])
+            plt.scatter(theRelevant[fps][4][0],theRelevant[fps][4][1],c="yellow",s=500,marker='o')
+            plt.axis('off')
+            plt.show()'''
+            #print(theRelevant[fps])
             if len(fps)==points_per_instance:
                 sampledPositive=[1]*len(fps) 
                 mask, _, _ = predictor.predict(
@@ -345,11 +356,11 @@ def createReverseMappingCombined(
         if np.all(masks[np.ix_(instanceId[1,:].astype(int), instanceId[0,:].astype(int))] != instance):
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
+            #print("REMOVED", instance)
     
             
-    visualizerForId = visualizerForIds()
-    visualizerForId.visualizer(masks)
+    #visualizerForId = visualizerForIds()
+    #visualizerForId.visualizer(masks)
 
     
     #sample from the right side
@@ -383,12 +394,6 @@ def createReverseMappingCombined(
 
         masks[condition] = max_id + counter
         #need to sample more in the first time I found the new id
-        plt.figure(figsize=(20,20))
-        plt.imshow(current_frame)
-        #print(instanceId[0,i],instanceId[1,i])
-        plt.scatter(random_index[1],random_index[0],c="yellow",s=500,marker='o')
-        plt.axis('off')
-        plt.show()
         
 
     max_id = max_id + counter
@@ -428,7 +433,7 @@ def createReverseMappingCombined(
     print(allsampled)
     #samples=samples[:,allsampled.astype(int)]
     '''
-    print(samples.shape)
+    #print(samples.shape)
     
     return masks,samples
 
@@ -447,8 +452,8 @@ def cleanSamples(samples,T_current, K, depthf, masks):
         if instance_data.shape[0]==frontProjectedSamples.shape[0]:
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
-    print("samples",np.unique(samples[3,:]))
+            #print("REMOVED", instance)
+    #print("samples",np.unique(samples[3,:]))
     
     
     return samples
