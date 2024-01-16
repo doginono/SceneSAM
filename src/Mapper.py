@@ -120,7 +120,7 @@ class Mapper(object):
         else:"""
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, slam = slam, tracker=False)
-        self.frame_reader.__post_init__(slam)
+        #self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
@@ -716,7 +716,8 @@ class Mapper(object):
                             break
                         time.sleep(0.1)
             else:#such that coarse mapper and normal mapper stay roughly in sync
-                if self.coarse_mapper:
+                pass
+                """if self.coarse_mapper:
                     while True:
                         if self.idx_mapper[0] +3 > self.idx_coarse_mapper[0]:
                             break
@@ -725,7 +726,7 @@ class Mapper(object):
                     while True:
                         if self.idx_coarse_mapper[0] +3 > self.idx_mapper[0]:
                             break
-                        time.sleep(0.1)
+                        time.sleep(0.1)"""
             """if init:
                 self.idx[0] = idx
             else:
@@ -882,9 +883,9 @@ class Mapper(object):
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'
-                    #self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
-                    #                     idx,  self.device, show_forecast=self.mesh_coarse_level,
-                    #                     clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
+                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
+                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
+                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
                     self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) #mesh on segmentation

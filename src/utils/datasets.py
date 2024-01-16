@@ -149,6 +149,7 @@ class Replica(BaseDataset):
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
+        self.seg_folder = f'{self.input_folder}/segmentation'
         #-------------------added-----------------------------------------------
         #self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
         self.mask_paths = sorted(glob.glob(f'{self.input_folder}/results/mask*.pkl'))
@@ -165,7 +166,8 @@ class Replica(BaseDataset):
         self.load_poses(f'{self.input_folder}/traj.txt')
     
     def __post_init__(self, slam):
-        self.semantic_frames = slam.semantic_frames
+        #self.semantic_frames = slam.semantic_frames
+        assert False, "should not be entered, not used anymore"
        
     def setLock(self, lock): #J: should only be relevant for the Mapper
         self.lock = lock
@@ -181,10 +183,11 @@ class Replica(BaseDataset):
         """
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
-        color_data = cv2.imread(color_path) 
+        color_data = cv2.imread(color_path)
+
         #-------------------added-----------------------------------------------
         
-            
+        semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
 
 
         
@@ -273,7 +276,8 @@ class Replica(BaseDataset):
                 print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
             print('release lock')'''
 
-        semantic_data = self.semantic_frames[index].clone().int()
+        #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+        semantic_data = np.load(semantic_path)
         # Create one-hot encoding using numpy.eye
         print(f"read in semantic data of frame {index}: ", semantic_data)
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)

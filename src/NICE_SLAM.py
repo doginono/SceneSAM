@@ -32,6 +32,7 @@ class NICE_SLAM():
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
         self.mask_generator = cfg['Segmenter']['mask_generator']
+        self.every_frame = cfg['mapping']['every_frame']
 
         self.cfg = cfg
         self.args = args
@@ -91,10 +92,10 @@ class NICE_SLAM():
         self.idx_coarse_mapper.share_memory_()
         self.idx_segmenter = torch.zeros((1)).int()
         self.idx_segmenter.share_memory_()
-        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img, self.H, self.W)))
-        self.semantic_frames.share_memory_()
+        #self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
+        #self.semantic_frames.share_memory_()
        
-        self.frame_reader.__post_init__(self)
+        #self.frame_reader.__post_init__(self)
 
         
         
@@ -120,7 +121,7 @@ class NICE_SLAM():
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
-        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(self.output, 'segmentation'))
+        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'), H=self.H, W=self.W)
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
@@ -357,11 +358,13 @@ class NICE_SLAM():
         lock = mp.Lock() #for locking the access to the segmentation list
         if not self.mask_generator:
             self.segmenter.run()
+            del self.segmenter
+
             start = 1
         else:
             start = 0
         
-        for rank in range(start,3):
+        for rank in range(start,2):
             if rank == 0:
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))

@@ -50,7 +50,7 @@ class Mesher(object):
             np.array(cfg['mapping']['marching_cubes_bound']) * self.scale)
 
         self.frame_reader = get_dataset(cfg, args, self.scale, device='cpu', slam = slam)
-        self.frame_reader.__post_init__(slam)
+        #self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
 
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
