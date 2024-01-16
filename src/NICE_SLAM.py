@@ -321,7 +321,7 @@ class NICE_SLAM():
 
         self.tracker.run()
 
-    def mapping(self, rank, lock):
+    def mapping(self, rank):
         """
         Mapping Thread. (updates middle, fine, and color level)
 
@@ -329,9 +329,9 @@ class NICE_SLAM():
             rank (int): Thread ID.
         """
         print('Mapping Thread Started ', rank)
-        self.mapper.run(lock)
+        self.mapper.run()
 
-    def coarse_mapping(self, rank, lock):
+    def coarse_mapping(self, rank):
         """
         Coarse mapping Thread. (updates coarse level)
 
@@ -339,7 +339,7 @@ class NICE_SLAM():
             rank (int): Thread ID.
         """
         print('Mapping Thread Started ', rank)
-        self.coarse_mapper.run(lock)
+        self.coarse_mapper.run()
     
     def segmenting(self, rank):
         """
@@ -355,7 +355,7 @@ class NICE_SLAM():
         #torch.cuda.memory._record_memory_history(max_entries=100000000)
    
         processes = []
-        lock = mp.Lock() #for locking the access to the segmentation list
+        #lock = mp.Lock() #for locking the access to the segmentation list
         if not self.mask_generator:
             self.segmenter.run()
             del self.segmenter
@@ -369,10 +369,10 @@ class NICE_SLAM():
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))
             elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank,  lock)) 
+                p = mp.Process(target=self.mapping, args=(rank,  )) 
             elif rank == 2:
                 if self.coarse:
-                    p = mp.Process(target=self.coarse_mapping, args=(rank, lock))
+                    p = mp.Process(target=self.coarse_mapping, args=(rank, ))
                 else:
                     continue
             #print('Started Thread: ', rank)

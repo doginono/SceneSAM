@@ -675,9 +675,7 @@ class Mapper(object):
         else:
             return None
 
-    def run(self, lock):
-        #lock for accessing the frame_reader
-        self.frame_reader.setLock(lock)
+    def run(self):
         writer = SummaryWriter(self.writer_path)
             
         
