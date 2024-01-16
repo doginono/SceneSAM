@@ -296,8 +296,9 @@ def createReverseMappingCombined(
     points_per_instance=5,
     current_frame=None,
     samples=None,
-    smallesMaskSize=6400,
+    smallesMaskSize=1000,
     kernel_size=80,
+    num_of_clusters=4,
 ):
 
     T_current = T[curr_frame_number]
@@ -314,9 +315,9 @@ def createReverseMappingCombined(
     #check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
     
-    print("unique_ids", unique_ids)
+    #print("unique_ids", unique_ids)
     #temp=[]
-    for instance in unique_ids:
+    for instance in unique_ids[::-1]:
         
         #sample same id points from from frontProjectedSamples
         filtre = (frontProjectedSamples[2,:,:] == instance)
@@ -325,39 +326,42 @@ def createReverseMappingCombined(
         if instanceId.size is not 0 and instanceId[2,0]>=0:
             #print("instanceId",instance)
             theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
-            kmeans=KMeans(n_clusters=2, random_state=0).fit(theRelevant)
-            fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
-            '''plt.figure(figsize=(20,20))
-            plt.imshow(current_frame)
-            #print(instanceId[0,i],instanceId[1,i])
-            plt.scatter(theRelevant[fps][4][0],theRelevant[fps][4][1],c="yellow",s=500,marker='o')
-            plt.axis('off')
-            plt.show()'''
-            #print(theRelevant[fps])
-            if len(fps)==points_per_instance:
-                sampledPositive=[1]*len(fps) 
+            if len(theRelevant)>=num_of_clusters:
+                kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(theRelevant)
+
+                point_coords = kmeans.transform(theRelevant)
+                closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
+                closest_points = theRelevant[closest_points_indices]
+                sampledPositive=[1]*len(kmeans.cluster_centers_) 
                 mask, _, _ = predictor.predict(
-                    point_coords=theRelevant[fps],
+                    point_coords=closest_points[0],
                     point_labels=sampledPositive,
                     multimask_output=False,
                 )
                 #temp.append([mask,instance])
                 masks[mask.squeeze()] = instance
-        '''    temp=sorted(temp, key=lambda x: np.count_nonzero(x[0] == 1), reverse=False)
+    '''    temp=sorted(temp, key=lambda x: np.count_nonzero(x[0] == 1), reverse=False)
         for element in temp:
             masks[element[0].squeeze()]=element[1]'''
     
     unique_ids = np.unique(masks).astype(int)
     max_id = np.max(masks).astype(int)
     #For cleaning if all the samples are in another mask
-    for instance in unique_ids:
+    '''for instance in unique_ids:
         filtre = (frontProjectedSamples[2,:,:] == instance)
         instanceId = frontProjectedSamples[:, filtre]
-        if np.all(masks[np.ix_(instanceId[1,:].astype(int), instanceId[0,:].astype(int))] != instance):
+        condition = masks[instanceId[1,:].astype(int), instanceId[0,:].astype(int)] != instance
+        #print(frontProjectedSamples.shape)
+        
+        if condition.size > 0 and np.mean(condition)== 1:
             indices_to_delete = np.where(samples[3,:] == instance)
             samples = np.delete(samples, indices_to_delete, axis=1)
-            #print("REMOVED", instance)
-    
+            print("REMOVED", instance)
+    unique_ids = np.unique(masks).astype(int)
+    '''
+    for instance in unique_ids:
+        if smallesMaskSize > np.count_nonzero(masks == instance):
+            masks[masks == instance] = -100
             
     #visualizerForId = visualizerForIds()
     #visualizerForId.visualizer(masks)
@@ -394,14 +398,14 @@ def createReverseMappingCombined(
 
         masks[condition] = max_id + counter
         #need to sample more in the first time I found the new id
-        
+    
 
     max_id = max_id + counter
     numberOfMasks=len(np.unique(masks))
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         numberOfMasks, 
-        points_per_instance=5
+        points_per_instance=20
     )
     #3d
     realWorldProjectCurr = backproject.realWorldProject(
@@ -434,6 +438,81 @@ def createReverseMappingCombined(
     #samples=samples[:,allsampled.astype(int)]
     '''
     #print(samples.shape)
+    
+    return masks,samples
+
+def createReverseReverseMappingCombined(
+    curr_frame_number,
+    T,
+    K,
+    depths,
+    predictor,
+    points_per_instance=5,
+    current_frame=None,
+    samples=None,
+    smallesMaskSize=1000,
+    kernel_size=80,
+    num_of_clusters=4,
+):
+
+    T_current = T[curr_frame_number]
+    depthf = readDepth(depths[curr_frame_number])
+    masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
+    predictor.set_image(current_frame)
+    
+    #projected to current camera frame, they also have ids
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )
+    
+    frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
+    #check if all points lie on the same but different mask
+    unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
+    
+    #print("unique_ids", unique_ids)
+    #temp=[]
+    for instance in unique_ids[::-1]:
+        
+        #sample same id points from from frontProjectedSamples
+        filtre = (frontProjectedSamples[2,:,:] == instance)
+        #print(count,frontProjectedSamples.shape)
+        instanceId = frontProjectedSamples[:, filtre]
+        if instanceId.size is not 0 and instanceId[2,0]>=0:
+            #print("instanceId",instance)
+            theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
+            if len(theRelevant)>=num_of_clusters:
+                kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(theRelevant)
+
+                point_coords = kmeans.transform(theRelevant)
+                closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
+                closest_points = theRelevant[closest_points_indices]
+                sampledPositive=[1]*len(kmeans.cluster_centers_) 
+                mask, _, _ = predictor.predict(
+                    point_coords=closest_points[0],
+                    point_labels=sampledPositive,
+                    multimask_output=False,
+                )
+                #temp.append([mask,instance])
+                masks[mask.squeeze()] = instance
+    '''    temp=sorted(temp, key=lambda x: np.count_nonzero(x[0] == 1), reverse=False)
+        for element in temp:
+            masks[element[0].squeeze()]=element[1]'''
+    
+    unique_ids = np.unique(masks).astype(int)
+    max_id = np.max(masks).astype(int)
+    
+    
+    for instance in unique_ids:
+        if smallesMaskSize > np.count_nonzero(masks == instance):
+            masks[masks == instance] = -100
+            
+    #visualizerForId = visualizerForIds()
+    #visualizerForId.visualizer(masks)
+
+    
+    #sample from the right side
+    # for unknown
+    #convolve def 
     
     return masks,samples
 
