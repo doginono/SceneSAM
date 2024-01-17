@@ -108,7 +108,7 @@ class Segmenter(object):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        masksCreated,self.samples = id_generation.createReverseReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img,samples=self.samples,kernel_size=40,num_of_clusters=4)
+        masksCreated,self.samples = id_generation.createReverseReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, current_frame=img,samples=self.samples,num_of_clusters=4)
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
         
     def segment_idx(self,idx):
@@ -134,7 +134,7 @@ class Segmenter(object):
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids,
             self.new_id,
-            points_per_instance=100
+            points_per_instance=10
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
@@ -171,7 +171,6 @@ class Segmenter(object):
                 
             reverse_index_frames = range(len(self.semantic_frames), -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
-                print("l")
                 self.segment_reverse(idx)
             del self.predictor
             torch.cuda.empty_cache()

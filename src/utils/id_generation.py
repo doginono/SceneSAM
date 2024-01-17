@@ -449,11 +449,9 @@ def createReverseReverseMappingCombined(
     K,
     depths,
     predictor,
-    points_per_instance=5,
     current_frame=None,
     samples=None,
     smallesMaskSize=1000,
-    kernel_size=80,
     num_of_clusters=4,
 ):
 
