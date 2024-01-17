@@ -236,7 +236,7 @@ def createReverseMapping(
             ids_past, np.max(unique_ids) + 1, points_per_instance
         )
         predictor.set_image(current_frame)
-        print(unique_ids)
+        #print(unique_ids)
         for instance in unique_ids:
             earlierFrame = samplesFromEarlier[:, :, instance]
                 
@@ -338,7 +338,7 @@ def createReverseMappingCombined(
                     point_labels=sampledPositive,
                     multimask_output=False,
                 )
-                print(closest_points)
+                #print(closest_points)
                 #temp.append([mask,instance])
                 masks[mask.squeeze()] = instance
     '''    temp=sorted(temp, key=lambda x: np.count_nonzero(x[0] == 1), reverse=False)
