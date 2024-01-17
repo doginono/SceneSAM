@@ -17,7 +17,7 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self,cfg, args, slam, store_directory, H, W):
+    def __init__(self,cfg, args, store_directory):
         self.store_directory = store_directory
         os.makedirs(f'{store_directory}', exist_ok=True)
 
@@ -26,16 +26,18 @@ class Segmenter(object):
 
         self.mask_generator = cfg['Segmenter']['mask_generator']
         self.first_min_area = cfg['mapping']['first_min_area']
-        self.idx = slam.idx_segmenter
-        self.T_wc = slam.T_wc
+        #self.idx = slam.idx_segmenter
+        path_to_traj = cfg['data']['input_folder']+'/traj.txt'
+        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        self.T_wc[:,1:3] *= -1
+
         self.every_frame = cfg['mapping']['every_frame']
         #self.slam = slam
         #self.semantic_frames = slam.semantic_frames
-        self.n_img = slam.n_img
-        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, H, W))).int()
-        self.id_counter = slam.id_counter
-        self.idx_mapper = slam.idx_mapper
-        self.idx_coarse_mapper = slam.idx_coarse_mapper
+
+        #self.id_counter = slam.id_counter
+        #self.idx_mapper = slam.idx_mapper
+        #self.idx_coarse_mapper = slam.idx_coarse_mapper
         
         self.every_frame = cfg['mapping']['every_frame']
         self.points_per_instance = cfg['mapping']['points_per_instance']
@@ -48,6 +50,9 @@ class Segmenter(object):
             self.input_folder = args.input_folder
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(glob.glob(f'{self.input_folder}/results/depth*.png')) 
+
+        self.n_img = len(self.color_paths)
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
         
         self.new_id = 0
         self.visualizer = vis.visualizerForIds()
@@ -55,7 +60,7 @@ class Segmenter(object):
         self.samples = []
 
 
-    def update(self, semantic_data, id_counter, index):
+    '''def update(self, semantic_data, id_counter, index):
     
         map , id_counter= id_generation.create_complete_mapping_of_current_frame(
             semantic_data,
@@ -72,9 +77,9 @@ class Segmenter(object):
         semantic_data = id_generation.update_current_frame(semantic_data, map)
         print(f"update id_counter from {self.id_counter[0]} to {id_counter}")
         self.id_counter[0] = id_counter
-        return semantic_data
+        return semantic_data'''
 
-    def segment(self):
+    '''def segment(self):
         idx = self.idx[0].clone()
         print("called segment on idx ", idx)
         color_path = self.color_paths[idx]
@@ -103,7 +108,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
         print("segmentation done and cleared memory")
         self.idx[0] = idx + self.every_frame
-    
+    '''
     def segment_reverse(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -169,7 +174,7 @@ class Segmenter(object):
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 
-            reverse_index_frames = range(len(self.semantic_frames)-1, -1, -self.every_frame)
+            reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
                 self.segment_reverse(idx)
             del self.predictor

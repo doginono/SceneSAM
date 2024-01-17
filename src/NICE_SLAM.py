@@ -121,7 +121,7 @@ class NICE_SLAM():
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
-        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'), H=self.H, W=self.W)
+       #self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'), H=self.H, W=self.W)
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)

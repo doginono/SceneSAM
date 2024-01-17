@@ -57,10 +57,7 @@ def main():
     #-----------------------------------------------------------------------------------
     segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
     segmenter.run()
-    del segmenter
-    slam = NICE_SLAM(cfg, args)
-
-    slam.run()
+    
 
 
 if __name__ == '__main__':
