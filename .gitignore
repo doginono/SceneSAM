@@ -146,4 +146,8 @@ dmypy.json
 outputs/
 multirun/
 #room*#
+#room*
+multirun/
+outputs/
+tryoutData/
 ```
