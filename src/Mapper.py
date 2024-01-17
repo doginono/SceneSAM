@@ -36,7 +36,7 @@ class Mapper(object):
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
         self.w_semantic_loss = cfg['mapping']['w_semantic_loss']
-        self.writer_path = cfg['writer_path'] #J:added
+        self.writer_path = cfg['data']['logs'] #J:added
         self.use_vis = cfg['mapping']['use_vis']
         self.use_mesh = cfg['mapping']['use_mesh']
         self.iters_first = cfg['mapping']['iters_first']
@@ -120,7 +120,7 @@ class Mapper(object):
         else:"""
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, slam = slam, tracker=False)
-        self.frame_reader.__post_init__(slam)
+        #self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         if 'Demo' not in self.output:  # disable this visualization in demo
             self.visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
@@ -675,9 +675,7 @@ class Mapper(object):
         else:
             return None
 
-    def run(self, lock):
-        #lock for accessing the frame_reader
-        self.frame_reader.setLock(lock)
+    def run(self):
         writer = SummaryWriter(self.writer_path)
             
         
@@ -716,7 +714,8 @@ class Mapper(object):
                             break
                         time.sleep(0.1)
             else:#such that coarse mapper and normal mapper stay roughly in sync
-                if self.coarse_mapper:
+                pass
+                """if self.coarse_mapper:
                     while True:
                         if self.idx_mapper[0] +3 > self.idx_coarse_mapper[0]:
                             break
@@ -725,7 +724,7 @@ class Mapper(object):
                     while True:
                         if self.idx_coarse_mapper[0] +3 > self.idx_mapper[0]:
                             break
-                        time.sleep(0.1)
+                        time.sleep(0.1)"""
             """if init:
                 self.idx[0] = idx
             else:
@@ -831,7 +830,7 @@ class Mapper(object):
 
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
-                if ~self.coarse_mapper:
+                """if ~self.coarse_mapper:
                     gt_depth_np = gt_depth.cpu().numpy()
                     gt_color_np = gt_color.cpu().numpy() #TODO add semantics
                     semantic_np = gt_semantic.detach().cpu().numpy()
@@ -843,7 +842,7 @@ class Mapper(object):
                                             vmin=0, vmax=np.max(gt_depth_np))
                     axs[1].imshow(gt_color_np, cmap="plasma")
                     axs[2].imshow(semantic_argmax, cmap="plasma")
-                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")
+                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")"""
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
@@ -882,9 +881,9 @@ class Mapper(object):
 
                 if self.use_mesh and (idx % self.mesh_freq == 0) and (not (idx == 0 and self.no_mesh_on_first_frame)):
                     mesh_out_file = f'{self.output}/mesh/{idx:05d}_mesh'
-                    #self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
-                    #                     idx,  self.device, show_forecast=self.mesh_coarse_level,
-                    #                     clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
+                    self.mesher.get_mesh(mesh_out_file+'_color.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
+                                         idx,  self.device, show_forecast=self.mesh_coarse_level,
+                                         clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) # mesh on color
                     self.mesher.get_mesh(mesh_out_file+'_seg.ply', self.c, self.decoders, self.keyframe_dict, self.T_wc, #instead of estimatee_c2w
                                          idx,  self.device, show_forecast=self.mesh_coarse_level, color = False, semantic = True,
                                          clean_mesh=self.clean_mesh, get_mask_use_all_frames=False) #mesh on segmentation

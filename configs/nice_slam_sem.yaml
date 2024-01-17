@@ -132,4 +132,4 @@ model:
   c_dim: 32
   coarse_bound_enlarge: 2
   pos_embedding_method: 'fourier'
-writer_path: "logs"
+

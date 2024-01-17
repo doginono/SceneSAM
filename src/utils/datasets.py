@@ -132,16 +132,7 @@ class BaseDataset(Dataset):
 
 class Replica(BaseDataset):
 
-    #-------------------added-----------------------------------------------
-    #semantic_frames = {}
-    #id_counter = 0
-    
-
-    #shared_lock_frames = mp.Lock()
-    #shared_lock_sam = mp.Lock()
-
-    #------------------end-added-----------------------------------------------
-
+   
     def __init__(self, cfg, args, scale, device='cuda:0', tracker = False, slam = None
                  ):
         super(Replica, self).__init__(cfg, args, scale, device)
@@ -149,6 +140,7 @@ class Replica(BaseDataset):
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(
             glob.glob(f'{self.input_folder}/results/depth*.png'))
+        self.seg_folder = f'{self.input_folder}/segmentation'
         #-------------------added-----------------------------------------------
         #self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
         self.mask_paths = sorted(glob.glob(f'{self.input_folder}/results/mask*.pkl'))
@@ -157,7 +149,6 @@ class Replica(BaseDataset):
         self.istracker = tracker
         self.points_per_instance = cfg['mapping']['points_per_instance']
         self.T_wc = slam.T_wc
-        self.lock = None
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
         #-------------------end added-----------------------------------------------
@@ -165,10 +156,9 @@ class Replica(BaseDataset):
         self.load_poses(f'{self.input_folder}/traj.txt')
     
     def __post_init__(self, slam):
-        self.semantic_frames = slam.semantic_frames
+        #self.semantic_frames = slam.semantic_frames
+        assert False, "should not be entered, not used anymore"
        
-    def setLock(self, lock): #J: should only be relevant for the Mapper
-        self.lock = lock
 
     def __getitem__(self, index):
         if self.istracker:
@@ -181,10 +171,11 @@ class Replica(BaseDataset):
         """
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
-        color_data = cv2.imread(color_path) 
+        color_data = cv2.imread(color_path)
+
         #-------------------added-----------------------------------------------
         
-            
+        semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
 
 
         
@@ -209,71 +200,10 @@ class Replica(BaseDataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
-        '''print('try to acquire lock ', threading.current_thread().ident)
-        with self.lock:
-            print('acquired lock ',  threading.current_thread().ident)
-            print(f'current lenght of lsit is: {len(self.semantic_frames)}')
-            if index == 0 and len(self.semantic_frames) == 0:
 
-                print("start sam by ", threading.current_thread().ident)
-                #sam = create_instance_seg.create_sam('cpu')
-                #masks = sam.generate(image)
-                with open(self.mask_paths[index], 'rb') as f:
-                    masks = pickle.load(f)
-                print("end sam")
-                    
-                semantic_data = id_generation.generateIds(masks)
-                print("0 frame ids: ", np.unique(semantic_data))
-                self.id_counter = semantic_data.max() +1 
-                print("id_counter: ", self.id_counter)
-                #self.semantic_frames[index] = semantic_data
-                self.semantic_frames.append(semantic_data)
-                print(f"segmenation on current frame {index}: ", semantic_data)
-                print(f"unique ids on current frame: {index}", np.unique(semantic_data))
-            
-            elif index//self.every_frame < len(self.semantic_frames):
-                print("read segmentation from list")
-                semantic_data = self.semantic_frames[index//self.every_frame]
-            
-                
-            else:
-                #create instance encoding with sam model and backproject to seen ones
-                
-                print("start sam")
-                #sam = create_instance_seg.create_sam('cpu')
-                #masks = sam.generate(image)
-                with open(self.mask_paths[index], 'rb') as f:
-                    masks = pickle.load(f)
-                print("end sam")
-                
-                semantic_data = id_generation.generateIds(masks)
-                #semantic_frames = Replica.semantic_frames
-                #id_counter = self.id_counter
-                """while(len(self.slam.estimate_c2w_list)<=index):
-                    print("wait for tracker to catch up")
-                    time.sleep(0.1)"""#ignored beacause of ground truth c2w tracking
-                map , self.id_counter= id_generation.create_complete_mapping_of_current_frame(
-                    semantic_data,
-                    index,
-                    np.arange(index)[0:(index-1):self.every_frame],  # Corrected slice notation
-                    self.T_wc,
-                    self.K,
-                    self.depth_paths,
-                    self.semantic_frames,
-                    self.id_counter,
-                    points_per_instance=self.points_per_instance,  # Corrected parameter name
-                    verbose=False
-                )
-                semantic_data = id_generation.update_current_frame(semantic_data, map)
-                print("id_counter: ", self.id_counter)
-                #self.id_counter = id_counter
-                self.semantic_frames.append(semantic_data)
-                #self.semantic_frames[index] = semantic_data
-                print(f"segmenation on curretn frame {index}: ", semantic_data)
-                print(f"unique ids on current frame {index}: ", np.unique(semantic_data))
-            print('release lock')'''
-
-        semantic_data = self.semantic_frames[index].clone().int()
+        #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+        semantic_data = np.load(semantic_path)
+        
         # Create one-hot encoding using numpy.eye
         print(f"read in semantic data of frame {index}: ", semantic_data)
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
