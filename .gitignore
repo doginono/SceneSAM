@@ -145,5 +145,5 @@ dmypy.json
 
 outputs/
 multirun/
-room*
+#room*#
 ```
