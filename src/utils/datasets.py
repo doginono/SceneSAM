@@ -161,14 +161,6 @@ class Replica(BaseDataset):
        
 
     def __getitem__(self, index):
-        if self.istracker:
-            assert False, "should not be entered, not upto date"
-            return super().__getitem__(index)
-        
-        """two scenarios for accessing semanitc index:
-        1. index has already been seen -> have list list with seen encodings (dont store them on cuda
-        2. index has not been seen yet -> create instance encoding with sam model and backproject to seen ones
-        """
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
@@ -203,7 +195,7 @@ class Replica(BaseDataset):
 
         #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
         semantic_data = np.load(semantic_path)
-        
+
         # Create one-hot encoding using numpy.eye
         print(f"read in semantic data of frame {index}: ", semantic_data)
         semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)

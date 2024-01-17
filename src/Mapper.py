@@ -519,7 +519,9 @@ class Mapper(object):
                     gt_depth = keyframe_dict[frame]['depth'].to(device)
                     gt_color = keyframe_dict[frame]['color'].to(device)
                     #-----------------added-------------------
-                    gt_semantic = keyframe_dict[frame]['semantic'].to(device)
+                    #jkl%
+                    gt_semantic = torch.eye(self.output_dimension_semantic)[keyframe_dict[frame]['semantic']].to(bool).to(device)
+                    #gt_semantic = keyframe_dict[frame]['semantic'].to(device)
                     #-----------------end-added-------------------
                     if self.BA and frame != oldest_frame:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
@@ -856,9 +858,10 @@ class Mapper(object):
                     if (idx % self.keyframe_every == 0 or (idx == self.n_img-2)) \
                             and (idx not in self.keyframe_list):
                         self.keyframe_list.append(idx)
+                        #jkl%
                         self.keyframe_dict.append({'gt_c2w': gt_c2w.cpu(), 'idx': idx, 'color': gt_color.cpu(
                         ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone(),
-                        'semantic': gt_semantic.cpu()}) #Done: add semantics ground truth
+                        'semantic': torch.argmax(gt_semantic.to(int), dim = -1).cpu()}) #Done: add semantics ground truth
 
             if self.low_gpu_mem:
                 if self.verbose:

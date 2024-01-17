@@ -163,6 +163,7 @@ class Segmenter(object):
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
             
+            
             del self.predictor
             torch.cuda.empty_cache()
 
