@@ -169,7 +169,7 @@ class Segmenter(object):
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 
-            reverse_index_frames = range(len(self.semantic_frames)-1, -1, -self.every_frame)
+            reverse_index_frames = range(len(self.n_img)-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
                 self.segment_reverse(idx)
             del self.predictor
