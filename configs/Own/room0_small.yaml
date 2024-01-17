@@ -1,0 +1,11 @@
+inherit_from: 'configs/Own/own.yaml'
+#tracking:
+#  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt'
+mapping:
+  bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+  marching_cubes_bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+data:
+  input_folder: 'Datasets/Replica/room0_small'
+  logs: 'logs/room0_small'
+  output: 'output/Own/room0_small'
+output_dimension_semantic: 200
