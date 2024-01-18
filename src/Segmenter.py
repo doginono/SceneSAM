@@ -44,7 +44,7 @@ class Segmenter(object):
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = cfg['cam']['H'], cfg['cam'][
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
-        if args.input_folder is None:
+        if args is None or args.input_folder is None:
             self.input_folder = cfg['data']['input_folder']
         else:
             self.input_folder = args.input_folder
