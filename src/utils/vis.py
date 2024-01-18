@@ -97,9 +97,15 @@ class visualizerForIds:
         
         return ax, im
 
-    def visualizer(self, anns, title=""):
+    def visualizer(self, anns, title="", prompts = None):
         # Create a 2D numpy array
         #plt.title(title)
-        plt.figure(figsize=(20, 20))
+        plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
+        if prompts is not None:
+
+            #iterate through all elements of the prompts directory
+
+            for p in prompts.values():
+                plt.scatter(p[:,0], p[:,1], s=100, c="red", marker="o")
         plt.show()

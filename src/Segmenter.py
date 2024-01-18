@@ -58,7 +58,7 @@ class Segmenter(object):
         self.visualizer = vis.visualizerForIds()
         self.frame_numbers = []
         self.samples = []
-
+        self.deleted = {}
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -119,7 +119,7 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40)
+        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40, deleted = self.deleted)
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
 
     def segment_first(self):
@@ -130,8 +130,12 @@ class Segmenter(object):
         masks = sam.generate(image)
         del sam
         torch.cuda.empty_cache()
+       
+
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
+        visualizerForId = vis.visualizerForIds()
+        visualizerForId.visualizer(ids)
         self.semantic_frames[0]=torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.new_id = ids.max() +1
@@ -174,11 +178,19 @@ class Segmenter(object):
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 
-            reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
+            """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
-                self.segment_reverse(idx)
+                self.segment_reverse(idx)"""
             del self.predictor
             torch.cuda.empty_cache()
+
+            
+            for old_instance in self.deleted.keys():
+                self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
+
+            visualizerForId = vis.visualizerForIds()
+            for i in range(len(self.semantic_frames)):
+                visualizerForId.visualizer(self.semantic_frames[i])
 
             #store the segmentations, such that the dataset class (frame_reader) can read them
             for index in tqdm([0]+list(index_frames), desc = 'Storing segmentations'):
