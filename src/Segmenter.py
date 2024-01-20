@@ -165,11 +165,11 @@ class Segmenter(object):
             print('segment first frame')
             self.segment_first()
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+            index_frames = np.arange(self.every_frame, 101, self.every_frame)
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
-                
-            reverse_index_frames = range(len(self.n_img)-1, -1, -self.every_frame)
+               
+            reverse_index_frames = range(100-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
                 self.segment_reverse(idx)
             del self.predictor
