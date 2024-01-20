@@ -83,10 +83,13 @@ class visualizerForIds:
     def get_colors(self, ids):
         return self.cmap(ids)
     
-    def visualize(self, anns,path = None, ax=None, title=""):
+    def visualize(self, anns,path = None, ax=None, title="", prompts = None):
         if path is not None:
             plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors)-1)
+            if prompts is not None:
+                plt.scatter(prompts[:,0], prompts[:,1], s=100, c="red", marker="o")
             plt.savefig(path)
+            plt.clf()
             return
         if ax is None:
                 im = plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors)-1)

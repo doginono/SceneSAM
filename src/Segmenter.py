@@ -143,7 +143,7 @@ class Segmenter(object):
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids,
             self.new_id,
-            points_per_instance=10
+            points_per_instance=100
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
@@ -174,7 +174,7 @@ class Segmenter(object):
             print('segment first frame')
             self.segment_first()
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+            index_frames = np.arange(self.every_frame, 200, self.every_frame)
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 
@@ -189,7 +189,8 @@ class Segmenter(object):
                 self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
 
             visualizerForId = vis.visualizerForIds()
-            for i in range(len(self.semantic_frames)):
+            #for i in range(len(self.semantic_frames)):
+            for i in range(200):
                 visualizerForId.visualizer(self.semantic_frames[i])
 
             #store the segmentations, such that the dataset class (frame_reader) can read them
@@ -202,6 +203,8 @@ class Segmenter(object):
                 for index in tqdm([0]+list(index_frames), desc = 'Storing visualizations'):
                     path = os.path.join(self.store_directory, f'seg_{index}.png')
                     self.visualizer.visualize(self.semantic_frames[index//self.every_frame].numpy(), path = path)
+
+        return self.semantic_frames
                     
         
             
