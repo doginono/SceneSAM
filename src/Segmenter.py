@@ -17,7 +17,7 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self,cfg, args, slam, store_directory, H, W):
+    def __init__(self,cfg, args, store_directory):
         self.store_directory = store_directory
         os.makedirs(f'{store_directory}', exist_ok=True)
 
@@ -26,36 +26,41 @@ class Segmenter(object):
 
         self.mask_generator = cfg['Segmenter']['mask_generator']
         self.first_min_area = cfg['mapping']['first_min_area']
-        self.idx = slam.idx_segmenter
-        self.T_wc = slam.T_wc
+        #self.idx = slam.idx_segmenter
+        path_to_traj = cfg['data']['input_folder']+'/traj.txt'
+        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        self.T_wc[:,1:3] *= -1
+
         self.every_frame = cfg['mapping']['every_frame']
         #self.slam = slam
         #self.semantic_frames = slam.semantic_frames
-        self.n_img = slam.n_img
-        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, H, W))).int()
-        self.id_counter = slam.id_counter
-        self.idx_mapper = slam.idx_mapper
-        self.idx_coarse_mapper = slam.idx_coarse_mapper
+
+        #self.id_counter = slam.id_counter
+        #self.idx_mapper = slam.idx_mapper
+        #self.idx_coarse_mapper = slam.idx_coarse_mapper
         
         self.every_frame = cfg['mapping']['every_frame']
         self.points_per_instance = cfg['mapping']['points_per_instance']
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = cfg['cam']['H'], cfg['cam'][
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
-        if args.input_folder is None:
+        if args is None or args.input_folder is None:
             self.input_folder = cfg['data']['input_folder']
         else:
             self.input_folder = args.input_folder
         self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
         self.depth_paths = sorted(glob.glob(f'{self.input_folder}/results/depth*.png')) 
+
+        self.n_img = len(self.color_paths)
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
         
         self.new_id = 0
         self.visualizer = vis.visualizerForIds()
         self.frame_numbers = []
         self.samples = []
+        self.deleted = {}
 
-
-    def update(self, semantic_data, id_counter, index):
+    '''def update(self, semantic_data, id_counter, index):
     
         map , id_counter= id_generation.create_complete_mapping_of_current_frame(
             semantic_data,
@@ -72,9 +77,9 @@ class Segmenter(object):
         semantic_data = id_generation.update_current_frame(semantic_data, map)
         print(f"update id_counter from {self.id_counter[0]} to {id_counter}")
         self.id_counter[0] = id_counter
-        return semantic_data
+        return semantic_data'''
 
-    def segment(self):
+    '''def segment(self):
         idx = self.idx[0].clone()
         print("called segment on idx ", idx)
         color_path = self.color_paths[idx]
@@ -103,7 +108,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
         print("segmentation done and cleared memory")
         self.idx[0] = idx + self.every_frame
-    
+    '''
     def segment_reverse(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -114,7 +119,7 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40)
+        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40, deleted = self.deleted)
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
 
     def segment_first(self):
@@ -125,8 +130,12 @@ class Segmenter(object):
         masks = sam.generate(image)
         del sam
         torch.cuda.empty_cache()
+       
+
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
+        visualizerForId = vis.visualizerForIds()
+        visualizerForId.visualizer(ids)
         self.semantic_frames[0]=torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.new_id = ids.max() +1
@@ -134,7 +143,7 @@ class Segmenter(object):
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids,
             self.new_id,
-            points_per_instance=10
+            points_per_instance=100
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
@@ -165,15 +174,24 @@ class Segmenter(object):
             print('segment first frame')
             self.segment_first()
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, 101, self.every_frame)
+            index_frames = np.arange(self.every_frame, 200, self.every_frame)
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
-               
-            reverse_index_frames = range(100-1, -1, -self.every_frame)
+                
+            """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
-                self.segment_reverse(idx)
+                self.segment_reverse(idx)"""
             del self.predictor
             torch.cuda.empty_cache()
+
+            
+            for old_instance in self.deleted.keys():
+                self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
+
+            visualizerForId = vis.visualizerForIds()
+            #for i in range(len(self.semantic_frames)):
+            for i in range(200):
+                visualizerForId.visualizer(self.semantic_frames[i])
 
             #store the segmentations, such that the dataset class (frame_reader) can read them
             for index in tqdm([0]+list(index_frames), desc = 'Storing segmentations'):
@@ -185,6 +203,8 @@ class Segmenter(object):
                 for index in tqdm([0]+list(index_frames), desc = 'Storing visualizations'):
                     path = os.path.join(self.store_directory, f'seg_{index}.png')
                     self.visualizer.visualize(self.semantic_frames[index//self.every_frame].numpy(), path = path)
+
+        return self.semantic_frames
                     
         
             

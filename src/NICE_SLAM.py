@@ -15,6 +15,8 @@ from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
 
+from scripts import gifMaker 
+
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -121,7 +123,7 @@ class NICE_SLAM():
         
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         #TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color 
-        self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'), H=self.H, W=self.W)
+       #self.segmenter = Segmenter(cfg,args, self, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'), H=self.H, W=self.W)
     
         if self.coarse:
             self.coarse_mapper = Mapper(cfg, args, self, coarse_mapper=True)
@@ -356,15 +358,15 @@ class NICE_SLAM():
    
         processes = []
         #lock = mp.Lock() #for locking the access to the segmentation list
-        if not self.mask_generator:
+        """if not self.mask_generator:
             self.segmenter.run()
             del self.segmenter
 
             start = 1
         else:
             start = 0
-        
-        for rank in range(start,2):
+        """
+        for rank in range(1,2):
             if rank == 0:
                 #p = mp.Process(target=self.tracking, args=(rank, ))
                 p = mp.Process(target=self.segmenting, args=(rank, ))

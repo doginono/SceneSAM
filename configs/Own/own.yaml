@@ -32,7 +32,7 @@ mapping:
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 50
+  mesh_freq: 199
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5

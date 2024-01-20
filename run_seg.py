@@ -11,7 +11,6 @@ from src.Segmenter import Segmenter
 import os #J:added
 from torch.utils.tensorboard import SummaryWriter #J: added
 import yaml #J: added
-from scripts import gifMaker #J: added
 
 def setup_seed(seed):
     torch.manual_seed(seed)
@@ -58,11 +57,7 @@ def main():
     #-----------------------------------------------------------------------------------
     segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
     segmenter.run()
-    del segmenter
-    slam = NICE_SLAM(cfg, args)
-    if cfg['Segmenter']['store_vis']:
-        gifMaker.make_gif(os.path.join(cfg['data']['input_folder'], 'segmentation'))
-    slam.run()
+    
 
 
 if __name__ == '__main__':
