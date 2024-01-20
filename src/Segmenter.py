@@ -57,8 +57,12 @@ class Segmenter(object):
         self.new_id = 0
         self.visualizer = vis.visualizerForIds()
         self.frame_numbers = []
-        self.samples = []
+        self.samples = None
         self.deleted = {}
+        self.border = cfg['Segmenter']['border']
+        self.num_clusters = cfg['Segmenter']['num_clusters']
+        self.overlap = cfg['Segmenter']['overlap']
+        self.relevant = cfg['Segmenter']['relevant']
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -119,8 +123,20 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, self.samples = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, points_per_instance=self.points_per_instance, current_frame=img, samples=self.samples, kernel_size=40, deleted = self.deleted)
+        masksCreated, s = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, 
+                                                                     predictor=self.predictor, 
+                                                                     points_per_instance=self.points_per_instance, 
+                                                                     current_frame=img, samples=self.samples, 
+                                                                     kernel_size=40,smallesMaskSize=40*40, 
+                                                                     deleted = self.deleted,
+                                                                     num_of_clusters=self.num_clusters,
+                                                                     border=self.border,
+                                                                     overlap_threshold=self.overlap,
+                                                                     relevant_threshhold=self.relevant)
+        self.samples = s
+        
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
+        
 
     def segment_first(self):
         color_path = self.color_paths[0]
@@ -147,10 +163,10 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
-        self.samples = realWorldSamples
+        return realWorldSamples
 
 
-    def run(self):
+    def run(self, max = -1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame)
             for index in tqdm(index_frames, desc='Loading stored segmentations'):
@@ -172,11 +188,16 @@ class Segmenter(object):
                 self.segment()
         else:
             print('segment first frame')
-            self.segment_first()
+            s = self.segment_first()
+            self.samples = s
             self.predictor = create_instance_seg.create_predictor('cuda')
-            index_frames = np.arange(self.every_frame, 200, self.every_frame)
+            if max == -1:
+                index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+            else:
+                index_frames = np.arange(self.every_frame, max, self.every_frame)
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
+                #print(f'outside samples: {np.unique(self.samples[-1])}')
                 
             """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
@@ -190,8 +211,8 @@ class Segmenter(object):
 
             visualizerForId = vis.visualizerForIds()
             #for i in range(len(self.semantic_frames)):
-            for i in range(200):
-                visualizerForId.visualizer(self.semantic_frames[i])
+            """for i in range(len(self.semantic_frames)):
+                visualizerForId.visualizer(self.semantic_frames[i])"""
 
             #store the segmentations, such that the dataset class (frame_reader) can read them
             for index in tqdm([0]+list(index_frames), desc = 'Storing segmentations'):

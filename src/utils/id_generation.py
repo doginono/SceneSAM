@@ -72,15 +72,16 @@ def checkIfInsideImage(
     backprojectedSamples,
     zg,
     Depthg,
+    border
 ):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
     condition = (
-        (backprojectedSamples[1, :] < 0)
-        | (backprojectedSamples[0, :] < 0)
-        | (backprojectedSamples[1, :] > 679)
-        | (backprojectedSamples[0, :] > 1199)
+        (backprojectedSamples[1, :] < 0+border)
+        | (backprojectedSamples[0, :] < 0 + border)
+        | (backprojectedSamples[1, :] > 679 - border)
+        | (backprojectedSamples[0, :] > 1199 - border)
     )
     filteredIndices = np.where(condition)
     filteredBackProj = backprojectedSamples[:, ~condition]
@@ -294,6 +295,20 @@ def IOU(ids1, ids2):
     union = np.count_nonzero(np.logical_or(ids1 == 1, ids2 == 1))
     return intersection / union
 
+def overlap(ids1, ids2):
+    """calculate the overlap in both directions and takes themaximum
+
+    Args:
+        ids1 (np.array): (W,H) with ids
+        ids2 (np.array): (W,H) with ids
+
+    Return:
+        float: max overlap in percent
+    """
+    overlap1 = np.count_nonzero(np.logical_and((ids1 == ids2) ,(ids2 == 1 )))  / np.count_nonzero(ids2 == 1)
+    overlap2 = np.count_nonzero(np.logical_and((ids1 == ids2) ,(ids1 == 1 )))  / np.count_nonzero(ids1 == 1)
+    return np.max([overlap1, overlap2])
+
 #sample from earlier frames and predict 
 '''
     coarse to fine
@@ -316,10 +331,14 @@ def createReverseMappingCombined(
     smallesMaskSize=1000,
     kernel_size=80,
     num_of_clusters=4,
-    verbose = True,
-    deleted = None
-):
+    verbose = False,
+    deleted = None,
+    border = 25,
+    overlap_threshold = 0.5,
+    relevant_threshhold = 0.3
 
+):
+    #print(f'beginning: {np.unique(samples[-1])}')
     T_current = T[curr_frame_number]
     depthf = readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
@@ -330,17 +349,17 @@ def createReverseMappingCombined(
         samples, T_current, K
     )
     
-    frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
+    frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf, border = border)
     #check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
     
     #print("unique_ids", unique_ids)
+    visualizerForId = visualizerForIds()
+    path = 'output/Own/room0/masks'
+    os.makedirs(path, exist_ok=True)
     if verbose:
-        visualizerForId = visualizerForIds()
-        path = 'output/Own/room0_small/masks'
-        os.makedirs(path, exist_ok=True)
         prompts = {}
-        #masks_vis = masks.copy()
+        masks_vis = masks.copy()
     for instance in unique_ids[::-1]:
         
         #sample same id points from from frontProjectedSamples
@@ -354,8 +373,11 @@ def createReverseMappingCombined(
             #print(theRelevant, theRelevant.shape)
             if len(theRelevant)>=num_of_clusters:
                 kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(theRelevant)
-                e = np.bincount(kmeans.labels_)>=len(theRelevant)/num_of_clusters//2
-                print('e ', e)
+                e = np.bincount(kmeans.labels_)>=len(theRelevant)/num_of_clusters//4
+                #print('e ', e)
+                if len(e) < num_of_clusters:
+                    print('SKIPPED SKIPPED SKIPPED SKIPPED frame: ', curr_frame_number)
+                    e = np.concatenate((e, np.zeros(num_of_clusters-len(e), dtype=bool)))
                 point_coords = kmeans.transform(theRelevant)[:,e]
                 closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
                 closest_points = theRelevant[closest_points_indices]
@@ -368,7 +390,7 @@ def createReverseMappingCombined(
                 #The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
                 #if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
                 
-                ''' if verbose:
+                if verbose:
                     masks_vis[mask.squeeze()] = instance
                     visualizerForId.visualize(masks_vis, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts =closest_points[0])
                 target_ids = masks[theRelevant[:,1], theRelevant[:,0]]
@@ -377,24 +399,28 @@ def createReverseMappingCombined(
                 target_ids = target_ids[target_ids != instance]
                 target_ids, count = np.unique(target_ids, return_counts=True)
                 #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
-                if len(count)>0 and max(count) > 0.5*len(theRelevant):
+                if len(count)>0 and max(count) > relevant_threshhold*len(theRelevant):
                     target_id = target_ids[np.argmax(count)]
-                    print('check overlap: ', IOU(masks == target_id, mask))
-                    if IOU(masks == target_id, mask) > 0.7:
-                        keep_filter = samples[-1] != instance
-                        samples = samples[:, keep_filter]
+                    #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
+                    if overlap(masks == target_id, mask) > overlap_threshold:
+                        #print('inside overlap')
+                        change_filter = samples[-1] == instance
+                        samples[:,change_filter][-1] = target_id
                         masks[mask.squeeze()] == target_id
                         deleted[instance] = target_id
                     else:
-                        masks[mask.squeeze()] = instance
+                        condition = mask.squeeze() & (masks == -100)
+                        masks[condition] = instance
                 else:
-                    masks[mask.squeeze()] = instance
+                    condition = mask.squeeze() & (masks == -100)
+                    masks[condition] = instance
                 if verbose:
-                    prompts[instance] = (closest_points[0])'''
-                masks[mask.squeeze()] = instance
-                visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts =closest_points[0])
-                
-
+                    prompts[instance] = (closest_points[0])
+                #masks[mask.squeeze()] = instance
+                if verbose:
+                    visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_after.png'), prompts =closest_points[0])
+                    masks_vis = masks.copy()
+                    
 
             
             
@@ -425,8 +451,8 @@ def createReverseMappingCombined(
             masks[masks == instance] = -100
             '''if verbose:#
                 prompts.pop(instance)'''
-    
-    visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final_frontproject.png'))
+    if verbose:
+        visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final_frontproject.png'))
             
 
 
@@ -442,6 +468,10 @@ def createReverseMappingCombined(
     result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h//2)
     result = result.cpu().numpy()  # convert to numpy array
     result=result.squeeze()
+    result[0:border] = 0
+    result[-border:] = 0
+    result[:,0:border] = 0
+    result[:,-border:] = 0
     indices = np.array(np.where(result == (-100*(h*w)))).T
     
     counter=0
@@ -462,16 +492,22 @@ def createReverseMappingCombined(
 
         masks[condition] = max_id + counter
         #need to sample more in the first time I found the new id
-        visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{max_id+counter}_added.png'), prompts = point_coords)
+        if verbose:
+            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{max_id+counter}_added.png'), prompts = point_coords)
         torch_masks=torch.from_numpy(masks).float().to("cuda")
         result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h//2)
         result = result.cpu().numpy()  # convert to numpy array
         result=result.squeeze()
+        result[0:border] = 0
+        result[-border:] = 0
+        result[:,0:border] = 0
+        result[:,-border:] = 0
         indices = np.array(np.where(result == (-100*(h*w)))).T
     
 
     max_id = max_id + counter
     numberOfMasks=len(np.unique(masks))
+
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         numberOfMasks, 
@@ -509,12 +545,14 @@ def createReverseMappingCombined(
     '''
     #print(samples.shape)
         #print(max_id)
-    visualizerForId = visualizerForIds()
+    if verbose:
+        visualizerForId = visualizerForIds()
     if not verbose:
         prompts = None
 
     #visualizerForId.visualizer(masks, prompts = prompts)
-        
+    #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
+    #print(f'end: {np.unique(samples[-1])}')
     return masks,samples
 
 def createReverseReverseMappingCombined(

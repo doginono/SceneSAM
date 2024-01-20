@@ -38,7 +38,7 @@ def create_sam(device):
     sam.to(device=device)
 
     
-    mask_generator = SamAutomaticMaskGenerator(sam, points_per_side=16, pred_iou_thresh=0.9, stability_score_thresh=0.95, crop_n_layers=1, crop_n_points_downscale_factor=2, min_mask_region_area=100)
+    mask_generator = SamAutomaticMaskGenerator(sam, points_per_side=16, pred_iou_thresh=0.9, stability_score_thresh=0.95, crop_n_layers=1, crop_n_points_downscale_factor=2, min_mask_region_area=1000)
 
 
     return mask_generator
