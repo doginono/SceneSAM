@@ -30,8 +30,9 @@ def create_sam(device):
     Returns:
         SamAutomaticMaskGenerator: An SamAutomaticMaskGenerator object
     """
-    sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
-    model_type = "vit_b"
+    #sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
+    sam_checkpoint = '/home/koerner/Project/nice-slam/sam/sam_vit_h_4b8939.pth'
+    model_type = "vit_h"
 
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)

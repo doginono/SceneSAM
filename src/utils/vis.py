@@ -72,9 +72,9 @@ def vis(path_to_image, masks, uv=None):
 
 
 class visualizerForIds:
-    def __init__(self, seed=123):
+    def __init__(self, seed=1234):
         np.random.seed(seed)
-        self.colors = [np.random.random(3) for i in range(0,100)]
+        self.colors = [np.random.random(3) for i in range(0,1000)]
         
         self.colors.insert(0,[1,1,1])
         self.colors.insert(0,[0,0,0])

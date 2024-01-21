@@ -56,10 +56,10 @@ def main():
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     
-    borders = [25, 50, 100]
-    num_clusters = [4, 7, 10, 15]
-    overlaps = [0.2, 0.5, 0.7, 0.9]
-    relevants = [0.3, 0.5, 0.7]
+    borders = [0, 25, 70]
+    num_clusters = [5, 10, 15]
+    overlaps = [0,5,0.7, 0.9]
+    relevants = [0,5, 0.7, 0.9]
     
     for border in borders:
         for num_cluster in num_clusters:

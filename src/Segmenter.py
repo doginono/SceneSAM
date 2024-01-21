@@ -165,6 +165,13 @@ class Segmenter(object):
         realWorldSamples = np.concatenate((realWorldSamples, samplesFromCurrent[2:,:]), axis = 0)
         return realWorldSamples
 
+    def process_keys(self, deleted):
+        for target in deleted.values():
+            if target in deleted.keys():
+                update_keys = [key for key, value in deleted.items() if value == target]
+                for uk in update_keys:
+                    deleted[uk] = deleted[target]
+        return deleted
 
     def run(self, max = -1):
         if self.use_stored:
@@ -205,7 +212,9 @@ class Segmenter(object):
             del self.predictor
             torch.cuda.empty_cache()
 
-            
+            #print('unprocessed map: ', self.deleted)
+            #self.deleted = self.process_keys(self.deleted)
+            #print('preocessed map: ', self.deleted)
             for old_instance in self.deleted.keys():
                 self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
 

@@ -19,9 +19,9 @@ Segmenter:
   store_vis: False
   store_vis_freq: 50 # not implemented yet
   num_clusters: 4
-  border: 50
-  overlap_threshhold: 0.5
-  relevant_threshhold: 0.5
+  border: 25
+  overlap: 0.9
+  relevant: 0.6
 
 rendering:
   semantic_occupancy_multiplier: 10
