@@ -237,7 +237,7 @@ class Segmenter(object):
                     path = os.path.join(self.store_directory, f'seg_{index}.png')
                     self.visualizer.visualize(self.semantic_frames[index//self.every_frame].numpy(), path = path)
 
-        return self.semantic_frames
+        return self.semantic_frames, torch.max(self.semantic_frames)
                     
         
             

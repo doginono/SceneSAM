@@ -71,7 +71,7 @@ def main():
                     cfg['Segmenter']['relevant'] = relevant
                     
                     segmenter = Segmenter(cfg, args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
-                    frames = segmenter.run(max=1000)
+                    frames,_ = segmenter.run(max=1000)
                     make_gif_from_array(frames, store = f'gif/b{border}_n{num_cluster}_o{overlap}_r{relevant}.gif', max_frame = 210)
     
 

@@ -582,7 +582,7 @@ def createReverseMappingCombined_area_sort(
     smallesMaskSize=1000,
     kernel_size=80,
     num_of_clusters=4,
-    verbose = False,
+    verbose = True,
     deleted = None,
     border = 25,
     overlap_threshold = 0.5,
