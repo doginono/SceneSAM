@@ -18,10 +18,10 @@ Segmenter:
   use_stored: False
   store_vis: False
   store_vis_freq: 50 # not implemented yet
-  num_clusters: 4
-  border: 25
-  overlap: 0.9
-  relevant: 0.6
+  num_clusters: 5
+  border: 20
+  overlap: 0.7
+  relevant: 0.9
 
 rendering:
   semantic_occupancy_multiplier: 10
@@ -31,18 +31,18 @@ mapping:
   no_vis_on_first_frame: False
   every_frame: 5
   points_per_instance: 4
-  vis_freq: 50
+  vis_freq: 25
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 199
+  mesh_freq: 99
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
   iters_first: 1200 #finetune
-  iters: 100 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

@@ -54,7 +54,7 @@ class Segmenter(object):
         self.n_img = len(self.color_paths)
         self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
         
-        self.new_id = 0
+        #self.new_id = 0
         self.visualizer = vis.visualizerForIds()
         self.frame_numbers = []
         self.samples = None
@@ -63,6 +63,7 @@ class Segmenter(object):
         self.num_clusters = cfg['Segmenter']['num_clusters']
         self.overlap = cfg['Segmenter']['overlap']
         self.relevant = cfg['Segmenter']['relevant']
+        self.max_id = 0
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -123,8 +124,9 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, s = id_generation.createReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, 
-                                                                     predictor=self.predictor, 
+        masksCreated, s, max_id = id_generation.createReverseMappingCombined_area_sort(idx, self.T_wc, self.K, self.depth_paths, 
+                                                                     predictor=self.predictor,
+                                                                     max_id=self.max_id,
                                                                      points_per_instance=self.points_per_instance, 
                                                                      current_frame=img, samples=self.samples, 
                                                                      kernel_size=40,smallesMaskSize=40*40, 
@@ -134,6 +136,7 @@ class Segmenter(object):
                                                                      overlap_threshold=self.overlap,
                                                                      relevant_threshhold=self.relevant)
         self.samples = s
+        self.max_id = max_id
         
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
         
@@ -154,11 +157,11 @@ class Segmenter(object):
         visualizerForId.visualizer(ids)
         self.semantic_frames[0]=torch.from_numpy(ids)
         self.frame_numbers.append(0)
-        self.new_id = ids.max() +1
+        self.max_id = ids.max() +1
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids,
-            self.new_id,
+            self.max_id,
             points_per_instance=100
         )
         realWorldSamples = backproject.realWorldProject(samplesFromCurrent[:2,:], self.T_wc[0], self.K, id_generation.readDepth(self.depth_paths[0]) )
