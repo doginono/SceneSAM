@@ -412,13 +412,13 @@ def createReverseMappingCombined(
                         
                         change_filter = samples[-1] == instance
                         samples[-1][change_filter] = target_id
-                        print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
+                        #print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
                         condition = mask.squeeze() #& (masks == -100)
                         masks[condition] == target_id
                         deleted[instance] = target_id
                         for key, value in deleted.items():
                             if value == instance:
-                                print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
+                                #print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
                                 deleted[key] = target_id
                         if verbose:
                             visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_melted.png'), prompts =closest_points[0])
