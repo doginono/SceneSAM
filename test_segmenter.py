@@ -56,10 +56,10 @@ def main():
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     
-    borders = [0, 25, 70]
-    num_clusters = [5, 10, 15]
-    overlaps = [0.5,0.7, 0.9]
-    relevants = [0.5, 0.7, 0.9]
+    borders = [cfg['Segmenter']['border']]
+    num_clusters = [cfg['Segmenter']['num_clusters']]
+    overlaps = [cfg['Segmenter']['overlap']]
+    relevants = [cfg['Segmenter']['relevant']]
     
     for border in borders:
         for num_cluster in num_clusters:
@@ -71,8 +71,8 @@ def main():
                     cfg['Segmenter']['relevant'] = relevant
                     
                     segmenter = Segmenter(cfg, args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
-                    frames,_ = segmenter.run(max=1000)
-                    make_gif_from_array(frames, store = f'gif/b{border}_n{num_cluster}_o{overlap}_r{relevant}.gif', max_frame = 210)
+                    frames,_ = segmenter.run()
+                    make_gif_from_array(frames, store = f'gif/b{border}_n{num_cluster}_o{overlap}_r{relevant}.gif')
     
 
 

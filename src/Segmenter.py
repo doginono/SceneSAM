@@ -64,6 +64,7 @@ class Segmenter(object):
         self.overlap = cfg['Segmenter']['overlap']
         self.relevant = cfg['Segmenter']['relevant']
         self.max_id = 0
+        self.update = {}
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -124,9 +125,10 @@ class Segmenter(object):
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, s, max_id = id_generation.createReverseMappingCombined_area_sort(idx, self.T_wc, self.K, self.depth_paths, 
+        masksCreated, s, max_id, update = id_generation.createReverseMappingCombined_area_sort(idx, self.T_wc, self.K, self.depth_paths, 
                                                                      predictor=self.predictor,
                                                                      max_id=self.max_id,
+                                                                     update=self.update,
                                                                      points_per_instance=self.points_per_instance, 
                                                                      current_frame=img, samples=self.samples, 
                                                                      kernel_size=40,smallesMaskSize=40*40, 

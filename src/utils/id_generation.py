@@ -576,6 +576,7 @@ def createReverseMappingCombined_area_sort(
     depths,
     predictor,
     max_id,
+    update,
     points_per_instance=5,
     current_frame=None,
     samples=None,
@@ -586,7 +587,7 @@ def createReverseMappingCombined_area_sort(
     deleted = None,
     border = 25,
     overlap_threshold = 0.5,
-    relevant_threshhold = 0.3
+    relevant_threshhold = 0.3,
 
 ):
     #print(f'beginning: {np.unique(samples[-1])}')
@@ -721,27 +722,42 @@ def createReverseMappingCombined_area_sort(
             target_id = target_ids[np.argmax(count)]
             #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
-                #print('inside overlap')
-                
-                change_filter = samples[-1] == instance
-                samples[-1][change_filter] = target_id
-                print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
-                masks[mask.squeeze()] = target_id
-                deleted[instance] = target_id
-                for key, value in deleted.items():
-                    if value == instance:
-                        print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
-                        deleted[key] = target_id
-                if verbose:
-                    visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_melted.png'), prompts = prompts)
-            else:
-                masks[mask.squeeze()] = instance
-                if verbose:
-                    visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts = prompts)
-        else:
-            masks[mask.squeeze()] = instance
-            if verbose:
-                visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts = prompts)
+                #this is a method to update the heuristic when to merge masks, the idea is, 
+                #if mask m1 got projected into mask m2 at least for example 5 times then we update mask m1 to mask m2
+                #addidtionally we update all the other masks which got projected into m1 to m2
+                #the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
+                #and change the id of the samples array
+                if instance in update:
+                    if target_id in update[instance]:
+                        if update[instance][target_id] < 5:
+                            update[instance][target_id] += 1
+                        else:
+                            update.pop(instance)
+                            for key, value in update.items():
+                                if instance in value:
+                                    update[key][target_id] = update[key][instance]
+                                    update[key].pop(instance)
+                            change_filter = samples[-1] == instance
+                            samples[-1][change_filter] = target_id
+                            print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
+                            masks[mask.squeeze()] = target_id
+                            deleted[instance] = target_id
+                            for key, value in deleted.items():
+                                if value == instance:
+                                    print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
+                                    deleted[key] = target_id
+                            if verbose:
+                                visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_melted.png'), prompts =prompts)
+                            continue #skip the rest of the loop
+                    else:
+                        update[instance][target_id] = 1
+                else:
+                    update[instance] = {}
+                    update[instance][target_id] = 1
+        
+        masks[mask.squeeze()] = instance
+        if verbose:
+            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts = prompts)
 
     #unique_ids = np.unique(masks).astype(int)
     #max_id = np.max(masks).astype(int)
@@ -865,7 +881,7 @@ def createReverseMappingCombined_area_sort(
     #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
     #print(f'end: {np.unique(samples[-1])}')
     visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
-    return masks,samples, max_id
+    return masks,samples, max_id, update
 
 def createReverseReverseMappingCombined(
     curr_frame_number,
