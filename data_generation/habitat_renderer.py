@@ -123,7 +123,7 @@ def save_renders(save_path, observation, enable_semantic, suffix=""):
     save_path_sem_instance = save_path
 
     cv2.imwrite(os.path.join(save_path_rgb, "frame{}.jpg".format(suffix)), observation["color_sensor"][:,:,::-1])  # change from RGB to BGR for opencv write
-    cv2.imwrite(os.path.join(save_path_depth, "depth{}.png".format(suffix)), observation["depth_sensor_mm"])
+    #cv2.imwrite(os.path.join(save_path_depth, "depth{}.png".format(suffix)), observation["depth_sensor_mm"])
 
     if enable_semantic:
         #cv2.imwrite(os.path.join(save_path_sem_class, "semantic_class{}.png".format(suffix)), observation["semantic_class"])
@@ -132,8 +132,8 @@ def save_renders(save_path, observation, enable_semantic, suffix=""):
         #cv2.imwrite(os.path.join(save_path_sem_instance, "semantic_instance{}.png".format(suffix)), observation["semantic_instance"])
         cv2.imwrite(os.path.join(save_path_sem_instance, "vis_sem_instance{}.png".format(suffix)), observation["vis_sem_instance"][:,:,::-1])
         #print(type(observation["semantic_instance"]))
-        onehot_semantic_instance = np.eye(101)[observation["semantic_instance"]].astype(np.uint8)
-        np.save(os.path.join(save_path_sem_instance, 'semantic{}.npy'.format(suffix)), onehot_semantic_instance)
+        #onehot_semantic_instance = np.eye(101)[observation["semantic_instance"]].astype(np.uint8)
+        #np.save(os.path.join(save_path_sem_instance, 'semantic{}.npy'.format(suffix)), onehot_semantic_instance)
 
 
 def render(sim, config):
@@ -212,8 +212,22 @@ def main():
         os.makedirs(config["save_path"])
 
     T_wc = np.loadtxt(config["pose_file"]).reshape(-1, 4, 4)
+    #T_wc[:,1:3] *= -1
+    rotation_matrix_y= np.array([[0, 0, 1, 0],
+                                [0, 1, 0, 0],
+                                [-1, 0, 0, 0],
+                                [0, 0, 0, 1]])
+    rotation_matrix_x= np.array([[1, 0, 0, 0],
+                                [0, 0, -1, 0],
+                                [0, 1, 0, 0],
+                                [0, 0, 0, 1]])
+    rotation_matrix_z= np.array([[0, -1, 0, 0],
+                                [1, 0, 0, 0],
+                                [0, 0, 1, 0],
+                                [0, 0, 0, 1]])
+    
+    T_wc = np.matmul(rotation_matrix_x, T_wc)
     Ts_cam2world = T_wc
-
     print("-----Initialise and Set Habitat-Sim-----")
     sim, hs_cfg, config = init_habitat(config)
     # Set agent state
