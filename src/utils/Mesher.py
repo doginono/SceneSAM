@@ -281,6 +281,8 @@ class Mesher(object):
         points = np.array(mesh.vertices)
         faces = np.array(mesh.triangles)
         return_mesh = trimesh.Trimesh(vertices=points, faces=faces)
+        #ADDED: flip normals to make them point inwards
+        return_mesh.flip_normals()
         return return_mesh
 
     def eval_points(self, p, decoders, c=None, stage='color', device='cuda:0'):
