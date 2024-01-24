@@ -45,6 +45,7 @@ def createMapping(
     depthg = np.array(Depthg[filteredBackProj[1, :], filteredBackProj[0, :]])
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
+    
 
     # depth check indices
     # if depth close enough
@@ -65,7 +66,6 @@ def readImage(filepath):
     image = cv2.imread(filepath)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
-
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
@@ -90,12 +90,10 @@ def checkIfInsideImage(
     depthg = np.array(Depthg[filteredBackProj[1, :], filteredBackProj[0, :]])
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
-
-    indices = np.where(abs(depthCheck) < 0.1)
+    #print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
+    indices = np.where(abs(depthCheck) < 0.01)
     filteredBackProj = filteredBackProj[:, indices]
     return filteredBackProj
-
-
 
 def update_current_frame(curr_mask, id2id):
     """update curr_mask according to sampleFromCurrentMask
@@ -112,7 +110,6 @@ def update_current_frame(curr_mask, id2id):
     for id in ids:
         updated[curr_mask == id] = id2id[id]
     return updated
-
 
 def create_complete_mapping_of_current_frame(
     ids_curr,
@@ -187,7 +184,6 @@ def create_complete_mapping_of_current_frame(
         map.T
     )  # at index i of map.T are the actual ids of the instance i according to the past frames
     return map, id_counter
-
 
 def createReverseMapping(
     ids_curr,
@@ -569,6 +565,116 @@ def createReverseMappingCombined(
     #print(f'end: {np.unique(samples[-1])}')
     return masks,samples
 
+def  createReverseMappingCombined_area_sort_predict(curr_frame_number,
+    T,
+    K,
+    depths,
+    predictor,
+    max_id,
+    update,
+    points_per_instance=5,
+    current_frame=None,
+    samples=None,
+    smallesMaskSize=1000,
+    kernel_size=80,
+    num_of_clusters=4,
+    verbose = False,
+    deleted = None,
+    border = 25,
+    overlap_threshold = 0.5,
+    relevant_threshhold = 0.3,
+    every_frame = 5):
+    
+    #print(f'beginning: {np.unique(samples[-1])}')
+    T_current = T[curr_frame_number]
+    depthf = readDepth(depths[curr_frame_number])
+    masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
+    predictor.set_image(current_frame)
+    
+    #projected to current camera frame, they also have ids
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )
+    
+    frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf, border = border)
+    #check if all points lie on the same but different mask
+    unique_ids = np.unique(frontProjectedSamples[2:,:].astype(int))
+    
+    #print("unique_ids", unique_ids)
+    visualizerForId = visualizerForIds()
+    path = 'output/Own/room1/masks'
+    os.makedirs(path, exist_ok=True) #make it anyway if we just store the end of each iteration
+
+    #np.random.shuffle(unique_ids)
+    mask_list = []
+
+    for instance in unique_ids:
+        
+        #sample same id points from from frontProjectedSamples
+        filtre = (frontProjectedSamples[2,:,:] == instance)
+        #print(count,frontProjectedSamples.shape)
+        instanceId = frontProjectedSamples[:, filtre]
+        if instanceId.size is not 0 and instanceId[2,0]>=0:
+            #print("instanceId",instance)
+            #TODO, ask dogu if ok, it hink the instanceIDs have been swapped
+            theRelevant=np.array(list(zip(instanceId[0].tolist(), instanceId[1].tolist())))
+            #print(theRelevant, theRelevant.shape)
+            if len(theRelevant)>=num_of_clusters:
+                mask_dict = {}
+                kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(theRelevant)
+                e = np.bincount(kmeans.labels_)>=len(theRelevant)/num_of_clusters//4
+                #print('e ', e)
+                if len(e) < num_of_clusters:
+                    print('SKIPPED SKIPPED SKIPPED SKIPPED frame: ', curr_frame_number)
+                    e = np.concatenate((e, np.zeros(num_of_clusters-len(e), dtype=bool)))
+                point_coords = kmeans.transform(theRelevant)[:,e]
+                closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
+                closest_points = theRelevant[closest_points_indices]
+                sampledPositive=[1]*len(kmeans.cluster_centers_[e]) 
+                mask, scores, _ = predictor.predict(
+                point_coords=closest_points[0],
+                point_labels=sampledPositive,
+                multimask_output=True,
+                )
+                #visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
+                #visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
+                #visualizerForId.visualize(mask[2], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[2]}.png'), prompts =closest_points[0])
+                #The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
+                #if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
+                area = np.count_nonzero(mask.squeeze())
+                if area < smallesMaskSize:
+                    continue
+                mask_dict['area'] = area
+                #mask_dict['score'] = np.max(scores)
+                #mask_dict['mask'] = mask.squeeze()
+                mask_dict['mask'] = mask[np.argmax(scores)].squeeze()
+                mask_dict['instance'] = instance
+                mask_dict['theRelevant'] = theRelevant
+                if verbose:
+                    mask_dict['prompts'] = closest_points[0]
+                mask_list.append(mask_dict)
+
+            #print(closest_points)
+            #temp.append([mask,instance])
+
+    sortedMasks = sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
+
+    for d in sortedMasks:
+        
+        instance = d['instance']
+        mask = d['mask']
+        #theRelevant = d['theRelevant']
+        if verbose:
+            prompts = d['prompts']
+        
+        masks[mask.squeeze()] = instance
+        if verbose:
+            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_predict.png'), prompts = prompts)
+    if verbose:
+        visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final_predict.png'))
+
+    return masks
+
 def createReverseMappingCombined_area_sort(
     curr_frame_number,
     T,
@@ -583,11 +689,14 @@ def createReverseMappingCombined_area_sort(
     smallesMaskSize=1000,
     kernel_size=80,
     num_of_clusters=4,
-    verbose = True,
+    verbose = False,
     deleted = None,
     border = 25,
     overlap_threshold = 0.5,
     relevant_threshhold = 0.3,
+    every_frame = 15,
+    merging_parameter = 10
+
 
 ):
     #print(f'beginning: {np.unique(samples[-1])}')
@@ -607,7 +716,7 @@ def createReverseMappingCombined_area_sort(
     
     #print("unique_ids", unique_ids)
     visualizerForId = visualizerForIds()
-    path = 'output/Own/room0/masks'
+    path = 'output/Own/room1/masks'
     os.makedirs(path, exist_ok=True) #make it anyway if we just store the end of each iteration
 
     if verbose:
@@ -639,70 +748,32 @@ def createReverseMappingCombined_area_sort(
                 closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
                 closest_points = theRelevant[closest_points_indices]
                 sampledPositive=[1]*len(kmeans.cluster_centers_[e]) 
-                mask, _, _ = predictor.predict(
+                mask, scores, _ = predictor.predict(
                 point_coords=closest_points[0],
                 point_labels=sampledPositive,
-                multimask_output=False,
+                multimask_output=True,
                 )
+                #visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
+                #visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
+                #visualizerForId.visualize(mask[2], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[2]}.png'), prompts =closest_points[0])
                 #The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
                 #if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
                 area = np.count_nonzero(mask.squeeze())
                 if area < smallesMaskSize:
                     continue
                 mask_dict['area'] = area
-                mask_dict['mask'] = mask.squeeze()
+                mask_dict['score'] = np.max(scores)
+                #mask_dict['mask'] = mask.squeeze()
+                mask_dict['mask'] = mask[np.argmax(scores)].squeeze()
                 mask_dict['instance'] = instance
                 mask_dict['theRelevant'] = theRelevant
                 if verbose:
                     mask_dict['prompts'] = closest_points[0]
                 mask_list.append(mask_dict)
-                
-                '''target_ids = masks[theRelevant[:,1], theRelevant[:,0]]
-                #print('before filter: ' , target_ids)
-                target_ids = target_ids[target_ids >= 0]
-                target_ids = target_ids[target_ids != instance]
-                target_ids, count = np.unique(target_ids, return_counts=True)
-                #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
-                if len(count)>0 and max(count) > relevant_threshhold*len(theRelevant):
-                    target_id = target_ids[np.argmax(count)]
-                    #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
-                    if overlap(masks == target_id, mask) > overlap_threshold:
-                        #print('inside overlap')
-                        
-                        change_filter = samples[-1] == instance
-                        samples[-1][change_filter] = target_id
-                        #print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
-                        condition = mask.squeeze() #& (masks == -100)
-                        masks[condition] == target_id
-                        deleted[instance] = target_id
-                        for key, value in deleted.items():
-                            if value == instance:
-                                #print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
-                                deleted[key] = target_id
-                        if verbose:
-                            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_melted.png'), prompts =closest_points[0])
-                    else:
-                        condition = mask.squeeze() #& (masks == -100)
-                        masks[condition] = instance
-                        if verbose:
-                            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts =closest_points[0])
-                else:
-                    condition = mask.squeeze() #& (masks == -100)
-                    masks[condition] = instance
-                    if verbose:
-                            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts =closest_points[0])
-                #masks[mask.squeeze()] = instance'''
 
-                    
-
-            
-            
             #print(closest_points)
             #temp.append([mask,instance])
-            
-    '''    temp=sorted(temp, key=lambda x: np.count_nonzero(x[0] == 1), reverse=False)
-        for element in temp:
-            masks[element[0].squeeze()]=element[1]'''
+
     sortedMasks = sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
 
     for d in sortedMasks:
@@ -718,7 +789,8 @@ def createReverseMappingCombined_area_sort(
         target_ids = target_ids[target_ids != instance]
         target_ids, count = np.unique(target_ids, return_counts=True)
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
-        if len(count)>0 and max(count) > relevant_threshhold*np.sum(count):
+        first = curr_frame_number == every_frame 
+        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count):
             target_id = target_ids[np.argmax(count)]
             #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
@@ -727,24 +799,27 @@ def createReverseMappingCombined_area_sort(
                 #addidtionally we update all the other masks which got projected into m1 to m2
                 #the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
                 #and change the id of the samples array
-                if instance in update:
-                    if target_id in update[instance]:
-                        if update[instance][target_id] < 5:
+
+                if first or instance in update:
+                    if first or target_id in update[instance] :
+                        if not first and update[instance][target_id] < merging_parameter:
                             update[instance][target_id] += 1
                         else:
-                            update.pop(instance)
+                            if not first:
+                                update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
                                     update[key][target_id] = update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance
                             samples[-1][change_filter] = target_id
-                            print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
+                            if verbose:
+                                print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
                             masks[mask.squeeze()] = target_id
                             deleted[instance] = target_id
                             for key, value in deleted.items():
                                 if value == instance:
-                                    print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
+                                    #print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
                                     deleted[key] = target_id
                             if verbose:
                                 visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_melted.png'), prompts =prompts)
@@ -757,7 +832,7 @@ def createReverseMappingCombined_area_sort(
         
         masks[mask.squeeze()] = instance
         if verbose:
-            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}.png'), prompts = prompts)
+            visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'), prompts = prompts)
 
     #unique_ids = np.unique(masks).astype(int)
     #max_id = np.max(masks).astype(int)
@@ -838,7 +913,10 @@ def createReverseMappingCombined_area_sort(
 
     max_id = max_id + counter
     numberOfMasks=len(np.unique(masks))
-
+    masks[0:2*border] = -100
+    masks[-2*border:] = -100
+    masks[:,0:2*border] = -100
+    masks[:,-2*border:] = -100
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         numberOfMasks, 
@@ -880,7 +958,7 @@ def createReverseMappingCombined_area_sort(
     #visualizerForId.visualizer(masks, prompts = prompts)
     #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
     #print(f'end: {np.unique(samples[-1])}')
-    visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
+    #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
     return masks,samples, max_id, update
 
 def createReverseReverseMappingCombined(

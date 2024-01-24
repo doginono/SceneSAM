@@ -32,6 +32,7 @@ class Mapper(object):
 
         #-------added------------------
         self.wait_segmenter = cfg['Segmenter']['mask_generator']
+        self.seg_freq = cfg['Segmenter']['every_frame']
         self.T_wc = slam.T_wc
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
@@ -447,7 +448,7 @@ class Mapper(object):
             scheduler = StepLR(optimizer, step_size=200, gamma=0.8)
 
         #J: added semantic optimizing part: for now it is 0.4 which is the same as the number of iterations spend on color. Carefull the semantic_iter_rati is added tothe num_joint_iters
-        if ~self.coarse_mapper:
+        if ~self.coarse_mapper and idx%self.seg_freq == 0:
             inc = int(self.semantic_iter_ratio*num_joint_iters)
         else:
             inc = 0
@@ -608,10 +609,10 @@ class Mapper(object):
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
 
-                mask = (batch_gt_semantic >= 0)
+                """mask = (batch_gt_semantic >= 0)
                 color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
                 batch_gt_semantic = batch_gt_semantic[mask].reshape(-1, self.output_dimension_semantic)
-                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"
+                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"""
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 
                 #semantic_loss = loss_function(color_semantics, batch_gt_semantic)

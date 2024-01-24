@@ -12,7 +12,7 @@ def make_gif(frame_folder):
                save_all=True, duration=100, loop=0)
     
 
-def make_gif_from_array(semantic_frames, store, max_frame = -1):
+def make_gif_from_array(semantic_frames, store, max_frame = -1, duration = 100):
     frames = []
     visualizerForId = vis.visualizerForIds()
     
@@ -26,7 +26,7 @@ def make_gif_from_array(semantic_frames, store, max_frame = -1):
         
     frame_one = frames[0]
     frame_one.save(store, format="GIF", append_images=frames,
-               save_all=True, duration=100, loop=0)
+               save_all=True, duration=duration, loop=0)
         
     # Rest of the code...
     

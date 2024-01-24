@@ -64,6 +64,7 @@ class BaseDataset(Dataset):
         #-------------------added-----------------------------------------------
         if self.name == 'replica':
             self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.every_frame_seg = cfg['Segmenter']['every_frame']
         #------------------end-added-----------------------------------------------
 
         self.device = device
@@ -167,7 +168,6 @@ class Replica(BaseDataset):
 
         #-------------------added-----------------------------------------------
         
-        semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
 
 
         
@@ -192,16 +192,23 @@ class Replica(BaseDataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
+        if index % self.every_frame_seg == 0:
+            semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
+            #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+            semantic_data = np.load(semantic_path)
 
-        #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
-        semantic_data = np.load(semantic_path)
-
-        # Create one-hot encoding using numpy.eye
-        print(f"read in semantic data of frame {index}: ", semantic_data)
-        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
- 
-        assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
-        semantic_data = torch.from_numpy(semantic_data)
+            # Create one-hot encoding using numpy.eye
+            print(f"read in semantic data of frame {index}: ", semantic_data)
+            negative = np.where(semantic_data < 0)
+            semantic_data[negative] = 0
+            semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
+            semantic_data[negative] = False
+            #TODO set sematic data corresponding to negative ids, set one-hot encoding to zero
+            assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
+            semantic_data = torch.from_numpy(semantic_data)
+        else:
+            semantic_data = torch.ones((H, W, self.output_dimension_semantic)).to(bool)*-1
+            
 
         
 

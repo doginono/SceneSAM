@@ -57,11 +57,14 @@ def main():
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
-    segmenter.run()
+    frames,max_id = segmenter.run()
+    gifMaker.make_gif_from_array(frames, store = 'test2_every10.gif', duration = 100 )
     del segmenter
-    slam = NICE_SLAM(cfg, args)
     if cfg['Segmenter']['store_vis']:
         gifMaker.make_gif(os.path.join(cfg['data']['input_folder'], 'segmentation'))
+    cfg['output_dimension_semantic'] = max_id #ensures that we have enough ids which we can predict
+    slam = NICE_SLAM(cfg, args)
+    
     slam.run()
 
 

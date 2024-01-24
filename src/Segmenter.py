@@ -11,6 +11,7 @@ from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
 from tqdm import tqdm
+from scripts.gifMaker import make_gif_from_array
 
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
@@ -40,6 +41,7 @@ class Segmenter(object):
         #self.idx_coarse_mapper = slam.idx_coarse_mapper
         
         self.every_frame = cfg['mapping']['every_frame']
+        self.every_frame_seg = cfg['Segmenter']['every_frame']
         self.points_per_instance = cfg['mapping']['points_per_instance']
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = cfg['cam']['H'], cfg['cam'][
             'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
@@ -52,7 +54,7 @@ class Segmenter(object):
         self.depth_paths = sorted(glob.glob(f'{self.input_folder}/results/depth*.png')) 
 
         self.n_img = len(self.color_paths)
-        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
+        self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame_seg, self.H, self.W))).int()
         
         #self.new_id = 0
         self.visualizer = vis.visualizerForIds()
@@ -65,6 +67,8 @@ class Segmenter(object):
         self.relevant = cfg['Segmenter']['relevant']
         self.max_id = 0
         self.update = {}
+        self.verbose = cfg['Segmenter']['verbose']
+        self.merging_parameter = cfg['Segmenter']['merging_parameter']
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -122,6 +126,7 @@ class Segmenter(object):
         masksCreated,self.samples = id_generation.createReverseReverseMappingCombined(idx, self.T_wc, self.K, self.depth_paths, predictor=self.predictor, current_frame=img,samples=self.samples,num_of_clusters=4)
         self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
         
+        
     def segment_idx(self,idx):
         img  = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -136,12 +141,32 @@ class Segmenter(object):
                                                                      num_of_clusters=self.num_clusters,
                                                                      border=self.border,
                                                                      overlap_threshold=self.overlap,
-                                                                     relevant_threshhold=self.relevant)
+                                                                     relevant_threshhold=self.relevant,
+                                                                     every_frame=self.every_frame_seg,
+                                                                     merging_parameter=self.merging_parameter)
         self.samples = s
         self.max_id = max_id
         
-        self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
+        self.semantic_frames[idx//self.every_frame_seg]=torch.from_numpy(masksCreated)
         
+    def predict_idx(self,idx):
+        img  = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        masksCreated = id_generation.createReverseMappingCombined_area_sort_predict(idx, self.T_wc, self.K, self.depth_paths, 
+                                                                     predictor=self.predictor,
+                                                                     max_id=self.max_id,
+                                                                     update=self.update,
+                                                                     points_per_instance=self.points_per_instance, 
+                                                                     current_frame=img, samples=self.samples, 
+                                                                     kernel_size=40,smallesMaskSize=40*40, 
+                                                                     deleted = self.deleted,
+                                                                     num_of_clusters=self.num_clusters,
+                                                                     border=self.border,
+                                                                     overlap_threshold=self.overlap,
+                                                                     relevant_threshhold=self.relevant,
+                                                                     every_frame=self.every_frame_seg)
+        
+        self.semantic_frames[idx//self.every_frame]=torch.from_numpy(masksCreated)
 
     def segment_first(self):
         color_path = self.color_paths[0]
@@ -177,14 +202,25 @@ class Segmenter(object):
                 for uk in update_keys:
                     deleted[uk] = deleted[target]
         return deleted
+    
+    def process_frames(self, semantic_frames):
+        """process the semantic ids such that we have the minimum max(id), number"""
+        ids = np.unique(semantic_frames)
+        print(f'ids: {ids}')
+        result = semantic_frames.clone()
+        for i in range(len(ids)):
+            result[semantic_frames == ids[i]] = i
+        result[semantic_frames == -100] = -100
+        return result, len(ids)-1
+
 
     def run(self, max = -1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame)
             for index in tqdm(index_frames, desc='Loading stored segmentations'):
                 path = os.path.join(self.store_directory, f'seg_{index}.npy')
-                self.semantic_frames[index//self.every_frame] = torch.from_numpy(np.load(path).astype(np.int32))
-            return
+                self.semantic_frames[index//self.every_frame_seg] = torch.from_numpy(np.load(path).astype(np.int32))
+            return self.semantic_frames, self.semantic_frames.max() +1
 
         #----------end zero frame------------------
         if self.mask_generator:
@@ -204,12 +240,25 @@ class Segmenter(object):
             self.samples = s
             self.predictor = create_instance_seg.create_predictor('cuda')
             if max == -1:
-                index_frames = np.arange(self.every_frame, self.n_img, self.every_frame)
+                index_frames = np.arange(self.every_frame, self.n_img, self.every_frame_seg)
+                index_frames_predict = np.setdiff1d(np.arange(self.every_frame, self.n_img, self.every_frame), index_frames)
             else:
-                index_frames = np.arange(self.every_frame, max, self.every_frame)
+                index_frames = np.arange(self.every_frame, max, self.every_frame_seg)
+                index_frames_predict = np.setdiff1d(np.arange(self.every_frame, max, self.every_frame), index_frames)
+
+
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
                 #print(f'outside samples: {np.unique(self.samples[-1])}')
+            
+            for old_instance in self.deleted.keys():
+                self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
+            #if self.verbose:
+            #    make_gif_from_array(self.semantic_frames[index_frames//self.every_frame], os.path.join(self.store_directory, 'segmentation.gif'))
+
+            """for idx in tqdm(index_frames_predict, desc='Predicting frames'):
+                print(f'predicting frame {idx}')
+                self.predict_idx(idx)"""
                 
             """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
             for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
@@ -220,26 +269,27 @@ class Segmenter(object):
             #print('unprocessed map: ', self.deleted)
             #self.deleted = self.process_keys(self.deleted)
             #print('preocessed map: ', self.deleted)
-            for old_instance in self.deleted.keys():
-                self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[old_instance]
+            #if self.verbose:
+            #    make_gif_from_array(self.semantic_frames, os.path.join(self.store_directory, f'segmentation_full.gif'))
 
             visualizerForId = vis.visualizerForIds()
             #for i in range(len(self.semantic_frames)):
             """for i in range(len(self.semantic_frames)):
                 visualizerForId.visualizer(self.semantic_frames[i])"""
+            self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
 
             #store the segmentations, such that the dataset class (frame_reader) can read them
             for index in tqdm([0]+list(index_frames), desc = 'Storing segmentations'):
                 path = os.path.join(self.store_directory, f'seg_{index}.npy')
-                np.save(path, self.semantic_frames[index//self.every_frame].numpy())
+                np.save(path, self.semantic_frames[index//self.every_frame_seg].numpy())
 
 
             if self.store_vis:
                 for index in tqdm([0]+list(index_frames), desc = 'Storing visualizations'):
                     path = os.path.join(self.store_directory, f'seg_{index}.png')
-                    self.visualizer.visualize(self.semantic_frames[index//self.every_frame].numpy(), path = path)
+                    self.visualizer.visualize(self.semantic_frames[index//self.every_frame_seg].numpy(), path = path)
 
-        return self.semantic_frames, torch.max(self.semantic_frames)
+        return self.semantic_frames, max_id+1
                     
         
             

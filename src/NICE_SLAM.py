@@ -30,6 +30,8 @@ class NICE_SLAM():
     def __init__(self, cfg, args):
 
         #for groundtruth tracking
+        self.store = cfg['store']
+        self.store_path = cfg['store_path']
         path_to_traj = cfg['data']['input_folder']+'/traj.txt'
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
@@ -135,6 +137,12 @@ class NICE_SLAM():
     
     def to_gpu(self):
         self.shared_decoders.to('cuda')
+
+    def set_decoders(self, decoders):
+        self.shared_decoders = decoders
+
+    def set_grid(self, grid):
+        self.shared_c = grid
 
 
     def print_output_desc(self):
@@ -382,6 +390,11 @@ class NICE_SLAM():
             processes.append(p)
         for p in processes:
             p.join()
+        
+        if self.store:
+            os.makedirs(self.store_path, exist_ok=True)
+            torch.save(self.shared_c, os.path.join(self.store_path, 'shared_c.pth'))
+            torch.save(self.shared_decoders, os.path.join(self.store_path, 'shared_decoders.pth'))
         
 
 
