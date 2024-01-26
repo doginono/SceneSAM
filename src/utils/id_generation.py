@@ -912,11 +912,13 @@ def createReverseMappingCombined_area_sort(
     
 
     max_id = max_id + counter
-    numberOfMasks=len(np.unique(masks))
-    masks[0:2*border] = -100
-    masks[-2*border:] = -100
-    masks[:,0:2*border] = -100
-    masks[:,-2*border:] = -100
+    t = np.unique(masks)
+    numberOfMasks=len(np.unique(masks))-1
+    if border != 0:
+        masks[0:2*border] = -100
+        masks[-2*border:] = -100
+        masks[:,0:2*border] = -100
+        masks[:,-2*border:] = -100
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         numberOfMasks, 

@@ -216,7 +216,7 @@ class Segmenter(object):
 
     def run(self, max = -1):
         if self.use_stored:
-            index_frames = np.arange(0, self.n_img, self.every_frame)
+            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc='Loading stored segmentations'):
                 path = os.path.join(self.store_directory, f'seg_{index}.npy')
                 self.semantic_frames[index//self.every_frame_seg] = torch.from_numpy(np.load(path).astype(np.int32))
@@ -240,10 +240,10 @@ class Segmenter(object):
             self.samples = s
             self.predictor = create_instance_seg.create_predictor('cuda')
             if max == -1:
-                index_frames = np.arange(self.every_frame, self.n_img, self.every_frame_seg)
+                index_frames = np.arange(self.every_frame_seg, self.n_img, self.every_frame_seg)
                 index_frames_predict = np.setdiff1d(np.arange(self.every_frame, self.n_img, self.every_frame), index_frames)
             else:
-                index_frames = np.arange(self.every_frame, max, self.every_frame_seg)
+                index_frames = np.arange(self.every_frame_seg, max, self.every_frame_seg)
                 index_frames_predict = np.setdiff1d(np.arange(self.every_frame, max, self.every_frame), index_frames)
 
 

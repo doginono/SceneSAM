@@ -182,7 +182,7 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """
     tensors = []
 
-    temp=np.unique(ids)
+    temp=np.unique(ids)[1:]
     for i,element in enumerate(list(temp.astype(int))):
         if element >=0:            
             labels = np.where(ids == element)
