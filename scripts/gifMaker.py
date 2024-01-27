@@ -12,21 +12,21 @@ def make_gif(frame_folder):
                save_all=True, duration=100, loop=0)
     
 
-def make_gif_from_array(semantic_frames, store):
+def make_gif_from_array(semantic_frames, store, max_frame = -1, duration = 100):
     frames = []
     visualizerForId = vis.visualizerForIds()
     
-    for frame in semantic_frames:
+    for frame in semantic_frames[:max_frame]:
         # Create image from array using plt.plot
-        colors = visualizerForId.get_colors(frame.numpy().astype(np.uint8))
-        im = Image.fromarray(colors)
+        colors = visualizerForId.get_colors(frame.numpy())*255
+        im = Image.fromarray(colors.astype(np.uint8))
         frames.append(im)
         
         # Convert plot to image
         
     frame_one = frames[0]
     frame_one.save(store, format="GIF", append_images=frames,
-               save_all=True, duration=100, loop=0)
+               save_all=True, duration=duration, loop=0)
         
     # Rest of the code...
     

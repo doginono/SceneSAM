@@ -32,6 +32,7 @@ class Mapper(object):
 
         #-------added------------------
         self.wait_segmenter = cfg['Segmenter']['mask_generator']
+        self.seg_freq = cfg['Segmenter']['every_frame']
         self.T_wc = slam.T_wc
         self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.semantic_iter_ratio = cfg['mapping']['semantic_iter_ratio']
@@ -447,7 +448,7 @@ class Mapper(object):
             scheduler = StepLR(optimizer, step_size=200, gamma=0.8)
 
         #J: added semantic optimizing part: for now it is 0.4 which is the same as the number of iterations spend on color. Carefull the semantic_iter_rati is added tothe num_joint_iters
-        if ~self.coarse_mapper:
+        if ~self.coarse_mapper and idx%self.seg_freq == 0:
             inc = int(self.semantic_iter_ratio*num_joint_iters)
         else:
             inc = 0
@@ -514,6 +515,7 @@ class Mapper(object):
             
 
             camera_tensor_id = 0
+
             for frame in optimize_frame:
                 if frame != -1:
                     gt_depth = keyframe_dict[frame]['depth'].to(device)
@@ -521,6 +523,8 @@ class Mapper(object):
                     #-----------------added-------------------
                     #jkl%
                     gt_semantic = torch.eye(self.output_dimension_semantic)[keyframe_dict[frame]['semantic']].to(bool).to(device)
+                    ignore_pixel = keyframe_dict[frame]['ignore_pixel'].to(device)
+                    gt_semantic[ignore_pixel] = 0
                     #gt_semantic = keyframe_dict[frame]['semantic'].to(device)
                     #-----------------end-added-------------------
                     if self.BA and frame != oldest_frame:
@@ -608,10 +612,10 @@ class Mapper(object):
             elif (self.stage == 'semantic'): 
                 loss_function = torch.nn.CrossEntropyLoss()
 
-                mask = (batch_gt_semantic >= 0)
+                """mask = (batch_gt_semantic >= 0)
                 color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
                 batch_gt_semantic = batch_gt_semantic[mask].reshape(-1, self.output_dimension_semantic)
-                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"
+                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"""
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 
                 #semantic_loss = loss_function(color_semantics, batch_gt_semantic)
@@ -858,9 +862,9 @@ class Mapper(object):
                     if (idx % self.keyframe_every == 0 or (idx == self.n_img-2)) \
                             and (idx not in self.keyframe_list):
                         self.keyframe_list.append(idx)
-                        #jkl%
+                        ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
                         self.keyframe_dict.append({'gt_c2w': gt_c2w.cpu(), 'idx': idx, 'color': gt_color.cpu(
-                        ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone(),
+                        ), 'depth': gt_depth.cpu(), 'est_c2w': cur_c2w.clone(), 'ignore_pixel': ignore_pixel.cpu(),
                         'semantic': torch.argmax(gt_semantic.to(int), dim = -1).cpu()}) #Done: add semantics ground truth
 
             if self.low_gpu_mem:

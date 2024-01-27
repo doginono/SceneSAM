@@ -1,4 +1,6 @@
 inherit_from: 'configs/Own/own.yaml'
+store: True
+store_path: 'model/room1'
 #tracking:
 #  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt
 mapping:
