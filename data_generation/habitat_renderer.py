@@ -121,8 +121,8 @@ def save_renders(save_path, observation, enable_semantic, suffix=""):
     save_path_depth = save_path
     save_path_sem_class = save_path
     save_path_sem_instance = save_path
-
-    cv2.imwrite(os.path.join(save_path_rgb, "frame{}.jpg".format(suffix)), observation["color_sensor"][:,:,::-1])  # change from RGB to BGR for opencv write
+    observation["color_sensor"] = np.clip(observation["color_sensor"], 0, 255).astype('uint8')
+    cv2.imwrite(os.path.join(save_path_rgb, "frame{}.jpg".format(suffix)), observation["color_sensor"][:,:,::])  # change from RGB to BGR for opencv write
     #cv2.imwrite(os.path.join(save_path_depth, "depth{}.png".format(suffix)), observation["depth_sensor_mm"])
 
     if enable_semantic:
@@ -226,7 +226,7 @@ def main():
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1]])
     
-    T_wc = np.matmul(rotation_matrix_x, T_wc)
+    T_wc = rotation_matrix_x@ T_wc
     Ts_cam2world = T_wc
     print("-----Initialise and Set Habitat-Sim-----")
     sim, hs_cfg, config = init_habitat(config)
