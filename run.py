@@ -58,7 +58,7 @@ def main():
     #-----------------------------------------------------------------------------------
     segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
     frames,max_id = segmenter.run()
-    gifMaker.make_gif_from_array(frames, store = 'test2_every10.gif', duration = 100 )
+    gifMaker.make_gif_from_array(frames, store = os.path.join(cfg['data']['input_folder'], 'segmentation','gif.gif'), duration = 100 )
     del segmenter
     if cfg['Segmenter']['store_vis']:
         gifMaker.make_gif(os.path.join(cfg['data']['input_folder'], 'segmentation'))

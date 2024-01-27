@@ -774,7 +774,7 @@ def createReverseMappingCombined_area_sort(
             #print(closest_points)
             #temp.append([mask,instance])
 
-    sortedMasks = sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
+    sortedMasks = mask_list #sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
 
     for d in sortedMasks:
         
