@@ -632,9 +632,9 @@ def  createReverseMappingCombined_area_sort_predict(curr_frame_number,
                 closest_points = theRelevant[closest_points_indices]
                 sampledPositive=[1]*len(kmeans.cluster_centers_[e]) 
                 mask, scores, _ = predictor.predict(
-                point_coords=closest_points[0],
-                point_labels=sampledPositive,
-                multimask_output=True,
+                    point_coords=closest_points[0],
+                    point_labels=sampledPositive,
+                    multimask_output=True,
                 )
                 #visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
                 #visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
@@ -749,9 +749,9 @@ def createReverseMappingCombined_area_sort(
                 closest_points = theRelevant[closest_points_indices]
                 sampledPositive=[1]*len(kmeans.cluster_centers_[e]) 
                 mask, scores, _ = predictor.predict(
-                point_coords=closest_points[0],
-                point_labels=sampledPositive,
-                multimask_output=True,
+                    point_coords=closest_points[0],
+                    point_labels=sampledPositive,
+                    multimask_output=True,
                 )
                 #visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
                 #visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
@@ -786,7 +786,7 @@ def createReverseMappingCombined_area_sort(
         target_ids = masks[theRelevant[:,1], theRelevant[:,0]]
         #print('before filter: ' , target_ids)
         target_ids = target_ids[target_ids >= 0]
-        target_ids = target_ids[target_ids != instance]
+        #target_ids = target_ids[target_ids != instance]
         target_ids, count = np.unique(target_ids, return_counts=True)
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
         first = curr_frame_number == every_frame 
@@ -809,7 +809,7 @@ def createReverseMappingCombined_area_sort(
                                 update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
-                                    update[key][target_id] = update[key][instance]
+                                    update[key][target_id] += update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance
                             samples[-1][change_filter] = target_id
