@@ -789,8 +789,9 @@ def createReverseMappingCombined_area_sort(
         #target_ids = target_ids[target_ids != instance]
         target_ids, count = np.unique(target_ids, return_counts=True)
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
+        #and np.max(count)*0.3*samples[-1]
         first = curr_frame_number == every_frame 
-        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count):
+        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count) :
             target_id = target_ids[np.argmax(count)]
             #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
