@@ -103,8 +103,8 @@ class NICE_SLAM():
 
         
         
-        self.mapping_first_frame = torch.zeros((1)).int()
-        self.mapping_first_frame.share_memory_()
+        #self.mapping_first_frame = torch.zeros((1)).int()
+        #self.mapping_first_frame.share_memory_()
         # the id of the newest frame Mapper is processing
         #self.mapping_idx = torch.zeros((1)).int()
         #self.mapping_idx.share_memory_()
@@ -315,7 +315,7 @@ class NICE_SLAM():
 
         self.shared_c = c
 
-    def tracking(self, rank):
+    '''def tracking(self, rank):
         """
         Tracking Thread.
 
@@ -329,7 +329,7 @@ class NICE_SLAM():
                 break
             time.sleep(1)
 
-        self.tracker.run()
+        self.tracker.run()'''
 
     def mapping(self, rank):
         """

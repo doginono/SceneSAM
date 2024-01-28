@@ -144,7 +144,8 @@ class Segmenter(object):
                                                                      overlap_threshold=self.overlap,
                                                                      relevant_threshhold=self.relevant,
                                                                      every_frame=self.every_frame_seg,
-                                                                     merging_parameter=self.merging_parameter)
+                                                                     merging_parameter=self.merging_parameter,
+                                                                     hit_percent=self.hit_percent)
         self.samples = s
         self.max_id = max_id
         

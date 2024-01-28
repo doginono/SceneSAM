@@ -73,7 +73,7 @@ class Mapper(object):
         #self.mapping_cnt = slam.mapping_cnt
         self.decoders = slam.shared_decoders
         #self.estimate_c2w_list = slam.estimate_c2w_list #for tracker
-        self.mapping_first_frame = slam.mapping_first_frame
+        #self.mapping_first_frame = slam.mapping_first_frame
 
         self.scale = cfg['scale']
         self.coarse = cfg['coarse']
@@ -706,10 +706,12 @@ class Mapper(object):
 
             #the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
             #this ensures that the current frame has always been segmented before the mappers start training on it
-            if self.wait_segmenter:
+            ''' ""if self.wait_segmenter:
+                assert False, 'always asynchronous now'
                 if init:
                     pass
                 elif self.coarse_mapper:
+                    
                     while True:
                         if self.idx_segmenter[0] > self.idx_coarse_mapper[0]:
                             break
@@ -767,8 +769,9 @@ class Mapper(object):
                     idx = self.idx_mapper[0].clone()
                     if self.idx_coarse_mapper[0] >= idx:
                         break
-                    time.sleep(0.1)"""
+                    time.sleep(0.1)"""""'''
             if self.coarse_mapper:
+                assert False, 'no coarse mapper anymore'
                 idx = self.idx_coarse_mapper[0].clone()
             else:
                 idx = self.idx_mapper[0].clone()
@@ -820,39 +823,17 @@ class Mapper(object):
             cur_c2w = gt_c2w#torch.from_numpy(backproject.T_inv(self.T_wc[idx])).to(self.device)
             #cur_c2w = gt_c2w.clone().to(self.device)
             #J: using a unseen frame during training for visualization
-            print(f'pose of frame {idx} is {gt_c2w}')
-            if self.use_vis and (idx != 0 or ~self.no_vis_on_first_frame) and idx%self.vis_freq == 0 and idx-self.vis_offset >=0:
-                #vis_c2w = self.estimate_c2w_list[idx - self.vis_offset].to(self.device)
-                #vis_c2w = torch.from_numpy(self.T_wc[idx - self.vis_offset]).to(self.device)
-                vis_c2w =gt_c2w# torch.from_numpy(backproject.T_inv(self.T_wc[idx - self.vis_offset])).to(self.device)
-                """if self.vis_offset == 0:
-                    print("ATTENTION; ATTEMPTING TO VISUALIZE CURRENT FRAME")
-                    print("vis_c2w == gt_c2w: ",np.all(gt_c2w.cpu().numpy() == vis_c2w.cpu().numpy()))
-                    print("vis_c2w == cur_c2w: ",np.all(cur_c2w.cpu().numpy() == vis_c2w.cpu().numpy()))"""
-            else:
-                vis_c2w = None
+            #print(f'pose of frame {idx} is {gt_c2w}')
             num_joint_iters = num_joint_iters//outer_joint_iters
             for outer_joint_iter in range(outer_joint_iters):
 
                 self.BA = (len(self.keyframe_list) > 4) and cfg['mapping']['BA'] and (
                     not self.coarse_mapper)
-                """if ~self.coarse_mapper:
-                    gt_depth_np = gt_depth.cpu().numpy()
-                    gt_color_np = gt_color.cpu().numpy() #TODO add semantics
-                    semantic_np = gt_semantic.detach().cpu().numpy()
-                    semantic_argmax = np.argmax(semantic_np, axis=2)
-                    fig, axs = plt.subplots(3) #previously 2,3
-                    fig.suptitle(f'frame {idx}')
-                    fig.tight_layout()
-                    axs[0].imshow(gt_depth_np, cmap="plasma",
-                                            vmin=0, vmax=np.max(gt_depth_np))
-                    axs[1].imshow(gt_color_np, cmap="plasma")
-                    axs[2].imshow(semantic_argmax, cmap="plasma")
-                    plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")"""
+                
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
-                                      gt_c2w, vis_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
+                                      gt_c2w, cur_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     #self.estimate_c2w_list[idx] = cur_c2w
@@ -873,8 +854,7 @@ class Mapper(object):
                 torch.cuda.empty_cache()
 
             init = False
-            # mapping of first frame is done, can begin tracking
-            self.mapping_first_frame[0] = 1
+            #self.mapping_first_frame[0] = 1
 
             if not self.coarse_mapper:
                 if ((not (idx == 0 and self.no_log_on_first_frame)) and idx % self.ckpt_freq == 0) \
@@ -918,6 +898,7 @@ class Mapper(object):
             #TODO: push the decoders to the cpu 
             print(f'Mapping frame done, is coarse: {self.coarse_mapper}')
             if self.coarse_mapper:
+                assert False, 'no coarse mapper anymore'
                 self.idx_coarse_mapper[0] = idx + self.every_frame
             else:
                 if idx == 10:
@@ -927,5 +908,8 @@ class Mapper(object):
                         pass
                     except Exception as e:
                         print(f"Failed to capture memory snapshot {e}")
-                self.idx_mapper[0] = idx + self.every_frame
+                if idx + self.every_frame >= self.n_img-1:
+                    self.idx_mapper[0] = self.n_img-1
+                else:
+                    self.idx_mapper[0] = idx + self.every_frame
 

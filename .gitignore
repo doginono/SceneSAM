@@ -152,4 +152,5 @@ outputs/
 tryoutData/
 gif/
 model/
+test/
 ```

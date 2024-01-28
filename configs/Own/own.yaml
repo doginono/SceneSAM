@@ -20,12 +20,12 @@ Segmenter:
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
   border: 30
-  overlap: 0.7
+  overlap: 0.9
   relevant: 0.7
-  merging_parameter: 10
+  merging_parameter: 7
   every_frame: 10
   verbose: True
-  hit_percent: 0.5
+  hit_percent: 0.1
 
 rendering:
   semantic_occupancy_multiplier: 10
