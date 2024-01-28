@@ -695,7 +695,8 @@ def createReverseMappingCombined_area_sort(
     overlap_threshold = 0.5,
     relevant_threshhold = 0.3,
     every_frame = 15,
-    merging_parameter = 10
+    merging_parameter = 10,
+    hit_percent = 0.4
 
 
 ):
@@ -790,7 +791,7 @@ def createReverseMappingCombined_area_sort(
         target_ids, count = np.unique(target_ids, return_counts=True)
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
         first = curr_frame_number == every_frame 
-        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count):
+        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count) and np.sum(count) > hit_percent*np.sum(samples[-1]==instance):
             target_id = target_ids[np.argmax(count)]
             #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
@@ -809,6 +810,8 @@ def createReverseMappingCombined_area_sort(
                                 update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
+                                    if not target_id in update[key]:
+                                        update[key][target_id] = 0
                                     update[key][target_id] += update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance

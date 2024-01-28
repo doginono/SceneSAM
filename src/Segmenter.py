@@ -69,6 +69,7 @@ class Segmenter(object):
         self.update = {}
         self.verbose = cfg['Segmenter']['verbose']
         self.merging_parameter = cfg['Segmenter']['merging_parameter']
+        self.hit_percent = cfg['Segmenter']['hit_percent']
 
     '''def update(self, semantic_data, id_counter, index):
     
@@ -181,7 +182,7 @@ class Segmenter(object):
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
         visualizerForId = vis.visualizerForIds()
-        visualizerForId.visualizer(ids)
+        visualizerForId.visualize(ids, '0.png')
         self.semantic_frames[0]=torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.max_id = ids.max() +1
