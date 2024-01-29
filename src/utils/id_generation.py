@@ -843,7 +843,7 @@ def createReverseMappingCombined_area_sort(
         if verbose:
             visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'), prompts = prompts)
 
-    sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
+    #sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
 
     '''masks[:,:] = -100
     for d in sortedMasks:
@@ -942,7 +942,7 @@ def createReverseMappingCombined_area_sort(
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, 
         numberOfMasks, 
-        points_per_instance=20
+        points_per_instance=30
     )
     #3d
     realWorldProjectCurr = backproject.realWorldProject(
