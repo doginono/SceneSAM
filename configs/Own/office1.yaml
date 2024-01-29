@@ -1,0 +1,10 @@
+inherit_from: configs/Own/own.yaml
+store: True
+store_path: 'model/office1'
+mapping:
+  bound: [[-5.3,6.5],[-5.1,6.0],[-4.5,5.2]]
+  marching_cubes_bound: [[-5.3,6.5],[-5.1,6.0],[-4.5,5.2]]
+data:
+  input_folder: Datasets/Replica/office1
+  output: output/Own/office1
+  logs: logs/office1

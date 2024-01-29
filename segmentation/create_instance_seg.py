@@ -51,7 +51,6 @@ def create_instance_seg(img_path, store_directory, mask_generator):
         store_directory,
         img_path.split("/")[-1].replace("frame", "seg").replace("jpg", "npy"),
     )
-    print(save_path)
     np.save(save_path, instances)
 
 

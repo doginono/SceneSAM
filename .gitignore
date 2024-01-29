@@ -154,4 +154,5 @@ gif/
 model/
 DataSetEval/*
 outputSegmentation/*
+test/
 ```

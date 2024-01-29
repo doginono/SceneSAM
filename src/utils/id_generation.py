@@ -695,7 +695,8 @@ def createReverseMappingCombined_area_sort(
     overlap_threshold = 0.5,
     relevant_threshhold = 0.3,
     every_frame = 15,
-    merging_parameter = 10
+    merging_parameter = 10,
+    hit_percent = 0.1
 
 
 ):
@@ -794,7 +795,7 @@ def createReverseMappingCombined_area_sort(
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
         #and np.max(count)*0.3*samples[-1]
         first = curr_frame_number == every_frame 
-        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count) :
+        if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count) and  np.sum(count)*hit_percent < np.sum(samples[-1]==instance):
             target_id = target_ids[np.argmax(count)]
             #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
@@ -814,6 +815,8 @@ def createReverseMappingCombined_area_sort(
                                 update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
+                                    if not target_id in update[key]:
+                                        update[key][target_id] = 0
                                     update[key][target_id] += update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance
@@ -822,6 +825,7 @@ def createReverseMappingCombined_area_sort(
                                 print(f'change id {instance} to {target_id} in frame {curr_frame_number}')
                             masks[mask.squeeze()] = target_id
                             deleted[instance] = target_id
+                            #d['instance'] = target_id
                             for key, value in deleted.items():
                                 if value == instance:
                                     #print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
@@ -838,6 +842,14 @@ def createReverseMappingCombined_area_sort(
         masks[condition] = instance
         if verbose:
             visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'), prompts = prompts)
+
+    sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
+
+    '''masks[:,:] = -100
+    for d in sortedMasks:
+        masks[d['mask']] = d['instance']'''
+
+
 
     #unique_ids = np.unique(masks).astype(int)
     #max_id = np.max(masks).astype(int)
@@ -885,8 +897,11 @@ def createReverseMappingCombined_area_sort(
     indices = np.array(np.where(result == (-100*(h*w)))).T
     
     counter=0
+    path = 'output/Own/room0/masks'
+    os.makedirs(path, exist_ok=True) 
+    #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_old.png'))
     
-    while len(indices)>0:
+    if len(indices)>0:
         counter +=1
         
         random_index = indices[np.random.choice(len(indices))]
@@ -965,6 +980,7 @@ def createReverseMappingCombined_area_sort(
     #visualizerForId.visualizer(masks, prompts = prompts)
     #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
     #print(f'end: {np.unique(samples[-1])}')
+    
     #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
     return masks,samples, max_id, update
 

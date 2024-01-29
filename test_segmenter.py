@@ -56,23 +56,25 @@ def main():
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     
-    borders = [0]
-    num_clusters = [0]
-    overlaps = [0]
-    relevants = [0]
-    
-    for border in borders:
-        for num_cluster in num_clusters:
-            for overlap in overlaps:
-                for relevant in relevants:
+    overlaps = [0.9]
+    relevants = [0.7]
+    hit_percents = [0.1, 0.2, 0.3]
+    merging_paramenters = [3, 5, 7]
+    for overlap in overlaps: 
+        for relevant in relevants:
+            for hit_percent in hit_percents:
+                for merging_parameter in merging_paramenters:
+            
                     '''cfg['Segmenter']['border'] = border
-                    cfg['Segmenter']['num_clusters'] = num_cluster
+                    cfg['Segmenter']['num_clusters'] = num_cluster'''
+                    cfg['Segmenter']['hit_percent'] = hit_percent
                     cfg['Segmenter']['overlap'] = overlap
-                    cfg['Segmenter']['relevant'] = relevant'''
+                    cfg['Segmenter']['relevant'] = relevant
+                    cfg['Segmenter']['merging_parameter'] = merging_parameter
                     
                     segmenter = Segmenter(cfg, args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
                     frames,_ = segmenter.run()
-                    make_gif_from_array(frames, store = f'gif/standard_room1.gif')
+                    make_gif_from_array(frames, store = f'gif/office3_%{hit_percent}_m{merging_parameter}_o{overlap}_r{relevant}.gif')
     
 
 
