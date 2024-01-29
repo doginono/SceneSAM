@@ -896,7 +896,7 @@ def createReverseMappingCombined_area_sort(
     os.makedirs(path, exist_ok=True) 
     #visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_old.png'))
     
-    while len(indices)>0:
+    if len(indices)>0:
         counter +=1
         
         random_index = indices[np.random.choice(len(indices))]

@@ -56,9 +56,9 @@ def main():
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     
-    overlaps = [0.7, 0.9]
-    relevants = [0.3, 0.7]
-    hit_percents = [0.3, 0.5, 0.7]
+    overlaps = [0.9]
+    relevants = [0.7]
+    hit_percents = [0.1, 0.2, 0.3]
     merging_paramenters = [3, 5, 7]
     for overlap in overlaps: 
         for relevant in relevants:
@@ -74,7 +74,7 @@ def main():
                     
                     segmenter = Segmenter(cfg, args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
                     frames,_ = segmenter.run()
-                    make_gif_from_array(frames, store = f'gif/standard_%{hit_percent}_m{merging_parameter}_o{overlap}_r{relevant}.gif')
+                    make_gif_from_array(frames, store = f'gif/office3_%{hit_percent}_m{merging_parameter}_o{overlap}_r{relevant}.gif')
     
 
 

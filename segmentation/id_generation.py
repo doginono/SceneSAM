@@ -236,7 +236,7 @@ def createReverseMapping(
             ids_past, np.max(unique_ids) + 1, points_per_instance
         )
         predictor.set_image(current_frame)
-        print(unique_ids)
+        #print(unique_ids)
         for instance in unique_ids:
             earlierFrame = samplesFromEarlier[:, :, instance]
                 

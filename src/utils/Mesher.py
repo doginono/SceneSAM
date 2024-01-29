@@ -91,7 +91,7 @@ class Mesher(object):
             seen_mask = torch.zeros((points.shape[0])).bool().to(device)
             forecast_mask = torch.zeros((points.shape[0])).bool().to(device)
             if get_mask_use_all_frames:
-                for i in range(0, idx + 1, 1):
+                for i in range(0, idx + 1, 5): #changed from 1 to 5
                     c2w = estimate_c2w_list[i].cpu().numpy()
                     w2c = np.linalg.inv(c2w)
                     w2c = torch.from_numpy(w2c).to(device).float()
@@ -389,11 +389,8 @@ class Mesher(object):
                 whether to use all frames or just keyframes when getting the seen/unseen mask. Defaults to False.
         """
         assert (color and ~semantic) or (~color and semantic), 'color and semantic mesh extraction are mutually exclusive'
-        print('start meshing')
         with torch.no_grad():
-            print('set grid points with resolutiojn', self.resolution)
             grid = self.get_grid_uniform(self.resolution) #gets
-            print('finish set grid points')
             points = grid['grid_points']
             points = points.to(device)
             
@@ -446,7 +443,6 @@ class Mesher(object):
 
                 z = np.concatenate(z, axis=0)
                 z[~mask] = 100
-                print(np.unique(z))
 
             z = z.astype(np.float32)
 
@@ -654,7 +650,7 @@ class Mesher(object):
             del points, z
             torch.cuda.empty_cache()
 
-            print('finish meshing')
+          
 
             
                 

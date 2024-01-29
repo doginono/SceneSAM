@@ -35,6 +35,7 @@ class NICE_SLAM():
         path_to_traj = cfg['data']['input_folder']+'/traj.txt'
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
+        self.T_wc = torch.from_numpy(self.T_wc).float()
         self.mask_generator = cfg['Segmenter']['mask_generator']
         self.every_frame = cfg['mapping']['every_frame']
 

@@ -198,7 +198,6 @@ class Replica(BaseDataset):
             semantic_data = np.load(semantic_path)
 
             # Create one-hot encoding using numpy.eye
-            print(f"read in semantic data of frame {index}: ", semantic_data)
             negative = np.where(semantic_data < 0)
             semantic_data[negative] = 0
             semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
