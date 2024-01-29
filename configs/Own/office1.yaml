@@ -8,3 +8,11 @@ data:
   input_folder: Datasets/Replica/office1
   output: output/Own/office1
   logs: logs/office1
+Segmenter:
+  use_stored: True
+  border: 30
+  overlap: 0.9
+  relevant: 0.7
+  merging_parameter: 10
+  every_frame: 10
+  hit_percent: 0.6

@@ -155,7 +155,7 @@ class NICE_SLAM():
         else:
             print(
                 f"INFO: The GT, generated and residual depth/color images can be found under " +
-                f"{self.output}/tracking_vis/ and {self.output}/mapping_vis/")
+                f"{self.output}/mapping_vis/")
         print(f"INFO: The mesh can be found under {self.output}/mesh/")
         print(f"INFO: The checkpoint can be found under {self.output}/ckpt/")
 
