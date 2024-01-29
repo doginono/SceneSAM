@@ -152,4 +152,6 @@ outputs/
 tryoutData/
 gif/
 model/
+DataSetEval/*
+outputSegmentation/*
 ```
