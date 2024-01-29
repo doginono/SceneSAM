@@ -632,9 +632,9 @@ def  createReverseMappingCombined_area_sort_predict(curr_frame_number,
                 closest_points = theRelevant[closest_points_indices]
                 sampledPositive=[1]*len(kmeans.cluster_centers_[e]) 
                 mask, scores, _ = predictor.predict(
-                point_coords=closest_points[0],
-                point_labels=sampledPositive,
-                multimask_output=True,
+                    point_coords=closest_points[0],
+                    point_labels=sampledPositive,
+                    multimask_output=True,
                 )
                 #visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
                 #visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
@@ -775,8 +775,11 @@ def createReverseMappingCombined_area_sort(
             #print(closest_points)
             #temp.append([mask,instance])
 
-    sortedMasks = sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
-
+    sortedMasks = mask_list #sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
+    # ADDED
+    # Reverse false start with the smaller one
+    # Reverse True start with the bigger one
+    sortedMasks= sorted(mask_list, key=(lambda x: x["area"]), reverse=False)
     for d in sortedMasks:
         
         instance = d['instance']
@@ -787,9 +790,10 @@ def createReverseMappingCombined_area_sort(
         target_ids = masks[theRelevant[:,1], theRelevant[:,0]]
         #print('before filter: ' , target_ids)
         target_ids = target_ids[target_ids >= 0]
-        target_ids = target_ids[target_ids != instance]
+        #target_ids = target_ids[target_ids != instance]
         target_ids, count = np.unique(target_ids, return_counts=True)
         #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
+        #and np.max(count)*0.3*samples[-1]
         first = curr_frame_number == every_frame 
         if (first and len(count)>0) or len(count)>0 and max(count) > relevant_threshhold*np.sum(count) and  np.sum(count)*hit_percent < np.sum(samples[-1]==instance):
             target_id = target_ids[np.argmax(count)]
@@ -801,6 +805,7 @@ def createReverseMappingCombined_area_sort(
                 #the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
                 #and change the id of the samples array
 
+                #NEED TO DEBUG DOGU
                 if first or instance in update:
                     if first or target_id in update[instance] :
                         if not first and update[instance][target_id] < merging_parameter:
@@ -833,8 +838,8 @@ def createReverseMappingCombined_area_sort(
                 else:
                     update[instance] = {}
                     update[instance][target_id] = 1
-        
-        masks[mask.squeeze()] = instance
+        condition = mask.squeeze() & (masks == -100)
+        masks[condition] = instance
         if verbose:
             visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'), prompts = prompts)
 

@@ -21,8 +21,8 @@ Segmenter:
   num_clusters: 5
   border: 30
   overlap: 0.9
-  relevant: 0.7
-  merging_parameter: 5
+  relevant: 0.3
+  merging_parameter: 3
   every_frame: 10
   verbose: True
   hit_percent: 0.3
@@ -30,7 +30,7 @@ Segmenter:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
-  first_min_area: 100
+  first_min_area: 1000
   use_vis: True
   no_vis_on_first_frame: False
   every_frame: 5

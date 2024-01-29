@@ -11,7 +11,6 @@ from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
 from tqdm import tqdm
-from scripts.gifMaker import make_gif_from_array
 
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
@@ -226,6 +225,7 @@ class Segmenter(object):
             return self.semantic_frames, self.semantic_frames.max() +1
 
         #----------end zero frame------------------
+        # ------------Delete this Late ------------
         if self.mask_generator:
             while(True):
                 if self.idx.item() + self.every_frame > self.n_img-1:
@@ -237,6 +237,7 @@ class Segmenter(object):
                 #self.slam.to_cpu()
                 torch.cuda.empty_cache()
                 self.segment()
+        # ------------Delete this Late ------------
         else:
             print('segment first frame')
             s = self.segment_first()
@@ -291,7 +292,8 @@ class Segmenter(object):
                 for index in tqdm([0]+list(index_frames), desc = 'Storing visualizations'):
                     path = os.path.join(self.store_directory, f'seg_{index}.png')
                     self.visualizer.visualize(self.semantic_frames[index//self.every_frame_seg].numpy(), path = path)
-
+        #EDIT THIS
+        
         return self.semantic_frames, max_id+1
                     
         

@@ -102,8 +102,5 @@ class visualizerForIds:
         # Create a 2D numpy array
         #plt.title(title)
         plt.figure(figsize=(20, 20))
-        plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
-        if framenumber != "":
-            filename = os.path.join("/home/koerner/Project_Dogu/nice-slam/outputSegmentation/room0", "0"*(6-len(str(framenumber)))+ str(framenumber) + ".jpg")
-            plt.savefig(filename)
+        plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)            
         plt.show()
