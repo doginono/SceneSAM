@@ -814,7 +814,7 @@ def createReverseMappingCombined_area_sort(
                                 update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
-                                    update[key][target_id] = update[key][instance]
+                                    update[key][target_id] += update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance
                             samples[-1][change_filter] = target_id
