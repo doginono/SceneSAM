@@ -7,6 +7,7 @@ import torch
 from src import config
 from src.NICE_SLAM import NICE_SLAM
 from src.Segmenter import Segmenter
+from scripts.gifMaker import make_gif_from_array
 
 import os #J:added
 from torch.utils.tensorboard import SummaryWriter #J: added
@@ -55,9 +56,9 @@ def main():
     writer.close()
     print('read in hparams')
     #-----------------------------------------------------------------------------------
-    segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['input_folder'], 'segmentation'))
-    segmenter.run()
-    
+    segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['output'], 'segmentation'))
+    semanticFrames,_ = segmenter.run()
+    make_gif_from_array(semanticFrames, store = os.path.join(cfg['data']['output'], 'segmentation','gif.gif'), duration = 100 )
 
 
 if __name__ == '__main__':

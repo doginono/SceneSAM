@@ -775,7 +775,10 @@ def createReverseMappingCombined_area_sort(
             #temp.append([mask,instance])
 
     sortedMasks = mask_list #sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
-
+    # ADDED
+    # Reverse false start with the smaller one
+    # Reverse True start with the bigger one
+    sortedMasks= sorted(mask_list, key=(lambda x: x["area"]), reverse=False)
     for d in sortedMasks:
         
         instance = d['instance']
@@ -801,6 +804,7 @@ def createReverseMappingCombined_area_sort(
                 #the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
                 #and change the id of the samples array
 
+                #NEED TO DEBUG DOGU
                 if first or instance in update:
                     if first or target_id in update[instance] :
                         if not first and update[instance][target_id] < merging_parameter:
@@ -810,7 +814,7 @@ def createReverseMappingCombined_area_sort(
                                 update.pop(instance)
                             for key, value in update.items():
                                 if instance in value:
-                                    update[key][target_id] += update[key][instance]
+                                    update[key][target_id] = update[key][instance]
                                     update[key].pop(instance)
                             change_filter = samples[-1] == instance
                             samples[-1][change_filter] = target_id
@@ -830,8 +834,8 @@ def createReverseMappingCombined_area_sort(
                 else:
                     update[instance] = {}
                     update[instance][target_id] = 1
-        
-        masks[mask.squeeze()] = instance
+        condition = mask.squeeze() & (masks == -100)
+        masks[condition] = instance
         if verbose:
             visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'), prompts = prompts)
 
