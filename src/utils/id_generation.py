@@ -759,13 +759,21 @@ def createReverseMappingCombined_area_sort(
                 #visualizerForId.visualize(mask[2], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[2]}.png'), prompts =closest_points[0])
                 #The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
                 #if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
-                area = np.count_nonzero(mask.squeeze())
+                
+                #this counts the area of the maskSSS
+                
+                areas = [np.count_nonzero(single_mask) for single_mask in mask]
+                area = np.min(areas)
+                #area = np.count_nonzero(mask.squeeze())
+
                 if area < smallesMaskSize:
                     continue
                 mask_dict['area'] = area
                 mask_dict['score'] = np.max(scores)
                 #mask_dict['mask'] = mask.squeeze()
-                mask_dict['mask'] = mask[np.argmax(scores)].squeeze()
+                
+                #Changed
+                mask_dict['mask'] = mask[np.argmin(areas)].squeeze()
                 mask_dict['instance'] = instance
                 mask_dict['theRelevant'] = theRelevant
                 if verbose:
@@ -779,7 +787,7 @@ def createReverseMappingCombined_area_sort(
     # ADDED
     # Reverse false start with the smaller one
     # Reverse True start with the bigger one
-    sortedMasks= sorted(mask_list, key=(lambda x: x["area"]), reverse=False)
+    sortedMasks= sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
     for d in sortedMasks:
         
         instance = d['instance']
@@ -849,8 +857,6 @@ def createReverseMappingCombined_area_sort(
     for d in sortedMasks:
         masks[d['mask']] = d['instance']'''
 
-
-
     #unique_ids = np.unique(masks).astype(int)
     #max_id = np.max(masks).astype(int)
     #For cleaning if all the samples are in another mask
@@ -873,8 +879,10 @@ def createReverseMappingCombined_area_sort(
                 prompts.pop(instance)'''
     if verbose:
         visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final_frontproject.png'))
-            
-
+    unique_ids = np.unique(masks).astype(int)
+    for instance in unique_ids:
+        if smallesMaskSize > np.count_nonzero(masks == instance):
+            masks[masks == instance] = -100
 
     
     #sample from the right side

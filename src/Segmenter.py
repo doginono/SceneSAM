@@ -136,7 +136,8 @@ class Segmenter(object):
                                                                      update=self.update,
                                                                      points_per_instance=self.points_per_instance, 
                                                                      current_frame=img, samples=self.samples, 
-                                                                     kernel_size=40,smallesMaskSize=40*40, 
+                                                                     kernel_size=30,#from 40*40 to 1000
+                                                                     smallesMaskSize=1000, 
                                                                      deleted = self.deleted,
                                                                      num_of_clusters=self.num_clusters,
                                                                      border=self.border,
