@@ -1,10 +1,10 @@
+python -W ignore run.py configs/Own/office3.yaml
+
 python -W ignore run.py configs/Own/office0.yaml
 
 python -W ignore run.py configs/Own/office1.yaml
 
 python -W ignore run.py configs/Own/office2.yaml
-
-python -W ignore run.py configs/Own/office3.yaml
 
 python -W ignore run.py configs/Own/office4.yaml
 

@@ -253,6 +253,7 @@ class Segmenter(object):
 
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
+                #self.plot()
                 #print(f'outside samples: {np.unique(self.samples[-1])}')
             
             for old_instance in self.deleted.keys():
@@ -296,6 +297,35 @@ class Segmenter(object):
         
         return self.semantic_frames, max_id+1
                     
-        
+    def plot(self):
+        data  = self.samples.copy()
+        data = data[:,data[1]>-2]
+        x = data[0]
+        y = data[1]
+        z = data[2]*-1
+        labels = data[3]
+
+        # Create a scatter plot
+        fig = plt.figure()
+        fig.set_size_inches(18.5, 10.5)
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot each point with a color corresponding to its label
+        unique_labels = np.unique(labels)
+        for label in unique_labels:
+            indices = np.where(labels == label)
+            ax.scatter(x[indices], y[indices], z[indices], s=1)
+
+        # Set axis labels
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_ylim((-2,2))
+        # Add a legend
+        ax.legend()
+
+        # Show the plot
+        plt.show()
+
             
 
