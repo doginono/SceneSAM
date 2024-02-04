@@ -43,8 +43,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1200 #finetune
-  iters: 100 #finetune
+  iters_first: 12 #finetune
+  iters: 1 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
