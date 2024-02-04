@@ -37,28 +37,16 @@ Producing accurate dense geometric, color and instance segmentation on static in
       <a href="#installation">Installation</a>
     </li>
     <li>
-      <a href="#visualizing-nice-slam-results">Visualization</a>
+      <a href="#Visualizing WSNSL Results on Replica">Visualization</a>
     </li>
     <li>
-      <a href="#demo">Demo</a>
+      <a href="#Demo">Demo</a>
     </li>
     <li>
-      <a href="#run">Run</a>
+      <a href="#Replica">Replica</a>
     </li>
     <li>
-      <a href="#imap">iMAP*</a>
-    </li>
-    <li>
-      <a href="#evaluation">Evaluation</a>
-    </li>
-    <li>
-      <a href="#acknowledgement">Acknowledgement</a>
-    </li>
-    <li>
-      <a href="#citation">Citation</a>
-    </li>
-    <li>
-      <a href="#contact">Contact</a>
+      <a href="#Credits">Credits*</a>
     </li>
   </ol>
 </details>
