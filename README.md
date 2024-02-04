@@ -8,7 +8,8 @@
     ·
     <a href="https://github.com/JuliusKoerner"><strong>Julius Koerner</strong></a>
   </p>
-  <h3 align="center"><a href="https://arxiv.org/abs/2112.12130">Paper</a> | <a href="https://youtu.be/V5hYTz5os0M">Video</a> | <a href="https://pengsongyou.github.io/nice-slam">Project Page</a></h3>
+  <!-- 
+<h3 align="center"><a href="https://arxiv.org/abs/2112.12130">Paper</a> | <a href="https://youtu.be/V5hYTz5os0M">Video</a> | <a href="https://pengsongyou.github.io/nice-slam">Project Page</a></h3>TABLE OF CONTENTS -->
   <div align="center"></div>
 </p>
 <p align="center">
