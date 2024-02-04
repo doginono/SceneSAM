@@ -70,7 +70,7 @@ Some generated meshes from the Replica Dataset are provided in the repository re
 All of them can be found in the meshes folder.
 
 ```bash
-#cd to root if this directory
+#after cd to this repository
 meshlab meshes/room0_final_mesh_seg.ply
 meshlab meshes/room0_final_mesh_color.ply
 ```
