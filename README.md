@@ -2,7 +2,7 @@
 
 <p align="center">
 
-  <h1 align="center"><img src="media/logo.png" width="60">Weakly Supervised Neural Scene Labeling</h1>
+  <h1 align="center"><img src="media/TUM.png" width="60">  Weakly Supervised Neural Scene Labeling</h1>
   <p align="center">
     <a href="https://github.com/doginono"><strong>Dogu Tamgac</strong></a>
     ·
