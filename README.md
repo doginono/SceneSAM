@@ -79,13 +79,13 @@ conda env create -f environment.yaml
 conda activate wsnsl
 ```
 
-## Visualizing WSNSL Results
-Some generated meshes from the Replica Dataset are provided in the repository ready to download in the folder meshes.
+## Visualizing WSNSL Results on Replica
+Some generated meshes from the Replica Dataset are provided in the repository ready to be examined using for example meshlab.
 
-### Replica
 ```bash
-bash scripts/download_vis_room1.sh
-python visualizer.py configs/Replica/room1.yaml --output output/vis/Replica/room1
+#cd to root if this directory
+bash meshlab meshes/room0_final_mesh_seg.ply
+bash meshlab meshes/room0_final_mesh_color.ply
 ```
 <p align="center">
   <img src="./media/replica.gif" width="70%" />
