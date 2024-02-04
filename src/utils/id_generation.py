@@ -2,17 +2,13 @@ from src.utils.backproject import *
 import numpy as np
 import cv2
 import torch
-import math
 from src.utils import backproject
-from scipy import signal
 import torch.nn.functional as F
 from src.utils.vis import visualizerForIds
 import matplotlib.pyplot as plt
-import fpsample
 from sklearn.cluster import KMeans
 import numpy as np
 import os
-import shutil
 
 
 def readDepth(filepath):
@@ -171,9 +167,9 @@ def create_complete_mapping_of_current_frame(
             if actual_id == -1:
                 actual_id = id_counter
                 id_counter += 1
-            map_of_frame[
-                instance
-            ] = actual_id  # at index i of map_of_frame is the actual id of the instance i in the current frame
+            map_of_frame[instance] = (
+                actual_id  # at index i of map_of_frame is the actual id of the instance i in the current frame
+            )
         if map is None:
             map = map_of_frame[None]
         else:
@@ -385,7 +381,7 @@ def createReverseMappingCombined_area_sort(
                     point_labels=sampledPositive,
                     multimask_output=True,
                 )
-        
+
                 # The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
                 # if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
 
@@ -411,7 +407,7 @@ def createReverseMappingCombined_area_sort(
         instance = d["instance"]
         mask = d["mask"]
         theRelevant = d["theRelevant"]
-        
+
         target_ids = masks[theRelevant[:, 1], theRelevant[:, 0]]
         # print('before filter: ' , target_ids)
         target_ids = target_ids[target_ids >= 0]
@@ -470,13 +466,10 @@ def createReverseMappingCombined_area_sort(
         condition = mask.squeeze() & (masks == -100)
         masks[condition] = instance
 
-
-
     unique_ids = np.unique(masks).astype(int)
     for instance in unique_ids:
         if smallesMaskSize > np.count_nonzero(masks == instance):
             masks[masks == instance] = -100
-
 
     # sample from the right side
     # for unknown
@@ -499,7 +492,7 @@ def createReverseMappingCombined_area_sort(
 
     counter = 0
 
-    while(len(indices)) > 0:
+    while (len(indices)) > 0:
         counter += 1
 
         random_index = indices[np.random.choice(len(indices))]
@@ -546,7 +539,7 @@ def createReverseMappingCombined_area_sort(
         (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
     )
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
-    
+
     return masks, samples, max_id, update
 
 
@@ -956,7 +949,6 @@ def createReverseMappingCombined_area_sort_predict(
     return masks
 
 
-
 def createReverseReverseMappingCombined(
     curr_frame_number,
     T,
@@ -1045,8 +1037,6 @@ def cleanSamples(samples, T_current, K, depthf, masks):
     # print("samples",np.unique(samples[3,:]))
 
     return samples
-
-
 
 
 # when combining the maps, For example we look into earlier 0 5 10 15 20 25 30th frame

@@ -98,6 +98,8 @@ dependencies:
   - zlib=1.2.11=h166bdaf_1014
   - zstd=1.4.9=haebb681_0
   - pip:
+    - tqdm
+    - git+https://github.com/facebookresearch/segment-anything.git
     - addict==2.4.0
     - anyio==3.5.0
     - argon2-cffi==21.3.0
