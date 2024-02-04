@@ -66,7 +66,8 @@ conda activate wsnsl
 ```
 
 ## Precomputed WSNSL Results on Replica
-Some generated meshes from the Replica Dataset are provided in the repository ready to be examined using for example meshlab.
+Some generated meshes from the Replica Dataset are provided in the repository ready to be examined. 
+All of them can be found in the meshes folder.
 
 ```bash
 #cd to root if this directory
