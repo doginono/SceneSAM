@@ -82,26 +82,6 @@ conda activate wsnsl
 ## Visualizing WSNSL Results
 Some result meshes for color and segmentations are providedin the repository ready to download in the folder meshes.
 
-### Self-captured Apartment
-To visualize our results on the self-captured apartment, as shown in the teaser:
-```bash
-bash scripts/download_vis_apartment.sh
-python visualizer.py configs/Apartment/apartment.yaml --output output/vis/Apartment
-```
-
-**Note for users from China:**  If you encounter slow speed in downloading, check in all the `scripts/download_*.sh` scripts, where we also provide the 和彩云 links for you to download manually.
-
-### ScanNet
-```bash
-bash scripts/download_vis_scene0000.sh
-python visualizer.py configs/ScanNet/scene0000.yaml --output output/vis/scannet/scans/scene0000_00
-```
-<p align="center">
-  <img src="./media/scannet.gif" width="60%" />
-</p>
-
-You can find the results of NICE-SLAM on other scenes in ScanNet [here](https://cvg-data.inf.ethz.ch/nice-slam/vis/scannet/).
-
 ### Replica
 ```bash
 bash scripts/download_vis_room1.sh
@@ -129,7 +109,7 @@ The black trajectory indicates the ground truth trajectory, abd the red is traje
 
 ## Demo
 
-Here you can run NICE-SLAM yourself on a short ScanNet sequence with 500 frames. 
+Here you can run WSNSL yourself on a short Replica sequence with 100 frames. 
 
 First, download the demo data as below and the data is saved into the `./Datasets/Demo` folder. 
 ```bash
