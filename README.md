@@ -37,7 +37,7 @@ Producing accurate dense geometric, color and instance segmentation on static in
       <a href="#installation">Installation</a>
     </li>
     <li>
-      <a href="#Precomputed WSNSL Results on Replica">Visualization</a>
+      <a href="#Precomputed WSNSL Results on Replica">Meshes</a>
     </li>
     <li>
       <a href="#Demo">Demo</a>
