@@ -21,7 +21,7 @@
 Producing accurate dense geometric, color and instance segmentation on static indoor scenes.
 </p>
 <p align="center">
-(The black / red lines are the ground truth / predicted camera trajectory)
+(Example output of Room 0 of the Replica Dataset)
 </p>
 <br>
 
