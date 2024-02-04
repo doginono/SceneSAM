@@ -492,7 +492,7 @@ def createReverseMappingCombined_area_sort(
 
     counter = 0
 
-    while (len(indices)) > 0:
+    if (len(indices)) > 0:
         counter += 1
 
         random_index = indices[np.random.choice(len(indices))]
