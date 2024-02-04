@@ -85,47 +85,29 @@ Some generated meshes from the Replica Dataset are provided in the repository re
 
 ```bash
 #cd to root if this directory
-bash meshlab meshes/room0_final_mesh_seg.ply
-bash meshlab meshes/room0_final_mesh_color.ply
+meshlab meshes/room0_final_mesh_seg.ply
+meshlab meshes/room0_final_mesh_color.ply
 ```
-<p align="center">
-  <img src="./media/replica.gif" width="70%" />
-</p
-
-You can find the results of NICE-SLAM on other scenes in Replica [here](https://cvg-data.inf.ethz.ch/nice-slam/vis/Replica/).
-
-### Interactive Visualizer Usage
-The black trajectory indicates the ground truth trajectory, abd the red is trajectory of NICE-SLAM. 
-- Press `Ctrl+0` for grey mesh rendering. 
-- Press `Ctrl+1` for textured mesh rendering. 
-- Press `Ctrl+9` for normal rendering. 
-- Press `L` to turn off/on lighting.  
-### Command line arguments
-- `--output $OUTPUT_FOLDER` output folder (overwrite the output folder in the config file)  
-- `--input_folder $INPUT_FOLDER` input folder (overwrite the input folder in the config file) 
-- `--save_rendering` save rendering video to `vis.mp4` in the output folder
-- `--no_gt_traj` do not show ground truth trajectory
-- `--imap` visualize results of iMAP*
-- `--vis_input_frame` opens up a viewer to show input frames. Note: you need to download the dataset first. See the Run section below.
 
 ## Demo
 
-Here you can run WSNSL yourself on a short Replica sequence with 100 frames. 
+You can run WSNSL on a short Replica Video of 60 frames yourself without having to download additional data-
+ 
+```bash
+python -W ignore run.py configs/Own/room1_small.yaml
+```
+The runtime visualizaions and meshes are stored into the output/Own/room1_small folder.
 
-First, download the demo data as below and the data is saved into the `./Datasets/Demo` folder. 
+### Replica
+You can download the Replica Dataset as below and then run WSNSL on it. 
+Running it on a full video takes around 5-6 hours. 
 ```bash
-bash scripts/download_demo.sh
-```
-Next, run NICE-SLAM. It takes a few minutes with ~5G GPU memory.
-```bash
-python -W ignore run.py configs/Demo/demo.yaml
-```
-Finally, run the following command to visualize.
-```bash
-python visualizer.py configs/Demo/demo.yaml 
-```
+bash scripts/download_replica.sh
 
-**NOTE:** This is for demonstration only, its configuration/performance may be different from our paper.
+python -W ignore run.py configs/Own/room0.yaml
+```
+The runtime visualizations and the meshes are stored into the folder output/Own/room0
+
 
 
 ## Run
