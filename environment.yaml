@@ -1,4 +1,4 @@
-name: nice-slam-2
+name: wsnsl
 channels:
   - pytorch
   - conda-forge
