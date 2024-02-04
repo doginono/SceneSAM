@@ -4,7 +4,7 @@
 
   <h1 align="center"><img src="media/logo.png" width="60">Weakly Supervised Neural Scene Labeling</h1>
   <p align="center">
-    <a href="https://zzh2000.github.io"><strong>Zihan Zhu*</strong></a>
+    <a href="https://github.com/doginono"><strong>Dogu Tamgac</strong></a>
     ·
     <a href="https://github.com/JuliusKoerner"><strong>Julius Koerner</strong></a>
   </p>
@@ -13,7 +13,7 @@
 </p>
 <p align="center">
   <a href="">
-    <img src="./media/apartment.gif" alt="Logo" width="80%">
+    <img src="./media/room0.gif" alt="Room0" width="80%">
   </a>
 </p>
 <p align="center">
