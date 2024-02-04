@@ -63,6 +63,7 @@ sudo apt-get install libopenexr-dev
     
 conda env create -f environment.yaml
 conda activate wsnsl
+pip install git+https://github.com/facebookresearch/segment-anything.git
 ```
 
 ## Precomputed WSNSL Results on Replica
