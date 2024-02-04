@@ -83,6 +83,7 @@ conda activate wsnsl
 Some generated meshes from the Replica Dataset are provided in the repository ready to be examined using for example meshlab.
 
 ```bash
+#cd to root if this directory
 bash meshlab meshes/room0_final_mesh_seg.ply
 bash meshlab meshes/room0_final_mesh_color.ply
 ```
