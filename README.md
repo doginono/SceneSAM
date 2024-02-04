@@ -2,26 +2,12 @@
 
 <p align="center">
 
-  <h1 align="center"><img src="media/logo.png" width="60">NICE-SLAM: Neural Implicit Scalable Encoding for SLAM</h1>
+  <h1 align="center"><img src="media/logo.png" width="60">Weakly Supervised Neural Scene Labeling</h1>
   <p align="center">
     <a href="https://zzh2000.github.io"><strong>Zihan Zhu*</strong></a>
     ·
-    <a href="https://pengsongyou.github.io"><strong>Songyou Peng*</strong></a>
-    ·
-    <a href="http://people.inf.ethz.ch/vlarsson/"><strong>Viktor Larsson</strong></a>
-    ·
-    <a href="http://www.cad.zju.edu.cn/home/weiweixu/weiweixu_en.htm"><strong>Weiwei Xu</strong></a>
-    ·
-    <a href="http://www.cad.zju.edu.cn/home/bao/"><strong>Hujun Bao</strong></a>
-    <br>
-    <a href="https://zhpcui.github.io/"><strong>Zhaopeng Cui</strong></a>
-    ·
-    <a href="http://people.inf.ethz.ch/moswald/"><strong>Martin R. Oswald</strong></a>
-    ·
-    <a href="https://people.inf.ethz.ch/pomarc/"><strong>Marc Pollefeys</strong></a>
+    <a href="https://github.com/JuliusKoerner"><strong>Julius Koerner</strong></a>
   </p>
-  <p align="center"><strong>(* Equal Contribution)</strong></p>
-  <h2 align="center">CVPR 2022</h2>
   <h3 align="center"><a href="https://arxiv.org/abs/2112.12130">Paper</a> | <a href="https://youtu.be/V5hYTz5os0M">Video</a> | <a href="https://pengsongyou.github.io/nice-slam">Project Page</a></h3>
   <div align="center"></div>
 </p>
@@ -31,7 +17,7 @@
   </a>
 </p>
 <p align="center">
-NICE-SLAM produces accurate dense geometry and camera tracking on large-scale indoor scenes.
+Producing accurate dense geometric, color and instance segmentation on static indoor scenes.
 </p>
 <p align="center">
 (The black / red lines are the ground truth / predicted camera trajectory)
@@ -76,22 +62,25 @@ NICE-SLAM produces accurate dense geometry and camera tracking on large-scale in
   </ol>
 </details>
 
+## Credits
+This repository is based on the <a href="https://github.com/cvg/nice-slam">NICE-SLAM</a>  repository.
+
 
 ## Installation
 
 First you have to make sure that you have all dependencies in place.
 The simplest way to do so, is to use [anaconda](https://www.anaconda.com/). 
 
-You can create an anaconda environment called `nice-slam`. For linux, you need to install **libopenexr-dev** before creating the environment.
+You can create an anaconda environment called `wsnsl`. For linux, you need to install **libopenexr-dev** before creating the environment.
 ```bash
 sudo apt-get install libopenexr-dev
     
 conda env create -f environment.yaml
-conda activate nice-slam
+conda activate wsnsl
 ```
 
-## Visualizing NICE-SLAM Results
-We provide the results of NICE-SLAM ready for download. You can run our **interactive visualizer** as following. 
+## Visualizing WSNSL Results
+Some result meshes for color and segmentations are providedin the repository ready to download in the folder meshes.
 
 ### Self-captured Apartment
 To visualize our results on the self-captured apartment, as shown in the teaser:
