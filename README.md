@@ -80,7 +80,7 @@ conda activate wsnsl
 ```
 
 ## Visualizing WSNSL Results
-Some result meshes for color and segmentations are providedin the repository ready to download in the folder meshes.
+Some generated meshes from the Replica Dataset are provided in the repository ready to download in the folder meshes.
 
 ### Replica
 ```bash
