@@ -254,7 +254,7 @@ class Segmenter(object):
 
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
-                #self.plot()
+                self.plot()
                 #print(f'outside samples: {np.unique(self.samples[-1])}')
             
             for old_instance in self.deleted.keys():
@@ -315,7 +315,7 @@ class Segmenter(object):
         unique_labels = np.unique(labels)
         for label in unique_labels:
             indices = np.where(labels == label)
-            ax.scatter(x[indices], y[indices], z[indices], s=1)
+            ax.scatter(x[indices], y[indices], z[indices], s=3)
 
         # Set axis labels
         ax.set_xlabel('X')

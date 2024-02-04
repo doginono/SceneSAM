@@ -315,16 +315,239 @@ def overlap(ids1, ids2):
     return overlap1
 
 
-# sample from earlier frames and predict
-"""
-    coarse to fine
-    backproject majority vote
-    when with automaticsam generator ratio of in points!!!
-    reset the samples 
-" After creating the mask backproject all ids into it and give according to the projected majority vote "
-check if inside mask
-take majority vote
-"""
+def createReverseMappingCombined_area_sort(
+    curr_frame_number,
+    T,
+    K,
+    depths,
+    predictor,
+    max_id,
+    update,
+    points_per_instance=5,
+    current_frame=None,
+    samples=None,
+    smallesMaskSize=1000,
+    kernel_size=80,
+    num_of_clusters=4,
+    deleted=None,
+    border=25,
+    overlap_threshold=0.5,
+    relevant_threshhold=0.3,
+    every_frame=15,
+    merging_parameter=10,
+    hit_percent=0.1,
+):
+    # print(f'beginning: {np.unique(samples[-1])}')
+    T_current = T[curr_frame_number]
+    depthf = readDepth(depths[curr_frame_number])
+    masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
+    predictor.set_image(current_frame)
+
+    # projected to current camera frame, they also have ids
+    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+
+    frontProjectedSamples = checkIfInsideImage(
+        frontProjectedSamples, projDepth, depthf, border=border
+    )
+    # check if all points lie on the same but different mask
+    unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
+
+    mask_list = []
+
+    for instance in unique_ids:
+        # sample same id points from from frontProjectedSamples
+        filtre = frontProjectedSamples[2, :, :] == instance
+        instanceId = frontProjectedSamples[:, filtre]
+        if instanceId.size is not 0 and instanceId[2, 0] >= 0:
+            theRelevant = np.array(
+                list(zip(instanceId[0].tolist(), instanceId[1].tolist()))
+            )
+
+            if len(theRelevant) >= num_of_clusters:
+                mask_dict = {}
+                kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(
+                    theRelevant
+                )
+                e = (
+                    np.bincount(kmeans.labels_)
+                    >= len(theRelevant) / num_of_clusters // 4
+                )
+                if len(e) < num_of_clusters:
+                    e = np.concatenate(
+                        (e, np.zeros(num_of_clusters - len(e), dtype=bool))
+                    )
+                point_coords = kmeans.transform(theRelevant)[:, e]
+                closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
+                closest_points = theRelevant[closest_points_indices]
+                sampledPositive = [1] * len(kmeans.cluster_centers_[e])
+                mask, scores, _ = predictor.predict(
+                    point_coords=closest_points[0],
+                    point_labels=sampledPositive,
+                    multimask_output=True,
+                )
+        
+                # The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
+                # if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
+
+                # this counts the area of the maskSSS
+
+                areas = [np.count_nonzero(single_mask) for single_mask in mask]
+                area = np.min(areas)
+                # area = np.count_nonzero(mask.squeeze())
+
+                if area < smallesMaskSize:
+                    continue
+                mask_dict["area"] = area
+                mask_dict["score"] = np.max(scores)
+                mask_dict["mask"] = mask[np.argmin(areas)].squeeze()
+                mask_dict["instance"] = instance
+                mask_dict["theRelevant"] = theRelevant
+                mask_list.append(mask_dict)
+
+    # Reverse false start with the smaller one
+    # Reverse True start with the bigger one
+    sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
+    for d in sortedMasks:
+        instance = d["instance"]
+        mask = d["mask"]
+        theRelevant = d["theRelevant"]
+        
+        target_ids = masks[theRelevant[:, 1], theRelevant[:, 0]]
+        # print('before filter: ' , target_ids)
+        target_ids = target_ids[target_ids >= 0]
+        # target_ids = target_ids[target_ids != instance]
+        target_ids, count = np.unique(target_ids, return_counts=True)
+        # print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
+        # and np.max(count)*0.3*samples[-1]
+        first = curr_frame_number == every_frame
+        if (
+            (first and len(count) > 0)
+            or len(count) > 0
+            and max(count) > relevant_threshhold * np.sum(count)
+            and np.sum(count) * hit_percent < np.sum(samples[-1] == instance)
+        ):
+            target_id = target_ids[np.argmax(count)]
+            # print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
+            if overlap(masks == target_id, mask) > overlap_threshold:
+                # this is a method to update the heuristic when to merge masks, the idea is,
+                # if mask m1 got projected into mask m2 at least for example 5 times then we update mask m1 to mask m2
+                # addidtionally we update all the other masks which got projected into m1 to m2
+                # the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
+                # and change the id of the samples array
+
+                if first or instance in update:
+                    if first or target_id in update[instance]:
+                        if (
+                            not first
+                            and update[instance][target_id] < merging_parameter
+                        ):
+                            update[instance][target_id] += 1
+                        else:
+                            if not first:
+                                update.pop(instance)
+                            for key, value in update.items():
+                                if instance in value:
+                                    if not target_id in update[key]:
+                                        update[key][target_id] = 0
+                                    update[key][target_id] += update[key][instance]
+                                    update[key].pop(instance)
+                            change_filter = samples[-1] == instance
+                            samples[-1][change_filter] = target_id
+
+                            masks[mask.squeeze()] = target_id
+                            deleted[instance] = target_id
+                            # d['instance'] = target_id
+                            for key, value in deleted.items():
+                                if value == instance:
+                                    # print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
+                                    deleted[key] = target_id
+                            continue  # skip the rest of the loop
+                    else:
+                        update[instance][target_id] = 1
+                else:
+                    update[instance] = {}
+                    update[instance][target_id] = 1
+        condition = mask.squeeze() & (masks == -100)
+        masks[condition] = instance
+
+
+
+    unique_ids = np.unique(masks).astype(int)
+    for instance in unique_ids:
+        if smallesMaskSize > np.count_nonzero(masks == instance):
+            masks[masks == instance] = -100
+
+
+    # sample from the right side
+    # for unknown
+    # convolve def
+    nb_channels = 1
+    h, w = kernel_size, kernel_size
+    weights = torch.ones(h, w)
+    weights = weights.view(1, 1, h, w).repeat(1, nb_channels, 1, 1).to("cuda")
+    torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
+    if border != 0:
+        torch_masks[0 : 2 * border] = 0
+        torch_masks[-2 * border :] = 0
+        torch_masks[:, 0 : 2 * border] = 0
+        torch_masks[:, -2 * border :] = 0
+    result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h // 2)
+    result = result.cpu().numpy()  # convert to numpy array
+    result = result.squeeze()
+
+    indices = np.array(np.where(result == (-100 * (h * w)))).T
+
+    counter = 0
+
+    while(len(indices)) > 0:
+        counter += 1
+
+        random_index = indices[np.random.choice(len(indices))]
+        point_coords = np.array([random_index[1], random_index[0]])
+        point_coords = point_coords.reshape(1, -1)
+        # print(point_coords)
+        mask, _, _ = predictor.predict(
+            point_coords=point_coords,
+            point_labels=np.array([1]),
+            multimask_output=False,
+        )
+        condition = mask.squeeze() & (masks == -100)
+
+        masks[condition] = max_id + counter
+        # need to sample more in the first time I found the new id
+        torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
+        if border != 0:
+            torch_masks[0 : 2 * border] = 0
+            torch_masks[-2 * border :] = 0
+            torch_masks[:, 0 : 2 * border] = 0
+            torch_masks[:, -2 * border :] = 0
+        result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h // 2)
+        result = result.cpu().numpy()  # convert to numpy array
+        result = result.squeeze()
+        indices = np.array(np.where(result == (-100 * (h * w)))).T
+
+    max_id = max_id + counter
+    t = np.unique(masks)
+    numberOfMasks = len(np.unique(masks)) - 1
+    if border != 0:
+        masks[0 : 2 * border] = -100
+        masks[-2 * border :] = -100
+        masks[:, 0 : 2 * border] = -100
+        masks[:, -2 * border :] = -100
+    samplesFromCurrent = sample_from_instances_with_ids(
+        masks, numberOfMasks, points_per_instance=30
+    )
+    # 3d
+    realWorldProjectCurr = backproject.realWorldProject(
+        samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
+    )
+    # add the ids 4d
+    realWorldProjectCurr = np.concatenate(
+        (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
+    )
+    samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
+    
+    return masks, samples, max_id, update
 
 
 def createReverseMappingCombined(
@@ -733,367 +956,6 @@ def createReverseMappingCombined_area_sort_predict(
     return masks
 
 
-def createReverseMappingCombined_area_sort(
-    curr_frame_number,
-    T,
-    K,
-    depths,
-    predictor,
-    max_id,
-    update,
-    points_per_instance=5,
-    current_frame=None,
-    samples=None,
-    smallesMaskSize=1000,
-    kernel_size=80,
-    num_of_clusters=4,
-    verbose=False,
-    deleted=None,
-    border=25,
-    overlap_threshold=0.5,
-    relevant_threshhold=0.3,
-    every_frame=15,
-    merging_parameter=10,
-    hit_percent=0.1,
-):
-    # print(f'beginning: {np.unique(samples[-1])}')
-    T_current = T[curr_frame_number]
-    depthf = readDepth(depths[curr_frame_number])
-    masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
-    predictor.set_image(current_frame)
-
-    # projected to current camera frame, they also have ids
-    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
-
-    frontProjectedSamples = checkIfInsideImage(
-        frontProjectedSamples, projDepth, depthf, border=border
-    )
-    # check if all points lie on the same but different mask
-    unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
-
-    # print("unique_ids", unique_ids)
-    visualizerForId = visualizerForIds()
-    path = "output/Own/room1/masks"
-    os.makedirs(
-        path, exist_ok=True
-    )  # make it anyway if we just store the end of each iteration
-
-    if verbose:
-        prompts = {}
-        masks_vis = masks.copy()
-    # np.random.shuffle(unique_ids)
-    mask_list = []
-
-    for instance in unique_ids:
-        # sample same id points from from frontProjectedSamples
-        filtre = frontProjectedSamples[2, :, :] == instance
-        # print(count,frontProjectedSamples.shape)
-        instanceId = frontProjectedSamples[:, filtre]
-        if instanceId.size is not 0 and instanceId[2, 0] >= 0:
-            # print("instanceId",instance)
-            # TODO, ask dogu if ok, it hink the instanceIDs have been swapped
-            theRelevant = np.array(
-                list(zip(instanceId[0].tolist(), instanceId[1].tolist()))
-            )
-            # print(theRelevant, theRelevant.shape)
-            if len(theRelevant) >= num_of_clusters:
-                mask_dict = {}
-                kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(
-                    theRelevant
-                )
-                e = (
-                    np.bincount(kmeans.labels_)
-                    >= len(theRelevant) / num_of_clusters // 4
-                )
-                # print('e ', e)
-                if len(e) < num_of_clusters:
-                    print("SKIPPED SKIPPED SKIPPED SKIPPED frame: ", curr_frame_number)
-                    e = np.concatenate(
-                        (e, np.zeros(num_of_clusters - len(e), dtype=bool))
-                    )
-                point_coords = kmeans.transform(theRelevant)[:, e]
-                closest_points_indices = np.argsort(point_coords, axis=0)[:1, :]
-                closest_points = theRelevant[closest_points_indices]
-                sampledPositive = [1] * len(kmeans.cluster_centers_[e])
-                mask, scores, _ = predictor.predict(
-                    point_coords=closest_points[0],
-                    point_labels=sampledPositive,
-                    multimask_output=True,
-                )
-                # visualizerForId.visualize(mask[0], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[0]}.png'), prompts =closest_points[0])
-                # visualizerForId.visualize(mask[1], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[1]}.png'), prompts =closest_points[0])
-                # visualizerForId.visualize(mask[2], path = os.path.join(path, f'{curr_frame_number}_{instance}_mask_{scores[2]}.png'), prompts =closest_points[0])
-                # The idea here is that if a proportion of the relevant projected smaples hits the same mask, we check the iou of the predicted maks with the hitted one
-                # if the iou is high enough we delete the the current instance id ffrom the samples array and add the union the the hitted mask
-
-                # this counts the area of the maskSSS
-
-                areas = [np.count_nonzero(single_mask) for single_mask in mask]
-                area = np.min(areas)
-                # area = np.count_nonzero(mask.squeeze())
-
-                if area < smallesMaskSize:
-                    continue
-                mask_dict["area"] = area
-                mask_dict["score"] = np.max(scores)
-                # mask_dict['mask'] = mask.squeeze()
-
-                # Changed
-                mask_dict["mask"] = mask[np.argmin(areas)].squeeze()
-                mask_dict["instance"] = instance
-                mask_dict["theRelevant"] = theRelevant
-                if verbose:
-                    mask_dict["prompts"] = closest_points[0]
-                mask_list.append(mask_dict)
-
-            # print(closest_points)
-            # temp.append([mask,instance])
-
-    sortedMasks = (
-        mask_list  # sorted(mask_list, key=(lambda x: x["area"]), reverse=True)
-    )
-    # ADDED
-    # Reverse false start with the smaller one
-    # Reverse True start with the bigger one
-    sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
-    for d in sortedMasks:
-        instance = d["instance"]
-        mask = d["mask"]
-        theRelevant = d["theRelevant"]
-        if verbose:
-            prompts = d["prompts"]
-        target_ids = masks[theRelevant[:, 1], theRelevant[:, 0]]
-        # print('before filter: ' , target_ids)
-        target_ids = target_ids[target_ids >= 0]
-        # target_ids = target_ids[target_ids != instance]
-        target_ids, count = np.unique(target_ids, return_counts=True)
-        # print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
-        # and np.max(count)*0.3*samples[-1]
-        first = curr_frame_number == every_frame
-        if (
-            (first and len(count) > 0)
-            or len(count) > 0
-            and max(count) > relevant_threshhold * np.sum(count)
-            and np.sum(count) * hit_percent < np.sum(samples[-1] == instance)
-        ):
-            target_id = target_ids[np.argmax(count)]
-            # print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
-            if overlap(masks == target_id, mask) > overlap_threshold:
-                # this is a method to update the heuristic when to merge masks, the idea is,
-                # if mask m1 got projected into mask m2 at least for example 5 times then we update mask m1 to mask m2
-                # addidtionally we update all the other masks which got projected into m1 to m2
-                # the rest of the procedure is the same as before, so we enter the update of the masks into the delete array
-                # and change the id of the samples array
-
-                # NEED TO DEBUG DOGU
-                if first or instance in update:
-                    if first or target_id in update[instance]:
-                        if (
-                            not first
-                            and update[instance][target_id] < merging_parameter
-                        ):
-                            update[instance][target_id] += 1
-                        else:
-                            if not first:
-                                update.pop(instance)
-                            for key, value in update.items():
-                                if instance in value:
-                                    if not target_id in update[key]:
-                                        update[key][target_id] = 0
-                                    update[key][target_id] += update[key][instance]
-                                    update[key].pop(instance)
-                            change_filter = samples[-1] == instance
-                            samples[-1][change_filter] = target_id
-                            if verbose:
-                                print(
-                                    f"change id {instance} to {target_id} in frame {curr_frame_number}"
-                                )
-                            masks[mask.squeeze()] = target_id
-                            deleted[instance] = target_id
-                            # d['instance'] = target_id
-                            for key, value in deleted.items():
-                                if value == instance:
-                                    # print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
-                                    deleted[key] = target_id
-                            if verbose:
-                                visualizerForId.visualize(
-                                    masks,
-                                    path=os.path.join(
-                                        path,
-                                        f"{curr_frame_number}_{instance}_melted.png",
-                                    ),
-                                    prompts=prompts,
-                                )
-                            continue  # skip the rest of the loop
-                    else:
-                        update[instance][target_id] = 1
-                else:
-                    update[instance] = {}
-                    update[instance][target_id] = 1
-        condition = mask.squeeze() & (masks == -100)
-        masks[condition] = instance
-        if verbose:
-            visualizerForId.visualize(
-                masks,
-                path=os.path.join(
-                    path, f'{curr_frame_number}_{instance}_{round(d["score"],4)}.png'
-                ),
-                prompts=prompts,
-            )
-
-    # sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
-
-    """masks[:,:] = -100
-    for d in sortedMasks:
-        masks[d['mask']] = d['instance']'''
-
-    #unique_ids = np.unique(masks).astype(int)
-    #max_id = np.max(masks).astype(int)
-    #For cleaning if all the samples are in another mask
-    '''for instance in unique_ids:
-        filtre = (frontProjectedSamples[2,:,:] == instance)
-        instanceId = frontProjectedSamples[:, filtre]
-        condition = masks[instanceId[1,:].astype(int), instanceId[0,:].astype(int)] != instance
-        #print(frontProjectedSamples.shape)
-        
-        if condition.size > 0 and np.mean(condition)== 1:
-            indices_to_delete = np.where(samples[3,:] == instance)
-            samples = np.delete(samples, indices_to_delete, axis=1)
-            print("REMOVED", instance)
-    unique_ids = np.unique(masks).astype(int)
-    """
-    """for instance in unique_ids:
-        if smallesMaskSize > np.count_nonzero(masks == instance):
-            masks[masks == instance] = -100"""
-    """     if verbose:#
-                prompts.pop(instance)"""
-
-    unique_ids = np.unique(masks).astype(int)
-    for instance in unique_ids:
-        if smallesMaskSize > np.count_nonzero(masks == instance):
-            masks[masks == instance] = -100
-
-    if verbose:
-        visualizerForId.visualize(
-            masks,
-            path=os.path.join(path, f"{curr_frame_number}_final_frontproject.png"),
-        )
-    visualizerForId.visualize(
-        masks, path=os.path.join(path, f"{curr_frame_number}_final_frontproject.png")
-    )
-
-    # sample from the right side
-    # for unknown
-    # convolve def
-    nb_channels = 1
-    h, w = kernel_size, kernel_size
-    weights = torch.ones(h, w)
-    weights = weights.view(1, 1, h, w).repeat(1, nb_channels, 1, 1).to("cuda")
-    torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
-    if border != 0:
-        torch_masks[0 : 2 * border] = 0
-        torch_masks[-2 * border :] = 0
-        torch_masks[:, 0 : 2 * border] = 0
-        torch_masks[:, -2 * border :] = 0
-    result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h // 2)
-    result = result.cpu().numpy()  # convert to numpy array
-    result = result.squeeze()
-
-    indices = np.array(np.where(result == (-100 * (h * w)))).T
-
-    counter = 0
-    path = "output/Own/room0/masks"
-    os.makedirs(path, exist_ok=True)
-    # visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_old.png'))
-
-    if len(indices) > 0:
-        counter += 1
-
-        random_index = indices[np.random.choice(len(indices))]
-        point_coords = np.array([random_index[1], random_index[0]])
-        point_coords = point_coords.reshape(1, -1)
-        # print(point_coords)
-        mask, _, _ = predictor.predict(
-            point_coords=point_coords,
-            point_labels=np.array([1]),
-            multimask_output=False,
-        )
-        condition = mask.squeeze() & (masks == -100)
-
-        masks[condition] = max_id + counter
-        # need to sample more in the first time I found the new id
-        if verbose:
-            visualizerForId.visualize(
-                masks,
-                path=os.path.join(
-                    path, f"{curr_frame_number}_{max_id+counter}_added.png"
-                ),
-                prompts=point_coords,
-            )
-        torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
-        if border != 0:
-            torch_masks[0 : 2 * border] = 0
-            torch_masks[-2 * border :] = 0
-            torch_masks[:, 0 : 2 * border] = 0
-            torch_masks[:, -2 * border :] = 0
-        result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h // 2)
-        result = result.cpu().numpy()  # convert to numpy array
-        result = result.squeeze()
-        indices = np.array(np.where(result == (-100 * (h * w)))).T
-
-    max_id = max_id + counter
-    t = np.unique(masks)
-    numberOfMasks = len(np.unique(masks)) - 1
-    if border != 0:
-        masks[0 : 2 * border] = -100
-        masks[-2 * border :] = -100
-        masks[:, 0 : 2 * border] = -100
-        masks[:, -2 * border :] = -100
-    samplesFromCurrent = sample_from_instances_with_ids(
-        masks, numberOfMasks, points_per_instance=30
-    )
-    # 3d
-    realWorldProjectCurr = backproject.realWorldProject(
-        samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
-    )
-    # add the ids 4d
-    realWorldProjectCurr = np.concatenate(
-        (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
-    )
-    samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
-    """
-    unique_ids = np.unique(masks).astype(int)
-    allsampled=[]
-    for i in unique_ids:
-        temp = samples[:3, samples[3, :] == i]
-
-        if samples[:2, samples[3, :] == i].size != 0:
-            theRelevant = np.array(list(zip(temp[0].tolist(), temp[1].tolist(), temp[2].tolist())))
-            fps_indices = fpsample.fps_sampling(theRelevant, min(200, len(theRelevant)))
-            fps_samples = theRelevant[fps_indices]
-            allsampled.append(fps_samples)
-
-    allsampled = np.concatenate(allsampled, axis=0)
-    # Create a mask that checks if each sample in samples is in fps_samples
-    mask = np.isin(samples[:3, :].T, allsampled).all(axis=1)
-    # Use the mask to index samples
-    # samples = samples[:, mask]
-    #fps=fpsample.fps_sampling(theRelevant, min(points_per_instance,len(theRelevant)))
-    #samples=cleanSamples(samples, T_current, K, depthf, masks)
-    print(allsampled.shape)
-    print(allsampled)
-    #samples=samples[:,allsampled.astype(int)]
-    """
-    # print(samples.shape)
-    # print(max_id)
-
-    # visualizerForId.visualizer(masks, prompts = prompts)
-    # visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
-    # print(f'end: {np.unique(samples[-1])}')
-
-    # visualizerForId.visualize(masks, path = os.path.join(path, f'{curr_frame_number}_final.png'))
-    return masks, samples, max_id, update
-
 
 def createReverseReverseMappingCombined(
     curr_frame_number,
@@ -1185,10 +1047,6 @@ def cleanSamples(samples, T_current, K, depthf, masks):
     return samples
 
 
-def create_complete_mapping(
-    store_path, every_nth_frame, T, K, directory, points_per_instance=5
-):
-    pass
 
 
 # when combining the maps, For example we look into earlier 0 5 10 15 20 25 30th frame

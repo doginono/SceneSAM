@@ -22,7 +22,7 @@ Segmenter:
   border: 30
   overlap: 0.4 # makes more stable
   relevant: 0.3
-  merging_parameter: 10 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
+  merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
   every_frame: 10
   verbose: True
   hit_percent: 0.4
