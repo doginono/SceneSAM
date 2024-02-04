@@ -37,7 +37,7 @@ Producing accurate dense geometric, color and instance segmentation on static in
       <a href="#installation">Installation</a>
     </li>
     <li>
-      <a href="#Visualizing WSNSL Results on Replica">Visualization</a>
+      <a href="#Precomputed WSNSL Results on Replica">Visualization</a>
     </li>
     <li>
       <a href="#Demo">Demo</a>
@@ -65,7 +65,7 @@ conda env create -f environment.yaml
 conda activate wsnsl
 ```
 
-## Visualizing WSNSL Results on Replica
+## Precomputed WSNSL Results on Replica
 Some generated meshes from the Replica Dataset are provided in the repository ready to be examined using for example meshlab.
 
 ```bash
