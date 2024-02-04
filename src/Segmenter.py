@@ -254,7 +254,7 @@ class Segmenter(object):
 
             for idx in tqdm(index_frames, desc='Segmenting frames'):
                 self.segment_idx(idx)
-                self.plot()
+                #self.plot()
                 #print(f'outside samples: {np.unique(self.samples[-1])}')
             
             for old_instance in self.deleted.keys():

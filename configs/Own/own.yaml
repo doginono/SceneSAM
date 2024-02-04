@@ -32,10 +32,10 @@ rendering:
 mapping:
   first_min_area: 1000
   use_vis: True
-  no_vis_on_first_frame: False
+  no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 4
-  vis_freq: 40
+  vis_freq: 10
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
