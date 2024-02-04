@@ -16,7 +16,7 @@ from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
 from src.utils import backproject
 
-from torch.utils.tensorboard import SummaryWriter #J: added
+#from torch.utils.tensorboard import SummaryWriter #J: added
 
 class Mapper(object):
     """
@@ -684,7 +684,7 @@ class Mapper(object):
             return None
 
     def run(self):
-        writer = SummaryWriter(self.writer_path)
+        #writer = SummaryWriter(self.writer_path)
             
         
         cfg = self.cfg
@@ -833,7 +833,7 @@ class Mapper(object):
 
                 #Done: add semantics to optimize_map
                 _ = self.optimize_map( num_joint_iters, lr_factor, idx, gt_color, gt_depth, 
-                                      gt_c2w, cur_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic, writer = writer) #Done add semantics to arguments
+                                      gt_c2w, cur_c2w, self.keyframe_dict, self.keyframe_list, cur_c2w=cur_c2w, cur_gt_semantic = gt_semantic) #Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     #self.estimate_c2w_list[idx] = cur_c2w
@@ -898,7 +898,7 @@ class Mapper(object):
                 
 
             if idx == self.n_img-1:
-                writer.close()
+                #writer.close()
                 break
 
             #TODO: push the decoders to the cpu 
