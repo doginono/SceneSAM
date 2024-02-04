@@ -46,7 +46,7 @@ Producing accurate dense geometric, color and instance segmentation on static in
       <a href="#Replica">Replica</a>
     </li>
     <li>
-      <a href="#Credits">Credits*</a>
+      <a href="#Credits">Credits</a>
     </li>
   </ol>
 </details>
