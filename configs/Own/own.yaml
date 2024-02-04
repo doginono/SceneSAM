@@ -13,8 +13,6 @@ tracking:
   pixels: 200
   iters: 10
 Segmenter:
-  mask_generator: False # always False -> delete later
-  #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
   store_vis: False
   store_vis_freq: 50 # not implemented yet

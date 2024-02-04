@@ -1,6 +1,4 @@
 inherit_from: configs/Own/own.yaml
-store: True
-store_path: 'model/office2'
 mapping:
   bound: [[-5.0,4.6],[-4.4,6.9],[-2.8,3.1]]
   marching_cubes_bound: [[-5.0,4.6],[-4.4,6.9],[-2.8,3.1]]

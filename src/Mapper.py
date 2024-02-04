@@ -32,7 +32,7 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         #-------added------------------
-        self.wait_segmenter = cfg['Segmenter']['mask_generator']
+        #self.wait_segmenter = cfg['Segmenter']['mask_generator']
         self.seg_freq = cfg['Segmenter']['every_frame']
         self.T_wc = slam.T_wc
         self.output_dimension_semantic = cfg['output_dimension_semantic']
@@ -693,9 +693,7 @@ class Mapper(object):
             gt_semantic = None
         #as long as the sematic files are not added like .../Results/sematic*.npy
         else: """
-        if self.wait_segmenter:
-            while(self.idx_segmenter[0] == 0):
-                        time.sleep(0.1)
+        
         #print(f"start mapping, is coarse mapper: {self.coarse_mapper}")
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
