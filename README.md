@@ -74,7 +74,7 @@ All of them can be found in the meshes folder.
 meshlab meshes/room0_final_mesh_seg.ply
 meshlab meshes/room0_final_mesh_color.ply
 ```
-If you are running on a remote sever, you can either set the Display variable or download it to you local machine before running the above command.
+If you are running on a remote sever, you can either set the Display variable or download it to your local machine before running the above command.
 You can copy the directory for examplewith scp:
 ```bash
 scp -r user@your.server.example.com:/path/to/repository/meshes/ /path/to/destination/
