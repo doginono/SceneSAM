@@ -63,9 +63,6 @@ Producing accurate dense geometric, color and instance segmentation on static in
   </ol>
 </details>
 
-## Credits
-This repository is based on the <a href="https://github.com/cvg/nice-slam">NICE-SLAM</a>  repository.
-
 
 ## Installation
 
@@ -110,3 +107,7 @@ Here is an example how to run it on Room 0. But you can also run it on all confi
 python -W ignore run.py configs/Own/room0.yaml
 ```
 The runtime visualizations and the meshes are stored into the folder output/Own/room0
+
+## Credits
+We included code from the <a href="https://github.com/cvg/nice-slam">NICE-SLAM</a> repository, thank you for making it publically available.
+
