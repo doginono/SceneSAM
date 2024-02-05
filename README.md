@@ -105,4 +105,5 @@ The runtime visualizations and the meshes are stored into the folder output/Own/
 
 ## Credits
 We included code from the <a href="https://github.com/cvg/nice-slam">NICE-SLAM</a> repository, thank you for making it publically available.
+Special thanks to <a href="https://rozdavid.github.io/"><strong>David Rozenberszki</strong></a> for his invaluable guidance and mentorship throughout the research project.
 
