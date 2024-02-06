@@ -9,7 +9,7 @@ from src.NICE_SLAM import NICE_SLAM
 from src.Segmenter import Segmenter
 
 import os #J:added
-#from torch.utils.tensorboard import SummaryWriter #J: added
+from torch.utils.tensorboard import SummaryWriter #J: added
 import yaml #J: added
 from scripts import gifMaker #J: added
 
@@ -47,7 +47,7 @@ def main():
     cfg["data"]['logs'] = path
     os.makedirs(path, exist_ok=True)
     
-    #writer = SummaryWriter(path)
+    writer = SummaryWriter(path)
     hparams_path = cfg['inherit_from']
     with open(hparams_path, 'r') as file:
         hparams_dict = yaml.safe_load(file)

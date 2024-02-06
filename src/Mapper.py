@@ -20,7 +20,7 @@ from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
 from src.utils import backproject
 
-# from torch.utils.tensorboard import SummaryWriter #J: added
+from torch.utils.tensorboard import SummaryWriter #J: added
 
 
 class Mapper(object):
@@ -57,7 +57,7 @@ class Mapper(object):
         else:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'regular'))"""
 
-        # self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
+        #self.writer = SummaryWriter(os.path.join(cfg["data"]['logs'])) #J: added
         self.idx_mapper = slam.idx_mapper
         self.idx_coarse_mapper = slam.idx_coarse_mapper
         self.idx_segmenter = slam.idx_segmenter
@@ -799,7 +799,8 @@ class Mapper(object):
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
-                # writer.add_scalar(f'Loss/color', color_loss.item(),self.idx_writer)
+                if writer is not None:
+                    writer.add_scalar(f'Loss/color', color_loss.item(),self.idx_writer)
                 weighted_color_loss = self.w_color_loss * color_loss
                 loss += weighted_color_loss
             # -----------------added-------------------
@@ -815,7 +816,7 @@ class Mapper(object):
                 # semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]"""
-                # writer.add_scalar(f'Loss/semantic', semantic_loss.item(),self.idx_writer)
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item(),self.idx_writer)
                 weighted_semantic_loss = self.w_semantic_loss * semantic_loss
                 loss += weighted_semantic_loss
             # -----------------end-added-------------------
@@ -885,7 +886,7 @@ class Mapper(object):
             return None
 
     def run(self):
-        # writer = SummaryWriter(self.writer_path)
+        writer = SummaryWriter(self.writer_path)
 
         cfg = self.cfg
         """if self.coarse_mapper:
@@ -1046,6 +1047,7 @@ class Mapper(object):
                     self.keyframe_list,
                     cur_c2w=cur_c2w,
                     cur_gt_semantic=gt_semantic,
+                    writer = writer
                 )  # Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
@@ -1177,7 +1179,7 @@ class Mapper(object):
                     break"""
 
             if idx == self.n_img - 1:
-                # writer.close()
+                writer.close()
                 break
 
             # TODO: push the decoders to the cpu
