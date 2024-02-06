@@ -53,11 +53,10 @@ Producing accurate dense geometric, color and instance segmentation on static in
 
 
 ## Installation
+After cloning the project and changing into the "wsnsl" directory you have to make sure that all teh dependencies are in place.
+We suggest using [anaconda](https://www.anaconda.com/), following the commands below an anaconda environment 'wsnsl' with all needed packages will be created.
 
-First you have to make sure that you have all dependencies in place.
-The simplest way to do so, is to use [anaconda](https://www.anaconda.com/). 
-
-You can create an anaconda environment called `wsnsl`. For linux, you need to install **libopenexr-dev** before creating the environment.
+For linux, you need to install **libopenexr-dev** before creating the environment.
 ```bash
 sudo apt-get install libopenexr-dev
     
