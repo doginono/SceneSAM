@@ -62,7 +62,6 @@ sudo apt-get install libopenexr-dev
     
 conda env create -f environment.yaml
 conda activate wsnsl
-pip install git+https://github.com/facebookresearch/segment-anything.git
 ```
 
 ## Precomputed WSNSL Results on Replica
@@ -82,7 +81,7 @@ scp -r user@your.server.example.com:/path/to/repository/meshes/ /path/to/destina
 
 ## Demo
 
-You can run WSNSL on a short Replica Video of 60 frames yourself without having to download additional data-
+You can run WSNSL on a short Replica Video of 60 frames yourself without having to download additional data. The results might be less clean as there are less frames for correction of inconsistent masks. 
  
 ```bash
 python -W ignore run.py configs/Own/room1_small.yaml
