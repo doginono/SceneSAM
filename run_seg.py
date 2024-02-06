@@ -10,7 +10,7 @@ from src.Segmenter import Segmenter
 from scripts.gifMaker import make_gif_from_array
 
 import os #J:added
-#from torch.utils.tensorboard import SummaryWriter #J: added
+from torch.utils.tensorboard import SummaryWriter #J: added
 import yaml #J: added
 
 def setup_seed(seed):
@@ -47,13 +47,13 @@ def main():
     cfg["data"]['logs'] = path
     os.makedirs(path, exist_ok=True)
     
-    #writer = SummaryWriter(path)
+    writer = SummaryWriter(path)
     hparams_path = cfg['inherit_from']
     with open(hparams_path, 'r') as file:
         hparams_dict = yaml.safe_load(file)
     yaml_string = yaml.dump(hparams_dict, default_flow_style=False)
-    #writer.add_text('hparams', yaml_string)
-    #writer.close()
+    writer.add_text('hparams', yaml_string)
+    writer.close()
     print('read in hparams')
     #-----------------------------------------------------------------------------------
     segmenter = Segmenter(cfg,args, store_directory=os.path.join(cfg['data']['output'], 'segmentation'))
