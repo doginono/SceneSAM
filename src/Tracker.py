@@ -198,6 +198,7 @@ class Tracker(object):
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 
             idx = idx[0]
+            print("Tracking Frame:", idx)
             gt_depth = gt_depth[0]
             gt_color = gt_color[0]
             gt_c2w = gt_c2w[0]
@@ -207,6 +208,7 @@ class Tracker(object):
                 # initiate mapping every self.every_frame frames
                 if idx > 0 and (idx % self.every_frame == 1 or self.every_frame == 1):
                     while self.mapping_idx[0] != idx - 1:
+                        print("tracking waiting for mapping")
                         time.sleep(0.1)
                     pre_c2w = self.estimate_c2w_list[idx - 1].to(device)
             elif self.sync_method == "loose":
