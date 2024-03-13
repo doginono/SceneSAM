@@ -1152,8 +1152,8 @@ class Mapper(object):
                         ),
                     )
 
-                # self.mapping_idx[0] = idx
-                # self.mapping_cnt[0] += 1
+                self.mapping_idx[0] = idx
+                self.mapping_cnt[0] += 1
 
                 if (
                     self.use_mesh

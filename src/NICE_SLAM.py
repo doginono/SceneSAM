@@ -146,6 +146,7 @@ class NICE_SLAM:
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
         self.segmenter = Segmenter(
             cfg,
+            self,
             args,
             store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
         )

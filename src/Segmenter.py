@@ -18,7 +18,7 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self, cfg, args, store_directory):
+    def __init__(self, slam, cfg, args, store_directory):
         self.store_directory = store_directory
         os.makedirs(f"{store_directory}", exist_ok=True)
 
@@ -27,10 +27,13 @@ class Segmenter(object):
 
         self.mask_generator = cfg["Segmenter"]["mask_generator"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
-        # self.idx = slam.idx_segmenter
+        self.idx_segmenter = slam.idx_segmenter
+        self.idx = slam.idx
+        self.mapping_idx = slam.mapping_idx
         path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
-        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
-        self.T_wc[:, 1:3] *= -1
+        #self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        #self.T_wc[:, 1:3] *= -1
+        self.estimate_c2w_list = slam.estimate_c2w_list
 
         self.every_frame = cfg["mapping"]["every_frame"]
         # self.slam = slam
@@ -124,7 +127,7 @@ class Segmenter(object):
 
         masksCreated, self.samples = id_generation.createReverseReverseMappingCombined(
             idx,
-            self.T_wc,
+            self.estimate_c2w_list,
             self.K,
             self.depth_paths,
             predictor=self.predictor,
@@ -139,7 +142,7 @@ class Segmenter(object):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         masksCreated, self.samples = id_generation.createReverseMappingCombined(
             idx,
-            self.T_wc,
+            self.estimate_c2w_list,
             self.K,
             self.depth_paths,
             predictor=self.predictor,
@@ -169,7 +172,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.T_wc[0],
+            self.estimate_c2w_list[0], #instead of T_wc
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
