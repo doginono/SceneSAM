@@ -14,7 +14,6 @@ import threading
 import torch.multiprocessing as mp
 
 
-
 def readEXR_onlydepth(filename):
     """
     Read depth data from EXR image file.
@@ -33,69 +32,76 @@ def readEXR_onlydepth(filename):
 
     exrfile = exr.InputFile(filename)
     header = exrfile.header()
-    dw = header['dataWindow']
+    dw = header["dataWindow"]
     isize = (dw.max.y - dw.min.y + 1, dw.max.x - dw.min.x + 1)
 
     channelData = dict()
 
-    for c in header['channels']:
+    for c in header["channels"]:
         C = exrfile.channel(c, Imath.PixelType(Imath.PixelType.FLOAT))
         C = np.fromstring(C, dtype=np.float32)
         C = np.reshape(C, isize)
 
         channelData[c] = C
 
-    Y = None if 'Y' not in header['channels'] else channelData['Y']
+    Y = None if "Y" not in header["channels"] else channelData["Y"]
 
     return Y
 
 
-def get_dataset(cfg, args, scale, device='cuda:0', tracker = False, slam = None):
-    return dataset_dict[cfg['dataset']](cfg, args, scale, device=device, tracker = tracker, slam = slam)
+def get_dataset(cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+    return dataset_dict[cfg["dataset"]](
+        cfg, args, scale, device=device, tracker=tracker, slam=slam
+    )
 
 
 class BaseDataset(Dataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
         super(BaseDataset, self).__init__()
 
-        self.name = cfg['dataset']
+        self.name = cfg["dataset"]
 
-        #-------------------added-----------------------------------------------
-        if self.name == 'replica':
-            self.output_dimension_semantic = cfg['output_dimension_semantic']
-        #------------------end-added-----------------------------------------------
+        # -------------------added-----------------------------------------------
+        if self.name == "replica":
+            self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.is_full_slam = cfg["Segmenter"]["full_slam"]
+        # ------------------end-added-----------------------------------------------
 
         self.device = device
         self.scale = scale
-        self.png_depth_scale = cfg['cam']['png_depth_scale']
+        self.png_depth_scale = cfg["cam"]["png_depth_scale"]
 
-        self.H, self.W, self.fx, self.fy, self.cx, self.cy = cfg['cam']['H'], cfg['cam'][
-            'W'], cfg['cam']['fx'], cfg['cam']['fy'], cfg['cam']['cx'], cfg['cam']['cy']
-        
+        self.H, self.W, self.fx, self.fy, self.cx, self.cy = (
+            cfg["cam"]["H"],
+            cfg["cam"]["W"],
+            cfg["cam"]["fx"],
+            cfg["cam"]["fy"],
+            cfg["cam"]["cx"],
+            cfg["cam"]["cy"],
+        )
 
-
-        self.distortion = np.array(
-            cfg['cam']['distortion']) if 'distortion' in cfg['cam'] else None
-        self.crop_size = cfg['cam']['crop_size'] if 'crop_size' in cfg['cam'] else None
+        self.distortion = (
+            np.array(cfg["cam"]["distortion"]) if "distortion" in cfg["cam"] else None
+        )
+        self.crop_size = cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else None
 
         if args.input_folder is None:
-            self.input_folder = cfg['data']['input_folder']
+            self.input_folder = cfg["data"]["input_folder"]
         else:
             self.input_folder = args.input_folder
 
-        self.crop_edge = cfg['cam']['crop_edge']
+        self.crop_edge = cfg["cam"]["crop_edge"]
 
     def __len__(self):
         return self.n_img
-    
+
     def __getitem__(self, index):
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
-        if '.png' in depth_path:
+        if ".png" in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
-        elif '.exr' in depth_path:
+        elif ".exr" in depth_path:
             depth_data = readEXR_onlydepth(depth_path)
         if self.distortion is not None:
             K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
@@ -103,19 +109,21 @@ class BaseDataset(Dataset):
             color_data = cv2.undistort(color_data, K, self.distortion)
 
         color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
-        color_data = color_data / 255.
+        color_data = color_data / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
         color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
-        depth_data = torch.from_numpy(depth_data)*self.scale
+        depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
-                color_data[None], self.crop_size, mode='bilinear', align_corners=True)[0]
+                color_data[None], self.crop_size, mode="bilinear", align_corners=True
+            )[0]
             depth_data = F.interpolate(
-                depth_data[None, None], self.crop_size, mode='nearest')[0, 0]
+                depth_data[None, None], self.crop_size, mode="nearest"
+            )[0, 0]
             color_data = color_data.permute(1, 2, 0).contiguous()
 
         edge = self.crop_edge
@@ -125,108 +133,124 @@ class BaseDataset(Dataset):
             depth_data = depth_data[edge:-edge, edge:-edge]
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
-        return index, color_data.to(self.device), depth_data.to(self.device), pose.to(self.device)
-
-    
+        return (
+            index,
+            color_data.to(self.device),
+            depth_data.to(self.device),
+            pose.to(self.device),
+        )
 
 
 class Replica(BaseDataset):
 
-   
-    def __init__(self, cfg, args, scale, device='cuda:0', tracker = False, slam = None
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(Replica, self).__init__(cfg, args, scale, device)
-        
-        self.color_paths = sorted(glob.glob(f'{self.input_folder}/results/frame*.jpg'))
-        self.depth_paths = sorted(
-            glob.glob(f'{self.input_folder}/results/depth*.png'))
-        self.seg_folder = f'{self.input_folder}/segmentation'
-        #-------------------added-----------------------------------------------
-        #self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
-        self.mask_paths = sorted(glob.glob(f'{self.input_folder}/results/mask*.pkl'))
-        self.output_dimension_semantic = cfg['output_dimension_semantic']
-        self.every_frame = cfg['mapping']['every_frame']
+
+        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
+        self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
+        self.seg_folder = f"{self.input_folder}/segmentation"
+        # -------------------added-----------------------------------------------
+        # self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
+        self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
+        self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.every_frame = cfg["mapping"]["every_frame"]
         self.istracker = tracker
-        self.points_per_instance = cfg['mapping']['points_per_instance']
+        self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.T_wc = slam.T_wc
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
-        #-------------------end added-----------------------------------------------
+        # -------------------end added-----------------------------------------------
         self.n_img = len(self.color_paths)
-        self.load_poses(f'{self.input_folder}/traj.txt')
-    
+        self.load_poses(f"{self.input_folder}/traj.txt")
+
     def __post_init__(self, slam):
-        #self.semantic_frames = slam.semantic_frames
+        # self.semantic_frames = slam.semantic_frames
         assert False, "should not be entered, not used anymore"
-       
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
 
-        #-------------------added-----------------------------------------------
-        
-        semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
+        # -------------------added-----------------------------------------------
 
+        semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
 
-        
-        #-----------------end--added-----------------------------------------------
-        if '.png' in depth_path:
+        # -----------------end--added-----------------------------------------------
+        if ".png" in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
-        elif '.exr' in depth_path:
+        elif ".exr" in depth_path:
             depth_data = readEXR_onlydepth(depth_path)
-        if self.distortion is not None: #TODO should distorion be applied to semantics?
+        if (
+            self.distortion is not None
+        ):  # TODO should distorion be applied to semantics?
             K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
             # undistortion is only applied on color image, not depth!
-            color_data = cv2.undistort(color_data, K, self.distortion) 
+            color_data = cv2.undistort(color_data, K, self.distortion)
 
-        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB) #J: convertion BGR -> RGB, image is passed to sam
-        color_data = image / 255.
+        image = cv2.cvtColor(
+            color_data, cv2.COLOR_BGR2RGB
+        )  # J: convertion BGR -> RGB, image is passed to sam
+        color_data = image / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
-        #-------------------added-----------------------------------------------
-        #semantic_data = semantic_data.resize((H, W, self.output_dimension_semantic)) #TODO check if this works
-        #------------------end-added-----------------------------------------------
-        color_data = cv2.resize(color_data, (W, H)) #shape after (680, 1200, 3) = (H, W, 3)
+        # -------------------added-----------------------------------------------
+        # semantic_data = semantic_data.resize((H, W, self.output_dimension_semantic)) #TODO check if this works
+        # ------------------end-added-----------------------------------------------
+        color_data = cv2.resize(
+            color_data, (W, H)
+        )  # shape after (680, 1200, 3) = (H, W, 3)
         color_data = torch.from_numpy(color_data)
-        depth_data = torch.from_numpy(depth_data)*self.scale
-        #-------------------added-----------------------------------------------
+        depth_data = torch.from_numpy(depth_data) * self.scale
+        # -------------------added-----------------------------------------------
 
-        #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
-        semantic_data = np.load(semantic_path)
+        # semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+
+        semantic_data = np.ones((H, W), int)  # np.load(semantic_path)
 
         # Create one-hot encoding using numpy.eye
-        print(f"read in semantic data of frame {index}: ", semantic_data)
-        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
- 
-        assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
+        # print(f"read in semantic data of frame {index}: ", semantic_data)
+        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(
+            bool
+        )
+
+        assert (
+            self.output_dimension_semantic >= semantic_data.shape[-1]
+        ), "Number of classes is smaller than the number of unique values in the semantic data"
         semantic_data = torch.from_numpy(semantic_data)
 
-        
-
-        #----------------------
-        if self.crop_size is not None: #TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
+        # ----------------------
+        if (
+            self.crop_size is not None
+        ):  # TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
             # follow the pre-processing step in lietorch, actually is resize
             assert False, "crop_size is not None -> need to crop semantic data"
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
-                color_data[None], self.crop_size, mode='bilinear', align_corners=True)[0]
+                color_data[None], self.crop_size, mode="bilinear", align_corners=True
+            )[0]
             depth_data = F.interpolate(
-                depth_data[None, None], self.crop_size, mode='nearest')[0, 0]
+                depth_data[None, None], self.crop_size, mode="nearest"
+            )[0, 0]
             color_data = color_data.permute(1, 2, 0).contiguous()
 
         edge = self.crop_edge
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
             color_data = color_data[edge:-edge, edge:-edge]
-            depth_data = depth_data[edge:-edge, edge:-edge] 
-            #-------------------added-----------------------------------------------
+            depth_data = depth_data[edge:-edge, edge:-edge]
+            # -------------------added-----------------------------------------------
             semantic_data = semantic_data[edge:-edge, edge:-edge]
-            #------------------end-added-----------------------------------------------
+            # ------------------end-added-----------------------------------------------
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
-        return index, color_data.to(self.device), depth_data.to(self.device), pose.to(self.device), semantic_data.to(self.device) #Done: add return semantics
+        return (
+            index,
+            color_data.to(self.device),
+            depth_data.to(self.device),
+            pose.to(self.device),
+            semantic_data.to(self.device),
+        )  # Done: add return semantics
 
     def load_poses(self, path):
         self.poses = []
@@ -242,16 +266,16 @@ class Replica(BaseDataset):
 
 
 class Azure(BaseDataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
         super(Azure, self).__init__(cfg, args, scale, device)
         self.color_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, 'color', '*.jpg')))
+            glob.glob(os.path.join(self.input_folder, "color", "*.jpg"))
+        )
         self.depth_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, 'depth', '*.png')))
+            glob.glob(os.path.join(self.input_folder, "depth", "*.png"))
+        )
         self.n_img = len(self.color_paths)
-        self.load_poses(os.path.join(
-            self.input_folder, 'scene', 'trajectory.log'))
+        self.load_poses(os.path.join(self.input_folder, "scene", "trajectory.log"))
 
     def load_poses(self, path):
         self.poses = []
@@ -262,14 +286,18 @@ class Azure(BaseDataset):
                 # Load .log file.
                 for i in range(0, len(content), 5):
                     # format %d (src) %d (tgt) %f (fitness)
-                    data = list(map(float, content[i].strip().split(' ')))
+                    data = list(map(float, content[i].strip().split(" ")))
                     ids = (int(data[0]), int(data[1]))
                     fitness = data[2]
 
                     # format %f x 16
                     c2w = np.array(
-                        list(map(float, (''.join(
-                            content[i + 1:i + 5])).strip().split()))).reshape((4, 4))
+                        list(
+                            map(
+                                float, ("".join(content[i + 1 : i + 5])).strip().split()
+                            )
+                        )
+                    ).reshape((4, 4))
 
                     c2w[:3, 1] *= -1
                     c2w[:3, 2] *= -1
@@ -283,27 +311,32 @@ class Azure(BaseDataset):
 
 
 class ScanNet(BaseDataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
         super(ScanNet, self).__init__(cfg, args, scale, device)
-        self.input_folder = os.path.join(self.input_folder, 'frames')
-        self.color_paths = sorted(glob.glob(os.path.join(
-            self.input_folder, 'color', '*.jpg')), key=lambda x: int(os.path.basename(x)[:-4]))
-        self.depth_paths = sorted(glob.glob(os.path.join(
-            self.input_folder, 'depth', '*.png')), key=lambda x: int(os.path.basename(x)[:-4]))
-        self.load_poses(os.path.join(self.input_folder, 'pose'))
+        self.input_folder = os.path.join(self.input_folder, "frames")
+        self.color_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "color", "*.jpg")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        self.depth_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "depth", "*.png")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        self.load_poses(os.path.join(self.input_folder, "pose"))
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
-        pose_paths = sorted(glob.glob(os.path.join(path, '*.txt')),
-                            key=lambda x: int(os.path.basename(x)[:-4]))
+        pose_paths = sorted(
+            glob.glob(os.path.join(path, "*.txt")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
         for pose_path in pose_paths:
             with open(pose_path, "r") as f:
                 lines = f.readlines()
             ls = []
             for line in lines:
-                l = list(map(float, line.split(' ')))
+                l = list(map(float, line.split(" ")))
                 ls.append(l)
             c2w = np.array(ls).reshape(4, 4)
             c2w[:3, 1] *= -1
@@ -313,16 +346,17 @@ class ScanNet(BaseDataset):
 
 
 class CoFusion(BaseDataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
         super(CoFusion, self).__init__(cfg, args, scale, device)
         self.input_folder = os.path.join(self.input_folder)
         self.color_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, 'colour', '*.png')))
-        self.depth_paths = sorted(glob.glob(os.path.join(
-            self.input_folder, 'depth_noise', '*.exr')))
+            glob.glob(os.path.join(self.input_folder, "colour", "*.png"))
+        )
+        self.depth_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "depth_noise", "*.exr"))
+        )
         self.n_img = len(self.color_paths)
-        self.load_poses(os.path.join(self.input_folder, 'trajectories'))
+        self.load_poses(os.path.join(self.input_folder, "trajectories"))
 
     def load_poses(self, path):
         # We tried, but cannot align the coordinate frame of cofusion to ours.
@@ -336,47 +370,47 @@ class CoFusion(BaseDataset):
 
 
 class TUM_RGBD(BaseDataset):
-    def __init__(self, cfg, args, scale, device='cuda:0'
-                 ):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
         super(TUM_RGBD, self).__init__(cfg, args, scale, device)
         self.color_paths, self.depth_paths, self.poses = self.loadtum(
-            self.input_folder, frame_rate=32)
+            self.input_folder, frame_rate=32
+        )
         self.n_img = len(self.color_paths)
 
     def parse_list(self, filepath, skiprows=0):
-        """ read list data """
-        data = np.loadtxt(filepath, delimiter=' ',
-                          dtype=np.unicode_, skiprows=skiprows)
+        """read list data"""
+        data = np.loadtxt(filepath, delimiter=" ", dtype=np.unicode_, skiprows=skiprows)
         return data
 
     def associate_frames(self, tstamp_image, tstamp_depth, tstamp_pose, max_dt=0.08):
-        """ pair images, depths, and poses """
+        """pair images, depths, and poses"""
         associations = []
         for i, t in enumerate(tstamp_image):
             if tstamp_pose is None:
                 j = np.argmin(np.abs(tstamp_depth - t))
-                if (np.abs(tstamp_depth[j] - t) < max_dt):
+                if np.abs(tstamp_depth[j] - t) < max_dt:
                     associations.append((i, j))
 
             else:
                 j = np.argmin(np.abs(tstamp_depth - t))
                 k = np.argmin(np.abs(tstamp_pose - t))
 
-                if (np.abs(tstamp_depth[j] - t) < max_dt) and \
-                        (np.abs(tstamp_pose[k] - t) < max_dt):
+                if (np.abs(tstamp_depth[j] - t) < max_dt) and (
+                    np.abs(tstamp_pose[k] - t) < max_dt
+                ):
                     associations.append((i, j, k))
 
         return associations
 
     def loadtum(self, datapath, frame_rate=-1):
-        """ read video data in tum-rgbd format """
-        if os.path.isfile(os.path.join(datapath, 'groundtruth.txt')):
-            pose_list = os.path.join(datapath, 'groundtruth.txt')
-        elif os.path.isfile(os.path.join(datapath, 'pose.txt')):
-            pose_list = os.path.join(datapath, 'pose.txt')
+        """read video data in tum-rgbd format"""
+        if os.path.isfile(os.path.join(datapath, "groundtruth.txt")):
+            pose_list = os.path.join(datapath, "groundtruth.txt")
+        elif os.path.isfile(os.path.join(datapath, "pose.txt")):
+            pose_list = os.path.join(datapath, "pose.txt")
 
-        image_list = os.path.join(datapath, 'rgb.txt')
-        depth_list = os.path.join(datapath, 'depth.txt')
+        image_list = os.path.join(datapath, "rgb.txt")
+        depth_list = os.path.join(datapath, "depth.txt")
 
         image_data = self.parse_list(image_list)
         depth_data = self.parse_list(depth_list)
@@ -386,8 +420,7 @@ class TUM_RGBD(BaseDataset):
         tstamp_image = image_data[:, 0].astype(np.float64)
         tstamp_depth = depth_data[:, 0].astype(np.float64)
         tstamp_pose = pose_data[:, 0].astype(np.float64)
-        associations = self.associate_frames(
-            tstamp_image, tstamp_depth, tstamp_pose)
+        associations = self.associate_frames(tstamp_image, tstamp_depth, tstamp_pose)
 
         indicies = [0]
         for i in range(1, len(associations)):
@@ -407,7 +440,7 @@ class TUM_RGBD(BaseDataset):
                 inv_pose = np.linalg.inv(c2w)
                 c2w = np.eye(4)
             else:
-                c2w = inv_pose@c2w
+                c2w = inv_pose @ c2w
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
             c2w = torch.from_numpy(c2w).float()
@@ -416,7 +449,7 @@ class TUM_RGBD(BaseDataset):
         return images, depths, poses
 
     def pose_matrix_from_quaternion(self, pvec):
-        """ convert 4x4 pose matrix to (t, q) """
+        """convert 4x4 pose matrix to (t, q)"""
         from scipy.spatial.transform import Rotation
 
         pose = np.eye(4)
@@ -430,5 +463,5 @@ dataset_dict = {
     "scannet": ScanNet,
     "cofusion": CoFusion,
     "azure": Azure,
-    "tumrgbd": TUM_RGBD
+    "tumrgbd": TUM_RGBD,
 }

@@ -61,7 +61,7 @@ class Mapper(object):
         self.idx_segmenter = slam.idx_segmenter
         # ------end-added------------------
 
-        # self.idx = slam.idx
+        self.idx = slam.idx
         self.nice = slam.nice
         self.c = slam.shared_c
         self.bound = slam.bound
@@ -909,7 +909,17 @@ class Mapper(object):
             # this ensures that the current frame has always been segmented before the mappers start training on it
             # TODO: will need to update this according to postsegmentatoin or full-SLAM
             while True:
+                print(
+                    "in while loop: ",
+                    self.coarse_mapper,
+                    " ",
+                    self.idx[0].clone(),
+                    " ",
+                    prev_idx,
+                )
                 idx = self.idx[0].clone()  # this should be the current tracking index
+                if idx == 5 and not self.coarse_mapper:
+                    print(" ")
                 if idx == self.n_img - 1:
                     break
                 if self.sync_method == "strict":
@@ -922,6 +932,7 @@ class Mapper(object):
                 elif self.sync_method == "free":
                     break
                 time.sleep(0.1)
+
             prev_idx = idx
             """if self.wait_segmenter:
                 if init:
@@ -1219,7 +1230,7 @@ class Mapper(object):
                 break
 
             # TODO: push the decoders to the cpu
-            print(f"Mapping frame done, is coarse: {self.coarse_mapper}")
+            """print(f"Mapping frame done, is coarse: {self.coarse_mapper}")
             if self.coarse_mapper:
                 self.idx_coarse_mapper[0] = idx + self.every_frame
             else:
@@ -1230,4 +1241,4 @@ class Mapper(object):
                         pass
                     except Exception as e:
                         print(f"Failed to capture memory snapshot {e}")
-                self.idx_mapper[0] = idx + self.every_frame
+                #self.idx_mapper[0] = idx + self.every_frame"""

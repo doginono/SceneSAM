@@ -34,8 +34,8 @@ class Tracker(object):
         self.renderer = slam.renderer
         self.gt_c2w_list = slam.gt_c2w_list
         self.low_gpu_mem = slam.low_gpu_mem
-        # self.mapping_idx = slam.mapping_idx
-        # self.mapping_cnt = slam.mapping_cnt
+        self.mapping_idx = slam.mapping_idx
+        self.mapping_cnt = slam.mapping_cnt
         self.shared_decoders = slam.shared_decoders
         self.estimate_c2w_list = slam.estimate_c2w_list
 
@@ -193,7 +193,7 @@ class Tracker(object):
             pbar = tqdm(self.frame_loader)
 
         # TODO maybe add semantic loss for tracking later
-        for idx, gt_color, gt_depth, gt_c2w in pbar:
+        for idx, gt_color, gt_depth, gt_c2w, _ in pbar:
             if not self.verbose:
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 

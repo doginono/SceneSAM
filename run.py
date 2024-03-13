@@ -68,13 +68,13 @@ def main():
     writer.close()
     print("read in hparams")
     # -----------------------------------------------------------------------------------
-    segmenter = Segmenter(
+    """segmenter = Segmenter(
         cfg,
         args,
         store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
     )
     segmenter.run()
-    del segmenter
+    del segmenter"""
     slam = NICE_SLAM(cfg, args)
     if cfg["Segmenter"]["store_vis"]:
         gifMaker.make_gif(os.path.join(cfg["data"]["input_folder"], "segmentation"))

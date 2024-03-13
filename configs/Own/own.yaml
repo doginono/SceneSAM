@@ -13,6 +13,7 @@ tracking:
   pixels: 200
   iters: 10
 Segmenter:
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -24,7 +25,7 @@ rendering:
 mapping:
   first_min_area: 100
   use_vis: True
-  no_vis_on_first_frame: False
+  no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 4
   vis_freq: 50
@@ -37,8 +38,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1200 #finetune
-  iters: 100 #finetune
+  iters_first: 10 #finetune
+  iters: 10 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
