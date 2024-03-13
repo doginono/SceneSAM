@@ -909,20 +909,20 @@ class Mapper(object):
             # this ensures that the current frame has always been segmented before the mappers start training on it
             # TODO: will need to update this according to postsegmentatoin or full-SLAM
             while True:
-                idx = self.idx[0].clone() #this should be the current tracking index
-                if idx == self.n_img-1:
+                idx = self.idx[0].clone()  # this should be the current tracking index
+                if idx == self.n_img - 1:
                     break
-                if self.sync_method == 'strict':
+                if self.sync_method == "strict":
                     if idx % self.every_frame == 0 and idx != prev_idx:
                         break
 
-                elif self.sync_method == 'loose':
-                    if idx == 0 or idx >= prev_idx+self.every_frame//2:
+                elif self.sync_method == "loose":
+                    if idx == 0 or idx >= prev_idx + self.every_frame // 2:
                         break
-                elif self.sync_method == 'free':
+                elif self.sync_method == "free":
                     break
                 time.sleep(0.1)
-            prev_idx = idx 
+            prev_idx = idx
             """if self.wait_segmenter:
                 if init:
                     pass
