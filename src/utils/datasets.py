@@ -61,11 +61,19 @@ class BaseDataset(Dataset):
 
         self.name = cfg["dataset"]
 
+<<<<<<< HEAD
         # -------------------added-----------------------------------------------
         if self.name == "replica":
             self.output_dimension_semantic = cfg["output_dimension_semantic"]
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
         # ------------------end-added-----------------------------------------------
+=======
+        #-------------------added-----------------------------------------------
+        if self.name == 'replica':
+            self.output_dimension_semantic = cfg['output_dimension_semantic']
+        self.every_frame_seg = cfg['Segmenter']['every_frame']
+        #------------------end-added-----------------------------------------------
+>>>>>>> master
 
         self.device = device
         self.scale = scale
@@ -172,7 +180,12 @@ class Replica(BaseDataset):
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
 
+<<<<<<< HEAD
         # -------------------added-----------------------------------------------
+=======
+        #-------------------added-----------------------------------------------
+        
+>>>>>>> master
 
         semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
 
@@ -201,6 +214,7 @@ class Replica(BaseDataset):
             color_data, (W, H)
         )  # shape after (680, 1200, 3) = (H, W, 3)
         color_data = torch.from_numpy(color_data)
+<<<<<<< HEAD
         depth_data = torch.from_numpy(depth_data) * self.scale
         # -------------------added-----------------------------------------------
 
@@ -218,6 +232,26 @@ class Replica(BaseDataset):
             self.output_dimension_semantic >= semantic_data.shape[-1]
         ), "Number of classes is smaller than the number of unique values in the semantic data"
         semantic_data = torch.from_numpy(semantic_data)
+=======
+        depth_data = torch.from_numpy(depth_data)*self.scale
+        #-------------------added-----------------------------------------------
+        if index % self.every_frame_seg == 0:
+            semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
+            #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
+            semantic_data = np.load(semantic_path)
+
+            # Create one-hot encoding using numpy.eye
+            negative = np.where(semantic_data < 0)
+            semantic_data[negative] = 0
+            semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
+            semantic_data[negative] = False
+            #TODO set sematic data corresponding to negative ids, set one-hot encoding to zero
+            assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
+            semantic_data = torch.from_numpy(semantic_data)
+        else:
+            semantic_data = torch.ones((H, W, self.output_dimension_semantic)).to(bool)*-1
+            
+>>>>>>> master
 
         # ----------------------
         if (
