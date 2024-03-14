@@ -21,7 +21,7 @@ def show_anns(anns):
     img[:, :, 3] = 0
     for ann in sorted_anns:
         m = ann["segmentation"]
-        color_mask = np.concatenate([np.random.random(3), [0.35]])
+        color_mask = np.concatenate([np.random.random(3), [1]])
         img[m] = color_mask
     ax.imshow(img)
 

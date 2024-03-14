@@ -543,6 +543,34 @@ def createReverseMappingCombined_area_sort(
     return masks, samples, max_id, update
 
 
+def createFrontMappingAutosort(
+    curr_frame_number,
+    T,
+    K,
+    depths,
+    predictor,
+    max_id,
+    update,
+    points_per_instance=5,
+    current_frame=None,
+    samples=None,
+    smallesMaskSize=1000,
+    kernel_size=80,
+    num_of_clusters=4,
+    deleted=None,
+    border=25,
+    overlap_threshold=0.5,
+    relevant_threshhold=0.3,
+    every_frame=15,
+    merging_parameter=10,
+    hit_percent=0.1,
+):
+    print("x")
+    
+    return 1
+    
+
+
 def createReverseMappingCombined(
     curr_frame_number,
     T,
