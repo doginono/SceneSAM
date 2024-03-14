@@ -6,4 +6,4 @@ data:
   input_folder: 'Demo_Data/room1_small'
   logs: 'logs/room1_small'
   output: 'output/Own/room1_small'
-output_dimension_semantic: 300
+output_dimension_semantic: 50
