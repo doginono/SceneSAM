@@ -396,6 +396,7 @@ class Mapper(object):
                 optimize_frame = random_select(len(self.keyframe_dict) - 1, num)
             elif self.keyframe_selection_method == "overlap":
                 num = self.mapping_window_size - 2
+                #TODO: if full_slam: this is fine, else all but current frame
                 optimize_frame = self.keyframe_selection_overlap(
                     cur_gt_color, cur_gt_depth, cur_c2w, keyframe_dict[:-1], num
                 )
@@ -405,7 +406,7 @@ class Mapper(object):
         if len(keyframe_list) > 0:
             optimize_frame = optimize_frame + [len(keyframe_list) - 1]
             oldest_frame = min(optimize_frame)
-        optimize_frame += [-1]
+        optimize_frame += [-1] #TODO not working if post segmentation is used
 
         if self.save_selected_keyframes_info:
             keyframes_info = []
@@ -570,7 +571,7 @@ class Mapper(object):
             inc = 0'''
         if round == 1:
             start = num_joint_iters
-            inc = int(self.semantic_iter_ratio * num_joint_iters)
+            inc = max(int(self.semantic_iter_ratio * num_joint_iters),1)
         else:
             start = 0
             inc = 0
