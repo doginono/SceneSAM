@@ -99,10 +99,11 @@ class NICE_SLAM:
         self.idx.share_memory_()
 
         # added by Julius
-        self.idx_mapper = torch.zeros((1)).int()
+        self.is_full_slam = cfg['Segmenter']["full_slam"]
+        '''self.idx_mapper = torch.zeros((1)).int()
         self.idx_mapper.share_memory_()
         self.idx_coarse_mapper = torch.zeros((1)).int()
-        self.idx_coarse_mapper.share_memory_()
+        self.idx_coarse_mapper.share_memory_()'''
         self.idx_segmenter = torch.zeros((1)).int()
         self.idx_segmenter.share_memory_()
         # self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
@@ -145,10 +146,10 @@ class NICE_SLAM:
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
         self.segmenter = Segmenter(
-            cfg,
             self,
+            cfg,
             args,
-            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
+            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation")
         )
 
         if self.coarse:
@@ -413,8 +414,12 @@ class NICE_SLAM:
         else:
             start = 0
         """
+        if not self.is_full_slam:
+            end = 3
+        else:
+            end = 4
         for rank in range(
-            0, 2
+            0, end
         ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank,))
@@ -433,7 +438,10 @@ class NICE_SLAM:
             processes.append(p)
         for p in processes:
             p.join()
-
+        #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
+        if not self.is_full_slam:
+            self.segmenter.run()
+            
 
 # This part is required by torch.multiprocessing
 if __name__ == "__main__":
