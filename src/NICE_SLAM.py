@@ -29,6 +29,11 @@ class NICE_SLAM:
 
     def __init__(self, cfg, args):
 
+        if 'load_cpt' in cfg:
+            self.load_nice_slam = True
+            self.load_cpt = cfg['load_cpt']
+        else:
+            self.load_nice_slam = None
         # for groundtruth tracking
         #path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         '''self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
@@ -165,12 +170,33 @@ class NICE_SLAM:
     def to_cpu(self):
         self.shared_decoders.cpu()
 
-    def set_decoders(self, decoders):
-        self.shared_decoders = decoders
+    def set_decoders(self, state_dict):
+        self.shared_decoders.load_state_dict(state_dict)
+        self.shared_decoders = self.shared_decoders.to(self.cfg["mapping"]["device"])
+        self.shared_decoders.share_memory()
 
     def set_grid(self, grid):
         self.shared_c = grid
+        for key, val in self.shared_c.items():
+            val = val.to(self.cfg["mapping"]["device"]).detach().requires_grad_(False)
+            val.share_memory_()
+            self.shared_c[key] = val
 
+    def set_estimate_c2w_list(self, estimate_c2w_list):
+        self.estimate_c2w_list = estimate_c2w_list
+        self.estimate_c2w_list.share_memory_()
+    
+    def set_gt_c2w_list(self, gt_c2w_list):
+        self.gt_c2w_list = gt_c2w_list
+        self.gt_c2w_list.share_memory_()
+    
+    def set_log_dict(self, log_dict):
+        log_dict = torch.load(log_dict, map_location=self.cfg["mapping"]["device"])
+        self.set_decoders(log_dict['decoder_state_dict'])
+        self.set_grid(log_dict['c'])
+        self.set_estimate_c2w_list(log_dict['estimate_c2w_list'])
+        self.set_gt_c2w_list(log_dict['gt_c2w_list'])
+    
 
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
@@ -420,32 +446,35 @@ class NICE_SLAM:
         else:
             start = 0
         """
-        if not self.is_full_slam:
-            end = 3
+        if self.load_nice_slam is not None:
+            self.set_log_dict(self.load_cpt)
         else:
-            end = 4
-        for rank in range(
-            0, end
-        ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
-            if rank == 0:
-                p = mp.Process(target=self.tracking, args=(rank,))
-                print('start tracking')
-                # p = mp.Process(target=self.segmenting, args=(rank,))
-            elif rank == 1:
-                p = mp.Process(target=self.mapping, args=(rank,))
-            elif rank == 2:
-                if self.coarse:
-                    p = mp.Process(target=self.coarse_mapping, args=(rank,))
-                else:
-                    continue
-            elif rank == 3:
-                print('start segmenter')
-                p = mp.Process(target=self.segmenting, args=(rank,))
-            # print('Started Thread: ', rank)
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
+            if not self.is_full_slam:
+                end = 3
+            else:
+                end = 4
+            for rank in range(
+                0, end
+            ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
+                if rank == 0:
+                    p = mp.Process(target=self.tracking, args=(rank,))
+                    print('start tracking')
+                    # p = mp.Process(target=self.segmenting, args=(rank,))
+                elif rank == 1:
+                    p = mp.Process(target=self.mapping, args=(rank,))
+                elif rank == 2:
+                    if self.coarse:
+                        p = mp.Process(target=self.coarse_mapping, args=(rank,))
+                    else:
+                        continue
+                elif rank == 3:
+                    print('start segmenter')
+                    p = mp.Process(target=self.segmenting, args=(rank,))
+                # print('Started Thread: ', rank)
+                p.start()
+                processes.append(p)
+            for p in processes:
+                p.join()
         #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
             frames, max_id = self.segmenter.run()
@@ -455,6 +484,7 @@ class NICE_SLAM:
             duration=100
             )
             self.round[0] = 1
+            self.mapper = Mapper(self.cfg, self.args, self, coarse_mapper=False)
             self.mapper.run()
             #rerun only with segmentation
 
