@@ -61,19 +61,11 @@ class BaseDataset(Dataset):
 
         self.name = cfg["dataset"]
 
-<<<<<<< HEAD
-        # -------------------added-----------------------------------------------
-        if self.name == "replica":
-            self.output_dimension_semantic = cfg["output_dimension_semantic"]
-        self.is_full_slam = cfg["Segmenter"]["full_slam"]
-        # ------------------end-added-----------------------------------------------
-=======
         #-------------------added-----------------------------------------------
         if self.name == 'replica':
             self.output_dimension_semantic = cfg['output_dimension_semantic']
         self.every_frame_seg = cfg['Segmenter']['every_frame']
         #------------------end-added-----------------------------------------------
->>>>>>> master
 
         self.device = device
         self.scale = scale
@@ -164,7 +156,7 @@ class Replica(BaseDataset):
         self.every_frame = cfg["mapping"]["every_frame"]
         self.istracker = tracker
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
-        self.T_wc = slam.T_wc
+        #self.T_wc = slam.T_wc
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
         # -------------------end added-----------------------------------------------
@@ -180,12 +172,8 @@ class Replica(BaseDataset):
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
 
-<<<<<<< HEAD
-        # -------------------added-----------------------------------------------
-=======
         #-------------------added-----------------------------------------------
         
->>>>>>> master
 
         semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
 
@@ -214,31 +202,12 @@ class Replica(BaseDataset):
             color_data, (W, H)
         )  # shape after (680, 1200, 3) = (H, W, 3)
         color_data = torch.from_numpy(color_data)
-<<<<<<< HEAD
-        depth_data = torch.from_numpy(depth_data) * self.scale
-        # -------------------added-----------------------------------------------
-
-        # semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
-
-        semantic_data = np.ones((H, W), int)  # np.load(semantic_path)
-
-        # Create one-hot encoding using numpy.eye
-        # print(f"read in semantic data of frame {index}: ", semantic_data)
-        semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(
-            bool
-        )
-
-        assert (
-            self.output_dimension_semantic >= semantic_data.shape[-1]
-        ), "Number of classes is smaller than the number of unique values in the semantic data"
-        semantic_data = torch.from_numpy(semantic_data)
-=======
         depth_data = torch.from_numpy(depth_data)*self.scale
         #-------------------added-----------------------------------------------
         if index % self.every_frame_seg == 0:
             semantic_path = os.path.join(self.seg_folder, f'seg_{index}.npy')
             #semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
-            semantic_data = np.load(semantic_path)
+            semantic_data = np.ones((H,W), int)#np.load(semantic_path)
 
             # Create one-hot encoding using numpy.eye
             negative = np.where(semantic_data < 0)
@@ -251,7 +220,6 @@ class Replica(BaseDataset):
         else:
             semantic_data = torch.ones((H, W, self.output_dimension_semantic)).to(bool)*-1
             
->>>>>>> master
 
         # ----------------------
         if (

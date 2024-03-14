@@ -18,25 +18,26 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self, cfg, args, store_directory):
+    def __init__(self, slam, cfg, args, store_directory):
         self.store_directory = store_directory
         os.makedirs(f"{store_directory}", exist_ok=True)
 
+        self.is_full_slam = cfg['Segmenter']["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
         # self.idx = slam.idx_segmenter
-        path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
+        '''path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
-        self.T_wc[:, 1:3] *= -1
+        self.T_wc[:, 1:3] *= -1'''
 
         self.every_frame = cfg["mapping"]["every_frame"]
         # self.slam = slam
         # self.semantic_frames = slam.semantic_frames
-
-        # self.id_counter = slam.id_counter
-        # self.idx_mapper = slam.idx_mapper
-        # self.idx_coarse_mapper = slam.idx_coarse_mapper
+        self.estimate_c2w_list = slam.estimate_c2w_list
+        self.id_counter = slam.id_counter
+        self.idx_mapper = slam.mapping_idx
+        #self.idx_coarse_mapper = slam.idx_coarse_mapper
 
         self.every_frame = cfg["mapping"]["every_frame"]
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
@@ -100,7 +101,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.T_wc,
+                self.estimate_c2w_list,
                 self.K,
                 self.depth_paths,
                 predictor=self.predictor,
@@ -176,7 +177,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.T_wc[0],
+            self.estimate_c2w_list[0],
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )

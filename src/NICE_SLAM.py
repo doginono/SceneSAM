@@ -30,10 +30,10 @@ class NICE_SLAM:
     def __init__(self, cfg, args):
 
         # for groundtruth tracking
-        path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
-        self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        #path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
+        '''self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
-        self.T_wc = torch.from_numpy(self.T_wc).float()
+        self.T_wc = torch.from_numpy(self.T_wc).float()'''
         #self.mask_generator = cfg['Segmenter']['mask_generator']
         self.every_frame = cfg['mapping']['every_frame']
 
@@ -100,6 +100,8 @@ class NICE_SLAM:
         self.idx.share_memory_()
 
         # added by Julius
+        self.round = torch.zeros((1)).int()
+        self.round.share_memory_()
         self.is_full_slam = cfg['Segmenter']["full_slam"]
         '''self.idx_mapper = torch.zeros((1)).int()
         self.idx_mapper.share_memory_()
@@ -360,7 +362,7 @@ class NICE_SLAM:
 
         self.shared_c = c
 
-    '''def tracking(self, rank):
+    def tracking(self, rank):
         """
         Tracking Thread.
 
@@ -373,7 +375,7 @@ class NICE_SLAM:
                 break
             time.sleep(1)
 
-        self.tracker.run()'''
+        self.tracker.run()
 
     def mapping(self, rank):
         """
@@ -427,6 +429,7 @@ class NICE_SLAM:
         ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
             if rank == 0:
                 p = mp.Process(target=self.tracking, args=(rank,))
+                print('start tracking')
                 # p = mp.Process(target=self.segmenting, args=(rank,))
             elif rank == 1:
                 p = mp.Process(target=self.mapping, args=(rank,))
@@ -436,6 +439,7 @@ class NICE_SLAM:
                 else:
                     continue
             elif rank == 3:
+                print('start segmenter')
                 p = mp.Process(target=self.segmenting, args=(rank,))
             # print('Started Thread: ', rank)
             p.start()
@@ -444,8 +448,15 @@ class NICE_SLAM:
             p.join()
         #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
-            self.segmenter.run()
-            
+            frames, max_id = self.segmenter.run()
+            gifMaker.make_gif_from_array(
+            frames,
+            store='gif.gif',
+            duration=100
+            )
+            self.round[0] = 1
+            self.mapper.run()
+            #rerun only with segmentation
 
 # This part is required by torch.multiprocessing
 if __name__ == "__main__":
