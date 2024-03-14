@@ -182,7 +182,7 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """
     tensors = []
 
-    temp=np.unique(ids)
+    temp=np.unique(ids)[1:]
     for i,element in enumerate(list(temp.astype(int))):
         if element >=0:            
             labels = np.where(ids == element)
@@ -219,7 +219,7 @@ def generateIds(masks, min_area=1000):
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
     return ids.squeeze().astype(np.int32)"""
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=False)
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
     ids = np.full(

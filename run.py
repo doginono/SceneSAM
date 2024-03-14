@@ -25,9 +25,13 @@ def setup_seed(seed):
 def main():
     # setup_seed(20)
 
+<<<<<<< HEAD
     parser = argparse.ArgumentParser(
         description="Arguments for running the NICE-SLAM/iMAP*."
     )
+=======
+    parser = argparse.ArgumentParser(description="Arguments for running the NICE-SLAM.")
+>>>>>>> master
     parser.add_argument("config", type=str, help="Path to config file.")
     parser.add_argument(
         "--input_folder",
@@ -63,21 +67,45 @@ def main():
     hparams_path = cfg["inherit_from"]
     with open(hparams_path, "r") as file:
         hparams_dict = yaml.safe_load(file)
+<<<<<<< HEAD
     yaml_string = yaml.dump(hparams_dict, default_flow_style=False)
     writer.add_text("hparams", yaml_string)
     writer.close()
     print("read in hparams")
     # -----------------------------------------------------------------------------------
     """segmenter = Segmenter(
+=======
+    # yaml_string = yaml.dump(hparams_dict, default_flow_style=False)
+    # writer.add_text('hparams', yaml_string)
+    # writer.close()
+    print("read in hparams")
+    # -----------------------------------------------------------------------------------
+    segmenter = Segmenter(
+>>>>>>> master
         cfg,
         args,
         store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
     )
+<<<<<<< HEAD
     segmenter.run()
     del segmenter"""
     slam = NICE_SLAM(cfg, args)
     if cfg["Segmenter"]["store_vis"]:
         gifMaker.make_gif(os.path.join(cfg["data"]["input_folder"], "segmentation"))
+=======
+    frames, max_id = segmenter.run()
+    gifMaker.make_gif_from_array(
+        frames,
+        store=os.path.join(cfg["data"]["input_folder"], "segmentation", "gif.gif"),
+        duration=100,
+    )
+    del segmenter
+    cfg["output_dimension_semantic"] = (
+        max_id  # ensures that we have enough ids which we can predict
+    )
+    slam = NICE_SLAM(cfg, args)
+
+>>>>>>> master
     slam.run()
 
 

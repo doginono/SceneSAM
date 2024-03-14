@@ -8,6 +8,10 @@ import numpy as np
 import torch
 from colorama import Fore, Style
 from torch.autograd import Variable
+<<<<<<< HEAD
+=======
+from tqdm import tqdm
+>>>>>>> master
 
 from src.common import (
     get_camera_from_tensor,
@@ -20,6 +24,7 @@ from src.utils.Visualizer import Visualizer
 from src.utils import backproject
 
 from torch.utils.tensorboard import SummaryWriter  # J: added
+
 
 
 class Mapper(object):
@@ -35,7 +40,12 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         # -------added------------------
+<<<<<<< HEAD
         self.wait_segmenter = cfg["Segmenter"]["mask_generator"]
+=======
+        # self.wait_segmenter = cfg['Segmenter']['mask_generator']
+        self.seg_freq = cfg["Segmenter"]["every_frame"]
+>>>>>>> master
         self.T_wc = slam.T_wc
         self.output_dimension_semantic = cfg["output_dimension_semantic"]
         self.semantic_iter_ratio = cfg["mapping"]["semantic_iter_ratio"]
@@ -55,6 +65,7 @@ class Mapper(object):
         else:
             self.writer = SummaryWriter(os.path.join(cfg['writer_path'], 'regular'))"""
 
+<<<<<<< HEAD
         # self.writer = SummaryWriter(os.path.join(cfg['writer_path'])) #J: added
         # self.idx_mapper = slam.idx_mapper
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
@@ -62,6 +73,15 @@ class Mapper(object):
         # ------end-added------------------
 
         self.idx = slam.idx
+=======
+        #self.writer = SummaryWriter(os.path.join(cfg["data"]['logs'])) #J: added
+        self.idx_mapper = slam.idx_mapper
+        self.idx_coarse_mapper = slam.idx_coarse_mapper
+        self.idx_segmenter = slam.idx_segmenter
+        # ------end-added------------------
+
+        # self.idx = slam.idx
+>>>>>>> master
         self.nice = slam.nice
         self.c = slam.shared_c
         self.bound = slam.bound
@@ -74,11 +94,19 @@ class Mapper(object):
         )  # J: added to use smaller batch size for visualization
         self.renderer = slam.renderer
         self.low_gpu_mem = slam.low_gpu_mem
+<<<<<<< HEAD
         self.mapping_idx = slam.mapping_idx
         self.mapping_cnt = slam.mapping_cnt
         self.decoders = slam.shared_decoders
         self.estimate_c2w_list = slam.estimate_c2w_list  # for tracker
         self.mapping_first_frame = slam.mapping_first_frame
+=======
+        # self.mapping_idx = slam.mapping_idx
+        # self.mapping_cnt = slam.mapping_cnt
+        self.decoders = slam.shared_decoders
+        # self.estimate_c2w_list = slam.estimate_c2w_list #for tracker
+        # self.mapping_first_frame = slam.mapping_first_frame
+>>>>>>> master
 
         self.scale = cfg["scale"]
         self.coarse = cfg["coarse"]
@@ -540,6 +568,7 @@ class Mapper(object):
                     ]
                 )
         else:
+            assert False
             # imap*, single MLP
             # J:will not be entered because nice = True always in our case
             if self.BA:
@@ -556,6 +585,7 @@ class Mapper(object):
             scheduler = StepLR(optimizer, step_size=200, gamma=0.8)
 
         # J: added semantic optimizing part: for now it is 0.4 which is the same as the number of iterations spend on color. Carefull the semantic_iter_rati is added tothe num_joint_iters
+<<<<<<< HEAD
         # TODO: the stages will depend on
         if ~self.coarse_mapper:
             inc = int(self.semantic_iter_ratio * num_joint_iters)
@@ -563,6 +593,17 @@ class Mapper(object):
             inc = 0
 
         for joint_iter in range(num_joint_iters + inc):
+=======
+        if (~self.coarse_mapper and idx % self.seg_freq == 0) or idx == self.n_img - 1:
+            inc = int(self.semantic_iter_ratio * num_joint_iters)
+
+        else:
+            inc = 0
+
+        for joint_iter in tqdm(
+            range(num_joint_iters + inc), desc=f"Training on Frame {idx.item()}"
+        ):
+>>>>>>> master
             if self.nice:
                 if self.frustum_feature_selection:
                     for key, val in c.items():
@@ -662,6 +703,7 @@ class Mapper(object):
             # -----------------end-added-------------------
 
             camera_tensor_id = 0
+
             for frame in optimize_frame:
                 if frame != -1:
                     gt_depth = keyframe_dict[frame]["depth"].to(device)
@@ -675,6 +717,11 @@ class Mapper(object):
                         .to(bool)
                         .to(device)
                     )
+<<<<<<< HEAD
+=======
+                    ignore_pixel = keyframe_dict[frame]["ignore_pixel"].to(device)
+                    gt_semantic[ignore_pixel] = 0
+>>>>>>> master
                     # gt_semantic = keyframe_dict[frame]['semantic'].to(device)
                     # -----------------end-added-------------------
                     if self.BA and frame != oldest_frame:
@@ -791,13 +838,19 @@ class Mapper(object):
                 """if joint_iter == num_joint_iters +inc -1:
                     print('Entered')
                     color_loss_writer = color_loss.item()/color_semantics.shape[0]"""
+<<<<<<< HEAD
                 writer.add_scalar(f"Loss/color", color_loss.item(), self.idx_writer)
+=======
+                if writer is not None:
+                    writer.add_scalar(f'Loss/color', color_loss.item(),self.idx_writer)
+>>>>>>> master
                 weighted_color_loss = self.w_color_loss * color_loss
                 loss += weighted_color_loss
             # -----------------added-------------------
             elif self.stage == "semantic":
                 loss_function = torch.nn.CrossEntropyLoss()
 
+<<<<<<< HEAD
                 mask = batch_gt_semantic >= 0
                 color_semantics = color_semantics[mask].reshape(
                     -1, self.output_dimension_semantic
@@ -808,14 +861,24 @@ class Mapper(object):
                 assert torch.all(
                     torch.sum(batch_gt_semantic == 1, dim=1) == 1
                 ), "batch_gt_semantic should have exactly one '1' per row"
+=======
+                """mask = (batch_gt_semantic >= 0)
+                color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
+                batch_gt_semantic = batch_gt_semantic[mask].reshape(-1, self.output_dimension_semantic)
+                assert torch.all(torch.sum(batch_gt_semantic == 1, dim=1) == 1), "batch_gt_semantic should have exactly one '1' per row"""
+>>>>>>> master
                 semantic_loss = loss_function(color_semantics, batch_gt_semantic)
 
                 # semantic_loss = loss_function(color_semantics, batch_gt_semantic)
                 """if joint_iter == num_joint_iters +inc -1:
                     semantic_loss_writer = semantic_loss.item()/color_semantics.shape[0]"""
+<<<<<<< HEAD
                 writer.add_scalar(
                     f"Loss/semantic", semantic_loss.item(), self.idx_writer
                 )
+=======
+                writer.add_scalar(f'Loss/semantic', semantic_loss.item(),self.idx_writer)
+>>>>>>> master
                 weighted_semantic_loss = self.w_semantic_loss * semantic_loss
                 loss += weighted_semantic_loss
             # -----------------end-added-------------------
@@ -843,6 +906,7 @@ class Mapper(object):
             optimizer.step()
             if not self.nice:  # J: never enter
                 # for imap*
+                assert False
                 scheduler.step()
             optimizer.zero_grad()
 
@@ -892,6 +956,7 @@ class Mapper(object):
             gt_semantic = None
         #as long as the sematic files are not added like .../Results/sematic*.npy
         else: """
+<<<<<<< HEAD
         if self.wait_segmenter:
             while self.idx_segmenter[0] == 0:
                 time.sleep(0.1)
@@ -899,11 +964,19 @@ class Mapper(object):
         idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
 
         self.estimate_c2w_list[0] = gt_c2w.cpu()
+=======
+
+        # print(f"start mapping, is coarse mapper: {self.coarse_mapper}")
+        idx, gt_color, gt_depth, gt_c2w, gt_semantic = self.frame_reader[0]
+
+        # self.estimate_c2w_list[0] = gt_c2w.cpu()
+>>>>>>> master
 
         init = True
         prev_idx = -1
 
         while 1:
+<<<<<<< HEAD
 
             # the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
             # this ensures that the current frame has always been segmented before the mappers start training on it
@@ -933,9 +1006,17 @@ class Mapper(object):
 
             prev_idx = idx
             """if self.wait_segmenter:
+=======
+
+            # the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
+            # this ensures that the current frame has always been segmented before the mappers start training on it
+            '''""if self.wait_segmenter:
+                assert False, 'always asynchronous now'
+>>>>>>> master
                 if init:
                     pass
                 elif self.coarse_mapper:
+
                     while True:
                         if self.idx_segmenter[0] > self.idx_coarse_mapper[0]:
                             break
@@ -993,8 +1074,14 @@ class Mapper(object):
                     idx = self.idx_mapper[0].clone()
                     if self.idx_coarse_mapper[0] >= idx:
                         break
+<<<<<<< HEAD
                     time.sleep(0.1)"""
             """ if self.coarse_mapper:
+=======
+                    time.sleep(0.1)"""""'''
+            if self.coarse_mapper:
+                assert False, "no coarse mapper anymore"
+>>>>>>> master
                 idx = self.idx_coarse_mapper[0].clone()
             else:
                 idx = self.idx_mapper[0].clone()"""
@@ -1002,7 +1089,11 @@ class Mapper(object):
             if self.verbose:
                 print(Fore.GREEN)
                 prefix = "Coarse " if self.coarse_mapper else ""
+<<<<<<< HEAD
                 print(prefix + "Mapping Frame ", idx)  # idx.item()
+=======
+                print(prefix + "Mapping Frame ", idx.item())  # idx.item()
+>>>>>>> master
                 print(Style.RESET_ALL)
 
             """if self.coarse_mapper:
@@ -1019,11 +1110,15 @@ class Mapper(object):
                 # here provides a color refinement postprocess
                 # TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
                 # -> check when semantics are available
+<<<<<<< HEAD
                 if (
                     idx == self.n_img - 1
                     and self.color_refine
                     and not self.coarse_mapper
                 ):
+=======
+                if idx == self.n_img - 1 and self.color_refine:
+>>>>>>> master
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
                     self.middle_iter_ratio = 0.0
@@ -1045,6 +1140,7 @@ class Mapper(object):
                 lr_factor = cfg["mapping"]["lr_first_factor"]
                 num_joint_iters = cfg["mapping"]["iters_first"]
 
+<<<<<<< HEAD
             cur_c2w = self.estimate_c2w_list[idx].to(self.device)
             # cur_c2w = torch.from_numpy(self.T_wc[idx]).to(self.device)
             # cur_c2w = gt_c2w  # torch.from_numpy(backproject.T_inv(self.T_wc[idx])).to(self.device)
@@ -1066,6 +1162,14 @@ class Mapper(object):
                     print("vis_c2w == cur_c2w: ",np.all(cur_c2w.cpu().numpy() == vis_c2w.cpu().numpy()))"""
             else:
                 vis_c2w = None
+=======
+            # cur_c2w = self.estimate_c2w_list[idx].to(self.device)
+            # cur_c2w = torch.from_numpy(self.T_wc[idx]).to(self.device)
+            cur_c2w = gt_c2w  # torch.from_numpy(backproject.T_inv(self.T_wc[idx])).to(self.device)
+            # cur_c2w = gt_c2w.clone().to(self.device)
+            # J: using a unseen frame during training for visualization
+            # print(f'pose of frame {idx} is {gt_c2w}')
+>>>>>>> master
             num_joint_iters = num_joint_iters // outer_joint_iters
             for outer_joint_iter in range(outer_joint_iters):
 
@@ -1074,6 +1178,7 @@ class Mapper(object):
                     and cfg["mapping"]["BA"]
                     and (not self.coarse_mapper)
                 )
+<<<<<<< HEAD
                 """if ~self.coarse_mapper:
                     gt_depth_np = gt_depth.cpu().numpy()
                     gt_color_np = gt_color.cpu().numpy() #TODO add semantics
@@ -1087,6 +1192,8 @@ class Mapper(object):
                     axs[1].imshow(gt_color_np, cmap="plasma")
                     axs[2].imshow(semantic_argmax, cmap="plasma")
                     plt.savefig(f"{self.output}/images/{idx:05d}_gt.png")"""
+=======
+>>>>>>> master
 
                 # Done: add semantics to optimize_map
                 _ = self.optimize_map(
@@ -1096,16 +1203,28 @@ class Mapper(object):
                     gt_color,
                     gt_depth,
                     gt_c2w,
+<<<<<<< HEAD
                     vis_c2w,
+=======
+                    cur_c2w,
+>>>>>>> master
                     self.keyframe_dict,
                     self.keyframe_list,
                     cur_c2w=cur_c2w,
                     cur_gt_semantic=gt_semantic,
+<<<<<<< HEAD
                     writer=writer,
                 )  # Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
                     self.estimate_c2w_list[idx] = cur_c2w
+=======
+                    writer = writer
+                )  # Done add semantics to arguments
+                if self.BA:
+                    cur_c2w = _
+                    # self.estimate_c2w_list[idx] = cur_c2w
+>>>>>>> master
 
                 # add new frame to keyframe set
                 if outer_joint_iter == outer_joint_iters - 1:
@@ -1113,7 +1232,11 @@ class Mapper(object):
                         idx not in self.keyframe_list
                     ):
                         self.keyframe_list.append(idx)
+<<<<<<< HEAD
                         # jkl%
+=======
+                        ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
+>>>>>>> master
                         self.keyframe_dict.append(
                             {
                                 "gt_c2w": gt_c2w.cpu(),
@@ -1121,6 +1244,10 @@ class Mapper(object):
                                 "color": gt_color.cpu(),
                                 "depth": gt_depth.cpu(),
                                 "est_c2w": cur_c2w.clone(),
+<<<<<<< HEAD
+=======
+                                "ignore_pixel": ignore_pixel.cpu(),
+>>>>>>> master
                                 "semantic": torch.argmax(
                                     gt_semantic.to(int), dim=-1
                                 ).cpu(),
@@ -1133,8 +1260,7 @@ class Mapper(object):
                 torch.cuda.empty_cache()
 
             init = False
-            # mapping of first frame is done, can begin tracking
-            self.mapping_first_frame[0] = 1
+            # self.mapping_first_frame[0] = 1
 
             if not self.coarse_mapper:
                 if (
@@ -1152,8 +1278,13 @@ class Mapper(object):
                         ),
                     )
 
+<<<<<<< HEAD
                 self.mapping_idx[0] = idx
                 self.mapping_cnt[0] += 1
+=======
+                # self.mapping_idx[0] = idx
+                # self.mapping_cnt[0] += 1
+>>>>>>> master
 
                 if (
                     self.use_mesh
@@ -1189,9 +1320,16 @@ class Mapper(object):
                     )  # mesh on segmentation
 
                 if idx == self.n_img - 1:
+<<<<<<< HEAD
                     mesh_out_file = f"{self.output}/mesh/final_mesh.ply"
                     self.mesher.get_mesh(
                         mesh_out_file,
+=======
+                    mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
+                    mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
+                    self.mesher.get_mesh(
+                        mesh_out_file_seg,
+>>>>>>> master
                         self.c,
                         self.decoders,
                         self.keyframe_dict,
@@ -1204,6 +1342,7 @@ class Mapper(object):
                         clean_mesh=self.clean_mesh,
                         get_mask_use_all_frames=False,
                     )
+<<<<<<< HEAD
                     os.system(
                         f"cp {mesh_out_file} {self.output}/mesh/{idx:05d}_mesh.ply"
                     )
@@ -1222,16 +1361,50 @@ class Mapper(object):
                             get_mask_use_all_frames=True,
                         )
                     break
+=======
+                    self.mesher.get_mesh(
+                        mesh_out_file_color,
+                        self.c,
+                        self.decoders,
+                        self.keyframe_dict,
+                        self.T_wc,  # instead of estimatee_c2w
+                        idx,
+                        self.device,
+                        show_forecast=self.mesh_coarse_level,
+                        color=True,
+                        semantic=False,
+                        clean_mesh=self.clean_mesh,
+                        get_mask_use_all_frames=False,
+                    )
+                    os.system(
+                        f"cp {mesh_out_file_color} {self.output}/mesh/{idx:05d}_mesh_color.ply"
+                    )
+                    os.system(
+                        f"cp {mesh_out_file_seg} {self.output}/mesh/{idx:05d}_mesh_seg.ply"
+                    )
+                    """if self.eval_rec:
+                        mesh_out_file = f'{self.output}/mesh/final_mesh_eval_rec.ply'
+                        self.mesher.get_mesh(mesh_out_file, self.c, self.decoders, self.keyframe_dict,
+                                             self.T_wc, idx, self.device, show_forecast=False, #instead of estimatee_c2w
+                                             clean_mesh=self.clean_mesh, get_mask_use_all_frames=True)
+                    break"""
+>>>>>>> master
 
             if idx == self.n_img - 1:
                 writer.close()
                 break
 
             # TODO: push the decoders to the cpu
+<<<<<<< HEAD
             """print(f"Mapping frame done, is coarse: {self.coarse_mapper}")
+=======
+            # print(f'Mapping frame done, is coarse: {self.coarse_mapper}')
+>>>>>>> master
             if self.coarse_mapper:
+                assert False, "no coarse mapper anymore"
                 self.idx_coarse_mapper[0] = idx + self.every_frame
             else:
+<<<<<<< HEAD
                 if idx == 10:
                     try:
                         # torch.cuda.memory._dump_snapshot(f"/home/koerner/Project/nice-slam/logs/memory_usage.pickle")
@@ -1240,3 +1413,9 @@ class Mapper(object):
                     except Exception as e:
                         print(f"Failed to capture memory snapshot {e}")
                 #self.idx_mapper[0] = idx + self.every_frame"""
+=======
+                if idx + self.every_frame >= self.n_img - 1:
+                    self.idx_mapper[0] = self.n_img - 1
+                else:
+                    self.idx_mapper[0] = idx + self.every_frame
+>>>>>>> master

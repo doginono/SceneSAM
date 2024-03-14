@@ -32,9 +32,10 @@ class NICE_SLAM:
         # for groundtruth tracking
         path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
-        self.T_wc[:, 1:3] *= -1
-        self.mask_generator = cfg["Segmenter"]["mask_generator"]
-        self.every_frame = cfg["mapping"]["every_frame"]
+        self.T_wc[:,1:3] *= -1
+        self.T_wc = torch.from_numpy(self.T_wc).float()
+        #self.mask_generator = cfg['Segmenter']['mask_generator']
+        self.every_frame = cfg['mapping']['every_frame']
 
         self.cfg = cfg
         self.args = args
@@ -162,8 +163,12 @@ class NICE_SLAM:
     def to_cpu(self):
         self.shared_decoders.cpu()
 
-    def to_gpu(self):
-        self.shared_decoders.to("cuda")
+    def set_decoders(self, decoders):
+        self.shared_decoders = decoders
+
+    def set_grid(self, grid):
+        self.shared_c = grid
+
 
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
@@ -174,9 +179,8 @@ class NICE_SLAM:
             )
         else:
             print(
-                f"INFO: The GT, generated and residual depth/color images can be found under "
-                + f"{self.output}/tracking_vis/ and {self.output}/mapping_vis/"
-            )
+                f"INFO: The GT, generated and residual depth/color images can be found under " +
+                f"{self.output}/mapping_vis/")
         print(f"INFO: The mesh can be found under {self.output}/mesh/")
         print(f"INFO: The checkpoint can be found under {self.output}/ckpt/")
 
@@ -356,7 +360,7 @@ class NICE_SLAM:
 
         self.shared_c = c
 
-    def tracking(self, rank):
+    '''def tracking(self, rank):
         """
         Tracking Thread.
 
@@ -369,7 +373,7 @@ class NICE_SLAM:
                 break
             time.sleep(1)
 
-        self.tracker.run()
+        self.tracker.run()'''
 
     def mapping(self, rank):
         """
