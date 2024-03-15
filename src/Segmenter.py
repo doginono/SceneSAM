@@ -217,6 +217,7 @@ class Segmenter(object):
         s = self.segment_first()
         self.samples = s
         self.predictor = create_instance_seg.create_predictor("cuda")
+        # create sam
         if max == -1:
             index_frames = np.arange(
                 self.every_frame_seg, self.n_img, self.every_frame_seg

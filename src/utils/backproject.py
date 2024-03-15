@@ -164,6 +164,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
         indices = list(zip(labels[0], labels[1]))
         if len(indices) > 0:  # Check if there are any True pixels
             sampled_indices = np.random.choice(len(indices), points_per_instance)
+            
             torch_sampled_indices[:, :, i] = torch.tensor(
                 [indices[j][::-1] for j in sampled_indices]
             ).T
@@ -188,7 +189,7 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
             if len(indices) > points_per_instance:  # Check if there are any True pixels
-                sampled_indices = np.random.choice(len(indices), points_per_instance,replace=False)
+                sampled_indices = np.linspace(0, len(indices)-1, points_per_instance, dtype=int)
                 sampled_tensor = torch.tensor(
                 [indices[j][::-1] for j in sampled_indices]
                 ).T
@@ -200,6 +201,7 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
 
     torch_sampled_indices = torch.cat(tensors, axis=1)
     return torch_sampled_indices.to(torch.int32)
+
 
 
 
@@ -219,7 +221,7 @@ def generateIds(masks, min_area=1000):
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
     return ids.squeeze().astype(np.int32)"""
-    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=False)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
     ids = np.full(
