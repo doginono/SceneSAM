@@ -478,6 +478,7 @@ class NICE_SLAM:
         #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
             frames, max_id = self.segmenter.run()
+            print(max_id)
             gifMaker.make_gif_from_array(
             frames,
             store='gif.gif',
