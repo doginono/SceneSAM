@@ -7,4 +7,5 @@ data:
   logs: 'logs/room1'
   output: 'output/Own/room1'
 output_dimension_semantic: 30
-load_cpt: /home/koerner/Project/wsnsl/output/Own/room1/ckpts/01000.tar
+#load_cpt: /home/koerner/Project/wsnsl/output/Own/room1/ckpts/01000.tar
+coarse: False
