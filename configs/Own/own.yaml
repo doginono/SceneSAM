@@ -1,4 +1,5 @@
 dataset: 'replica'
+coarse: False
 meshing:
   eval_rec: True
   resolution: 256 # change to 512 for higher resolution geometry
