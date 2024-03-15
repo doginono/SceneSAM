@@ -1151,8 +1151,8 @@ class Mapper(object):
                     and (idx % self.mesh_freq == 0)
                     and (not (idx == 0 and self.no_mesh_on_first_frame))
                 ):
+                    mesh_out_file = f"{self.output}/mesh/{idx:05d}_mesh"
                     if round == 0:
-                        mesh_out_file = f"{self.output}/mesh/{idx:05d}_mesh"
                         self.mesher.get_mesh(
                             mesh_out_file + "_color.ply",
                             self.c,
