@@ -8,4 +8,3 @@ data:
   output: 'output/Own/room1'
 output_dimension_semantic: 30
 #load_cpt: /home/koerner/Project/wsnsl/output/Own/room1/ckpts/01000.tar
-coarse: False
