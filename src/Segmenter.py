@@ -101,7 +101,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.estimate_c2w_list,
+                self.T_wc,
                 self.K,
                 self.depth_paths,
                 predictor=self.predictor,
