@@ -45,7 +45,7 @@ mapping:
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
-  pixels: 1000
+  pixels: 100
   iters_first: 1000 #finetune
   iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune

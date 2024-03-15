@@ -231,7 +231,7 @@ class Segmenter(object):
                 np.arange(self.every_frame, max, self.every_frame), index_frames
             )
 
-        for idx in tqdm(index_frames, desc="Segmenting frames"):
+        for idx in tqdm(index_frames_predict, desc="Segmenting frames"):
             self.segment_idx(idx)
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
