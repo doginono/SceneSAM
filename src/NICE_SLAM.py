@@ -14,7 +14,7 @@ from src.utils.datasets import get_dataset
 from src.utils.Logger import Logger
 from src.utils.Mesher import Mesher
 from src.utils.Renderer import Renderer
-
+from src.conv_onet.models.decoder import DenseLayer
 from scripts import gifMaker
 
 
@@ -197,6 +197,9 @@ class NICE_SLAM:
         self.set_estimate_c2w_list(log_dict['estimate_c2w_list'])
         self.set_gt_c2w_list(log_dict['gt_c2w_list'])
     
+
+    def set_output_dimension_semantic(self, output_dimension_semantic):
+        self.model.semantic_decoder.output_linear = DenseLayer(in_dim=32, out_dim=output_dimension_semantic, activation='linear')
 
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
@@ -478,6 +481,7 @@ class NICE_SLAM:
         #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
             frames, max_id = self.segmenter.run()
+            self.set_output_dimension_semantic(max_id)
             print(max_id)
             gifMaker.make_gif_from_array(
             frames,
