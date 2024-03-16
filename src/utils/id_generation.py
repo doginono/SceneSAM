@@ -508,7 +508,7 @@ def createReverseMappingCombined_area_sort(
 
         masks[condition] = max_id + counter
         # need to sample more in the first time I found the new id
-        """torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
+        torch_masks = torch.from_numpy(masks.copy()).float().to("cuda")
         if border != 0:
             torch_masks[0 : 2 * border] = 0
             torch_masks[-2 * border :] = 0
@@ -517,7 +517,7 @@ def createReverseMappingCombined_area_sort(
         result = F.conv2d(torch_masks.unsqueeze(0), weights, padding=h // 2)
         result = result.cpu().numpy()  # convert to numpy array
         result = result.squeeze()
-        indices = np.array(np.where(result == (-100 * (h * w)))).T"""
+        indices = np.array(np.where(result == (-100 * (h * w)))).T
 
     max_id = max_id + counter
     t = np.unique(masks)
