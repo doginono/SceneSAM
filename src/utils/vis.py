@@ -106,7 +106,7 @@ class visualizerForIds:
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:
-            for p in prompts:
-                plt.scatter(p[0], p[1], s=100, c="red", marker="o")
+            plt.scatter(prompts[0,:], prompts[1,:], s=100, c="red", marker="o")
         plt.savefig(path)
+
         plt.show()
