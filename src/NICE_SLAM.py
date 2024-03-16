@@ -484,6 +484,12 @@ class NICE_SLAM:
                 p.join()
         #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
+            self.segmenter = Segmenter(
+            self,
+            self.cfg,
+            self.args,
+            store_directory=os.path.join(self.cfg["data"]["input_folder"], "segmentation")
+            )
             frames, max_id = self.segmenter.run()
             self.set_output_dimension_semantic(max_id)
             print(max_id)

@@ -35,11 +35,14 @@ class Segmenter(object):
         # self.slam = slam
         # self.semantic_frames = slam.semantic_frames
         self.estimate_c2w_list = slam.estimate_c2w_list
+        s = np.ones((4,4), int)
+        s[[0,0,1,1,2], [1,2,0,3,3]] *=-1
+        self.shift = s
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         #self.idx_coarse_mapper = slam.idx_coarse_mapper
 
-        self.every_frame = cfg["mapping"]["every_frame"]
+
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = (
@@ -101,7 +104,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.estimate_c2w_list,
+                self.estimate_c2w_list.cpu()*self.shift,
                 self.K,
                 self.depth_paths,
                 predictor=self.predictor,
@@ -166,6 +169,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
+        print(np.sum(ids == -100) / (ids.shape[0] * ids.shape[1]))
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
         self.semantic_frames[0] = torch.from_numpy(ids)
@@ -177,7 +181,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.estimate_c2w_list[0],
+            self.estimate_c2w_list[0].cpu()*self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
