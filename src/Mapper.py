@@ -42,7 +42,7 @@ class Mapper(object):
         # self.wait_segmenter = cfg['Segmenter']['mask_generator']
         self.seg_freq = cfg["Segmenter"]["every_frame"]
         #self.T_wc = slam.T_wc
-        self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.output_dimension_semantic = slam.output_dimension_semantic
         self.semantic_iter_ratio = cfg["mapping"]["semantic_iter_ratio"]
         self.w_semantic_loss = cfg["mapping"]["w_semantic_loss"]
         self.writer_path = cfg["data"]["logs"]  # J:added
@@ -1194,8 +1194,6 @@ class Mapper(object):
                             idx,
                             self.device,
                             show_forecast=self.mesh_coarse_level,
-                            color=False,
-                            semantic=True,
                             clean_mesh=self.clean_mesh,
                             get_mask_use_all_frames=False,
                         )

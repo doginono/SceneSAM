@@ -43,7 +43,7 @@ mapping:
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
   mesh_freq: 1000
-  ckpt_freq: 20
+  ckpt_freq: 100
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
