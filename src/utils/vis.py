@@ -100,7 +100,7 @@ class visualizerForIds:
         
         return ax, im
 
-    def visualizer(self, anns, title="", prompts = None):
+    def visualizer(self, anns, path, title="", prompts = None):
         # Create a 2D numpy array
         #plt.title(title)
         plt.figure(figsize=(10, 10))
@@ -108,4 +108,5 @@ class visualizerForIds:
         if prompts is not None:
             for p in prompts:
                 plt.scatter(p[0], p[1], s=100, c="red", marker="o")
+        plt.savefig(path)
         plt.show()
