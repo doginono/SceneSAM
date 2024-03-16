@@ -152,7 +152,7 @@ class Replica(BaseDataset):
         # -------------------added-----------------------------------------------
         # self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
         self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
-        self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.output_dimension_semantic = slam.output_dimension_semantic
         self.every_frame = cfg["mapping"]["every_frame"]
         self.istracker = tracker
         self.points_per_instance = cfg["mapping"]["points_per_instance"]

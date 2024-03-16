@@ -29,6 +29,9 @@ class NICE_SLAM:
 
     def __init__(self, cfg, args):
 
+        self.output_dimension_semantic = torch.zeros((1)).int()
+        self.output_dimension_semantic.share_memory_()
+        self.output_dimension_semantic[0] = cfg['output_dimension_semantic']
         if 'load_cpt' in cfg:
             self.load_nice_slam = True
             self.load_cpt = cfg['load_cpt']
@@ -176,18 +179,17 @@ class NICE_SLAM:
         self.shared_decoders.share_memory()
 
     def set_grid(self, grid):
-        self.shared_c = grid
-        for key, val in self.shared_c.items():
+        for key, val in grid.items():
             val = val.to(self.cfg["mapping"]["device"]).detach().requires_grad_(False)
             val.share_memory_()
             self.shared_c[key] = val
 
     def set_estimate_c2w_list(self, estimate_c2w_list):
-        self.estimate_c2w_list = estimate_c2w_list
+        self.estimate_c2w_list = estimate_c2w_list.to(self.cfg["mapping"]["device"])
         self.estimate_c2w_list.share_memory_()
     
     def set_gt_c2w_list(self, gt_c2w_list):
-        self.gt_c2w_list = gt_c2w_list
+        self.gt_c2w_list = gt_c2w_list.to(self.cfg["mapping"]["device"])
         self.gt_c2w_list.share_memory_()
     
     def set_log_dict(self, log_dict):
@@ -199,7 +201,9 @@ class NICE_SLAM:
     
 
     def set_output_dimension_semantic(self, output_dimension_semantic):
-        self.model.semantic_decoder.output_linear = DenseLayer(in_dim=32, out_dim=output_dimension_semantic, activation='linear')
+        self.shared_decoders.semantic_decoder.output_linear = DenseLayer(in_dim=32, out_dim=output_dimension_semantic, activation='linear')
+        self.shared_decoders.to(self.cfg["mapping"]["device"])
+        self.output_dimension_semantic[0] = output_dimension_semantic
 
     def print_output_desc(self):
         print(f"INFO: The output folder is {self.output}")
