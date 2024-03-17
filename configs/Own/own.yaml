@@ -14,14 +14,14 @@ tracking:
   iters: 10
 Segmenter:
   use_stored: False
-  store_vis: False
+  store_vis: True
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
   border: 30
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 10
+  every_frame: 50
   verbose: True
   hit_percent: 0.4
 

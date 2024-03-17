@@ -131,30 +131,19 @@ class Segmenter(object):
     def segment_idx_forAuto(self, idx):
         img = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        masksCreated, s, max_id, update = (
-            id_generation.createFrontMappingAutosort(
+        masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
                 idx,
                 self.T_wc,
                 self.K,
                 self.depth_paths,
-                predictor=self.predictor,
+                self.predictor,
                 max_id=self.max_id,
-                update=self.update,
-                points_per_instance=self.points_per_instance,
                 current_frame=img,
                 samples=self.samples,
-                kernel_size=30,  # from 40*40 to 1000
                 smallesMaskSize=1000,
-                deleted=self.deleted,
-                num_of_clusters=self.num_clusters,
-                border=self.border,
-                overlap_threshold=self.overlap,
-                relevant_threshhold=self.relevant,
-                every_frame=self.every_frame_seg,
-                merging_parameter=self.merging_parameter,
-                hit_percent=self.hit_percent,
-            )
-        )
+                border=self.border
+                )
+        
         self.samples = s
         self.max_id = max_id
 
@@ -357,7 +346,7 @@ class Segmenter(object):
         print("segment first frame")
         s = self.segment_first_ForAuto()
         self.samples = s
-        self.predictor = create_instance_seg.create_predictor("cuda")
+        self.predictor = create_instance_seg.create_sam_forauto("cuda")
         # create sam
         if max == -1:
             index_frames = np.arange(

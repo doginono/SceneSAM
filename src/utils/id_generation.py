@@ -318,21 +318,10 @@ def createFrontMappingAutosort(
     depths,
     automaticMask,
     max_id=None,
-    update=None,
-    points_per_instance=5,
     current_frame=None,
     samples=None,
-    smallesMaskSize=10000,
-    kernel_size=80,
-    num_of_clusters=4,
-    deleted=None,
+    smallesMaskSize=1000,
     border=25,
-    overlap_threshold=0.5,
-    relevant_threshhold=0.6,
-    every_frame=15,
-    merging_parameter=10,
-    hit_percent=0.1,
-    verbose=False,
 ):
     
     if curr_frame_number==0:
@@ -422,7 +411,6 @@ def createFrontMappingAutosort(
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
     #max_id = np.max(samples[2:, :])
     #print(samples)
-    print("Current unique ids", current_unique_ids)
 
     return ids, samples, max_id
 
@@ -656,33 +644,6 @@ def createReverseMappingCombined_area_sort(
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
 
     return masks, samples, max_id, update
-
-
-def createFrontMappingAutosort(
-    curr_frame_number,
-    T,
-    K,
-    depths,
-    predictor,
-    max_id,
-    update,
-    points_per_instance=5,
-    current_frame=None,
-    samples=None,
-    smallesMaskSize=1000,
-    kernel_size=80,
-    num_of_clusters=4,
-    deleted=None,
-    border=25,
-    overlap_threshold=0.5,
-    relevant_threshhold=0.3,
-    every_frame=15,
-    merging_parameter=10,
-    hit_percent=0.1,
-):
-    print("x")
-    
-    return 1
     
 
 

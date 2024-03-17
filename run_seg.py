@@ -76,7 +76,7 @@ def main():
     make_gif_from_array(
         semanticFrames,
         store=os.path.join(cfg["data"]["output"], "segmentation", "gif.gif"),
-        duration=100,
+        duration=300,
     )
 
 
