@@ -686,7 +686,7 @@ class Mapper(object):
                     # -----------------added-------------------
                     # jkl%
                     gt_semantic = (
-                        torch.eye(self.output_dimension_semantic)[
+                        torch.eye(self.output_dimension_semantic[0])[
                             keyframe_dict[frame]["semantic"]
                         ]
                         .to(bool)
@@ -1182,6 +1182,7 @@ class Mapper(object):
                         )  # mesh on segmentation
 
                 if idx == self.n_img - 1:
+                    print('end, at round: ', round)
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
                     if round == 0:
