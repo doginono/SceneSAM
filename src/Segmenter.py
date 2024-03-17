@@ -22,26 +22,24 @@ class Segmenter(object):
         self.store_directory = store_directory
         os.makedirs(f"{store_directory}", exist_ok=True)
 
-        self.is_full_slam = cfg['Segmenter']["full_slam"]
+        self.is_full_slam = cfg["Segmenter"]["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
         # self.idx = slam.idx_segmenter
-        '''path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
+        """path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
-        self.T_wc[:, 1:3] *= -1'''
+        self.T_wc[:, 1:3] *= -1"""
 
         self.every_frame = cfg["mapping"]["every_frame"]
         # self.slam = slam
-        # self.semantic_frames = slam.semantic_frames
         self.estimate_c2w_list = slam.estimate_c2w_list
-        s = np.ones((4,4), int)
-        s[[0,0,1,1,2], [1,2,0,3,3]] *=-1
+        s = np.ones((4, 4), int)
+        s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         self.shift = s
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
-        #self.idx_coarse_mapper = slam.idx_coarse_mapper
-
+        # self.idx_coarse_mapper = slam.idx_coarse_mapper
 
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
@@ -62,9 +60,7 @@ class Segmenter(object):
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
 
         self.n_img = len(self.color_paths)
-        self.semantic_frames = torch.from_numpy(
-            np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
-        ).int()
+        self.semantic_frames = slam.semantic_frames
 
         # self.new_id = 0
         self.visualizer = vis.visualizerForIds()
@@ -104,7 +100,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.estimate_c2w_list.cpu()*self.shift,
+                self.estimate_c2w_list.cpu() * self.shift,
                 self.K,
                 self.depth_paths,
                 predictor=self.predictor,
@@ -181,7 +177,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.estimate_c2w_list[0].cpu()*self.shift,
+            self.estimate_c2w_list[0].cpu() * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -206,6 +202,7 @@ class Segmenter(object):
         for i in range(len(ids)):
             result[semantic_frames == ids[i]] = i
         result[semantic_frames == -100] = -100
+        semantic_frames[:, :, :] = result
         return result, len(ids) - 1
 
     def run(self, max=-1):
@@ -235,7 +232,7 @@ class Segmenter(object):
                 np.arange(self.every_frame, max, self.every_frame), index_frames
             )
 
-        for idx in tqdm(index_frames_predict, desc="Segmenting frames"):
+        for idx in tqdm(index_frames, desc="Segmenting frames"):
             self.segment_idx(idx)
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
@@ -267,7 +264,7 @@ class Segmenter(object):
         # for i in range(len(self.semantic_frames)):
         """for i in range(len(self.semantic_frames)):
             visualizerForId.visualizer(self.semantic_frames[i])"""
-        self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
+        _, max_id = self.process_frames(self.semantic_frames)
 
         # store the segmentations, such that the dataset class (frame_reader) can read them
         for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):

@@ -28,22 +28,23 @@ class NICE_SLAM:
     """
 
     def __init__(self, cfg, args):
-
+        self.round = torch.zeros((1)).int()
+        self.round.share_memory_()
         self.output_dimension_semantic = torch.zeros((1)).int()
         self.output_dimension_semantic.share_memory_()
-        self.output_dimension_semantic[0] = cfg['output_dimension_semantic']
-        if 'load_cpt' in cfg:
+        self.output_dimension_semantic[0] = cfg["output_dimension_semantic"]
+        if "load_cpt" in cfg:
             self.load_nice_slam = True
-            self.load_cpt = cfg['load_cpt']
+            self.load_cpt = cfg["load_cpt"]
         else:
             self.load_nice_slam = None
         # for groundtruth tracking
-        #path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
-        '''self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
+        # path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
+        """self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:,1:3] *= -1
-        self.T_wc = torch.from_numpy(self.T_wc).float()'''
-        #self.mask_generator = cfg['Segmenter']['mask_generator']
-        self.every_frame = cfg['mapping']['every_frame']
+        self.T_wc = torch.from_numpy(self.T_wc).float()"""
+        # self.mask_generator = cfg['Segmenter']['mask_generator']
+        self.every_frame = cfg["mapping"]["every_frame"]
 
         self.cfg = cfg
         self.args = args
@@ -108,13 +109,12 @@ class NICE_SLAM:
         self.idx.share_memory_()
 
         # added by Julius
-        self.round = torch.zeros((1)).int()
-        self.round.share_memory_()
-        self.is_full_slam = cfg['Segmenter']["full_slam"]
-        '''self.idx_mapper = torch.zeros((1)).int()
+
+        self.is_full_slam = cfg["Segmenter"]["full_slam"]
+        """self.idx_mapper = torch.zeros((1)).int()
         self.idx_mapper.share_memory_()
         self.idx_coarse_mapper = torch.zeros((1)).int()
-        self.idx_coarse_mapper.share_memory_()'''
+        self.idx_coarse_mapper.share_memory_()"""
         self.idx_segmenter = torch.zeros((1)).int()
         self.idx_segmenter.share_memory_()
         # self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
@@ -155,12 +155,16 @@ class NICE_SLAM:
         self.logger = Logger(cfg, args, self)
 
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.semantic_frames = torch.from_numpy(
+            np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
+        ).int()
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
         self.segmenter = Segmenter(
             self,
             cfg,
             args,
-            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation")
+            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
         )
 
         if self.coarse:
@@ -187,21 +191,22 @@ class NICE_SLAM:
     def set_estimate_c2w_list(self, estimate_c2w_list):
         self.estimate_c2w_list = estimate_c2w_list.to(self.cfg["mapping"]["device"])
         self.estimate_c2w_list.share_memory_()
-    
+
     def set_gt_c2w_list(self, gt_c2w_list):
         self.gt_c2w_list = gt_c2w_list.to(self.cfg["mapping"]["device"])
         self.gt_c2w_list.share_memory_()
-    
+
     def set_log_dict(self, log_dict):
         log_dict = torch.load(log_dict, map_location=self.cfg["mapping"]["device"])
-        self.set_decoders(log_dict['decoder_state_dict'])
-        self.set_grid(log_dict['c'])
-        self.set_estimate_c2w_list(log_dict['estimate_c2w_list'])
-        self.set_gt_c2w_list(log_dict['gt_c2w_list'])
-    
+        self.set_decoders(log_dict["decoder_state_dict"])
+        self.set_grid(log_dict["c"])
+        self.set_estimate_c2w_list(log_dict["estimate_c2w_list"])
+        self.set_gt_c2w_list(log_dict["gt_c2w_list"])
 
     def set_output_dimension_semantic(self, output_dimension_semantic):
-        self.shared_decoders.semantic_decoder.output_linear = DenseLayer(in_dim=32, out_dim=output_dimension_semantic, activation='linear')
+        self.shared_decoders.semantic_decoder.output_linear = DenseLayer(
+            in_dim=32, out_dim=output_dimension_semantic, activation="linear"
+        )
         self.shared_decoders.to(self.cfg["mapping"]["device"])
         self.output_dimension_semantic[0] = output_dimension_semantic
 
@@ -214,8 +219,9 @@ class NICE_SLAM:
             )
         else:
             print(
-                f"INFO: The GT, generated and residual depth/color images can be found under " +
-                f"{self.output}/mapping_vis/")
+                f"INFO: The GT, generated and residual depth/color images can be found under "
+                + f"{self.output}/mapping_vis/"
+            )
         print(f"INFO: The mesh can be found under {self.output}/mesh/")
         print(f"INFO: The checkpoint can be found under {self.output}/ckpt/")
 
@@ -465,7 +471,7 @@ class NICE_SLAM:
             ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
                 if rank == 0:
                     p = mp.Process(target=self.tracking, args=(rank,))
-                    print('start tracking')
+                    print("start tracking")
                     # p = mp.Process(target=self.segmenting, args=(rank,))
                 elif rank == 1:
                     p = mp.Process(target=self.mapping, args=(rank,))
@@ -475,33 +481,32 @@ class NICE_SLAM:
                     else:
                         continue
                 elif rank == 3:
-                    print('start segmenter')
+                    print("start segmenter")
                     p = mp.Process(target=self.segmenting, args=(rank,))
                 # print('Started Thread: ', rank)
                 p.start()
                 processes.append(p)
             for p in processes:
                 p.join()
-        #if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
+        # if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
             self.segmenter = Segmenter(
-            self,
-            self.cfg,
-            self.args,
-            store_directory=os.path.join(self.cfg["data"]["input_folder"], "segmentation")
+                self,
+                self.cfg,
+                self.args,
+                store_directory=os.path.join(
+                    self.cfg["data"]["input_folder"], "segmentation"
+                ),
             )
             frames, max_id = self.segmenter.run()
             self.set_output_dimension_semantic(max_id)
             print(max_id)
-            gifMaker.make_gif_from_array(
-            frames,
-            store='gif.gif',
-            duration=100
-            )
+            gifMaker.make_gif_from_array(frames, store="gif.gif", duration=100)
             self.round[0] = 1
             self.mapper = Mapper(self.cfg, self.args, self, coarse_mapper=False)
             self.mapper.run()
-            #rerun only with segmentation
+            # rerun only with segmentation
+
 
 # This part is required by torch.multiprocessing
 if __name__ == "__main__":
