@@ -26,7 +26,7 @@ class Segmenter(object):
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
-        # self.idx = slam.idx_segmenter
+
         """path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:, 1:3] *= -1"""
@@ -61,7 +61,12 @@ class Segmenter(object):
 
         self.n_img = len(self.color_paths)
         self.semantic_frames = slam.semantic_frames
-
+        self.idx_segmenter = slam.idx_segmenter
+        if not self.is_full_slam:
+            self.idx = torch.tensor([self.n_img])
+        else:
+            self.idx = slam.idx  # Tracking index
+            # Segmenter index
         # self.new_id = 0
         self.visualizer = vis.visualizerForIds()
         self.frame_numbers = []
@@ -175,6 +180,10 @@ class Segmenter(object):
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids, self.max_id, points_per_instance=100
         )
+
+        # wait for tracker to estimate first frame
+        while self.idx[0] < 1:
+            time.sleep(0.1)
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
             self.estimate_c2w_list[0].cpu() * self.shift,
@@ -213,10 +222,13 @@ class Segmenter(object):
                 self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
                     np.load(path).astype(np.int32)
                 )
+            self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
         print("segment first frame")
         s = self.segment_first()
+        if self.is_full_slam:
+            self.idx_segmenter[0] = 0
         self.samples = s
         self.predictor = create_instance_seg.create_predictor("cuda")
         if max == -1:
@@ -233,14 +245,20 @@ class Segmenter(object):
             )
 
         for idx in tqdm(index_frames, desc="Segmenting frames"):
+
+            # wait for tracker to estimate pose first
+            while self.idx[0] < idx:
+                time.sleep(0.1)
             self.segment_idx(idx)
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
 
-        for old_instance in self.deleted.keys():
-            self.semantic_frames[self.semantic_frames == old_instance] = self.deleted[
-                old_instance
-            ]
+        if not self.is_full_slam:
+            for old_instance in self.deleted.keys():
+                self.semantic_frames[self.semantic_frames == old_instance] = (
+                    self.deleted[old_instance]
+                )
+            _, max_id = self.process_frames(self.semantic_frames)
         # if self.verbose:
         #    make_gif_from_array(self.semantic_frames[index_frames//self.every_frame], os.path.join(self.store_directory, 'segmentation.gif'))
 
@@ -264,7 +282,6 @@ class Segmenter(object):
         # for i in range(len(self.semantic_frames)):
         """for i in range(len(self.semantic_frames)):
             visualizerForId.visualizer(self.semantic_frames[i])"""
-        _, max_id = self.process_frames(self.semantic_frames)
 
         # store the segmentations, such that the dataset class (frame_reader) can read them
         for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):

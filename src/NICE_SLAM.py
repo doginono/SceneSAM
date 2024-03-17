@@ -115,8 +115,12 @@ class NICE_SLAM:
         self.idx_mapper.share_memory_()
         self.idx_coarse_mapper = torch.zeros((1)).int()
         self.idx_coarse_mapper.share_memory_()"""
-        self.idx_segmenter = torch.zeros((1)).int()
+        if self.is_full_slam:
+            self.idx_segmenter = torch.tensor([-1]).int()
+        else:
+            self.idx_segmenter = torch.tensor([self.n_img]).int()
         self.idx_segmenter.share_memory_()
+
         # self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
         # self.semantic_frames.share_memory_()
 

@@ -1,0 +1,4 @@
+if full_slam:
+    1. start semgent thread
+    2. if tracker tracked the frame: let both mappers and segmenter continue
+    3. if normal mapper reaches stage semantic: wait for segmenter 
