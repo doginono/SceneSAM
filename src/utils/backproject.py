@@ -171,6 +171,30 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
     return torch_sampled_indices.to(torch.int32)
 
 #id list better
+
+def sample_from_instances_with_ids_area(ids, numberOfMasks, points_per_instance=1):
+    tensors = []
+
+    temp=np.unique(ids)[1:]
+    for i,element in enumerate(list(temp.astype(int))):
+        if element >=0:            
+            labels = np.where(ids == element)
+            indices = list(zip(labels[0], labels[1]))
+            points_per_instance= np.sum(ids == element)
+            #points_per_instance=int(2*np.log2(points_per_instance))
+            points_per_instance=2*points_per_instance//(30*30)
+            if len(indices) > points_per_instance and len(indices)>1 and points_per_instance>1:  # Check if there are any True pixels
+                sampled_indices = np.linspace(0, len(indices)-1, points_per_instance, dtype=int)
+                sampled_tensor = torch.tensor([indices[j][::-1] for j in sampled_indices]).T
+                element_tensor = torch.full((sampled_tensor.shape[1],), element)
+                
+                element_tensor = element_tensor.unsqueeze(0)
+                
+                tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
+
+    torch_sampled_indices = torch.cat(tensors, axis=1)
+    return torch_sampled_indices.to(torch.int32)
+
 def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """samples uv from the instances
 
@@ -238,6 +262,24 @@ def generateIds(masks, min_area=1000):
             ids[ids == unique_ids[i]] = -100
     return ids
 
+
+def generateIds_Auto(masks, min_area=1000):
+    sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+    if min_area > 0:
+        sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
+    ids = np.full(
+            (sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1]),
+            -100,
+        )
+    for i, ann in enumerate(sortedMasks):
+        m = ann["segmentation"]
+        ids[m] = i
+    unique_ids,counts = np.unique(ids, return_counts=True)
+    for i in range(len(unique_ids)):
+        if counts[i] < min_area:
+            ids[ids == unique_ids[i]] = -100
+    return ids
 
 
 def generateIdsNew(masks):

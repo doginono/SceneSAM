@@ -127,6 +127,40 @@ class Segmenter(object):
         self.semantic_frames[idx // self.every_frame_seg] = torch.from_numpy(
             masksCreated
         )
+    
+    def segment_idx_forAuto(self, idx):
+        img = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        masksCreated, s, max_id, update = (
+            id_generation.createFrontMappingAutosort(
+                idx,
+                self.T_wc,
+                self.K,
+                self.depth_paths,
+                predictor=self.predictor,
+                max_id=self.max_id,
+                update=self.update,
+                points_per_instance=self.points_per_instance,
+                current_frame=img,
+                samples=self.samples,
+                kernel_size=30,  # from 40*40 to 1000
+                smallesMaskSize=1000,
+                deleted=self.deleted,
+                num_of_clusters=self.num_clusters,
+                border=self.border,
+                overlap_threshold=self.overlap,
+                relevant_threshhold=self.relevant,
+                every_frame=self.every_frame_seg,
+                merging_parameter=self.merging_parameter,
+                hit_percent=self.hit_percent,
+            )
+        )
+        self.samples = s
+        self.max_id = max_id
+
+        self.semantic_frames[idx // self.every_frame_seg] = torch.from_numpy(
+            masksCreated
+        )
 
     def predict_idx(self, idx):
         assert False
@@ -185,6 +219,35 @@ class Segmenter(object):
         )
         return realWorldSamples
 
+    def segment_first_ForAuto(self):
+        color_path = self.color_paths[0]
+        color_data = cv2.imread(color_path)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        sam = create_instance_seg.create_sam_forauto("cuda")
+        masks = sam.generate(image)
+        del sam
+        torch.cuda.empty_cache()
+
+        ids = id_generation.generateIds_Auto(masks, min_area=self.first_min_area)
+        # visualizerForId = vis.visualizerForIds()
+        # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
+        self.semantic_frames[0] = torch.from_numpy(ids)
+        self.frame_numbers.append(0)
+        self.max_id = ids.max() + 1
+
+        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+            ids, self.max_id, points_per_instance=100
+        )
+        realWorldSamples = backproject.realWorldProject(
+            samplesFromCurrent[:2, :],
+            self.T_wc[0],
+            self.K,
+            id_generation.readDepth(self.depth_paths[0]),
+        )
+        realWorldSamples = np.concatenate(
+            (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
+        )
+        return realWorldSamples
     def process_keys(self, deleted):
         assert False
         for target in deleted.values():
@@ -203,7 +266,7 @@ class Segmenter(object):
         result[semantic_frames == -100] = -100
         return result, len(ids) - 1
 
-    def run(self, max=-1):
+    def run(self,max=-1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
@@ -263,6 +326,62 @@ class Segmenter(object):
         # for i in range(len(self.semantic_frames)):
         """for i in range(len(self.semantic_frames)):
             visualizerForId.visualizer(self.semantic_frames[i])"""
+        self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
+
+        # store the segmentations, such that the dataset class (frame_reader) can read them
+        for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
+            path = os.path.join(self.store_directory, f"seg_{index}.npy")
+            np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
+
+        if self.store_vis:
+            for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.png")
+                self.visualizer.visualize(
+                    self.semantic_frames[index // self.every_frame_seg].numpy(),
+                    path=path,
+                )
+        # EDIT THIS
+
+        return self.semantic_frames, max_id + 1
+
+    def runAuto(self,max=-1):
+        if self.use_stored:
+            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
+            for index in tqdm(index_frames, desc="Loading stored segmentations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.npy")
+                self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
+                    np.load(path).astype(np.int32)
+                )
+            return self.semantic_frames, self.semantic_frames.max() + 1
+
+        print("segment first frame")
+        s = self.segment_first_ForAuto()
+        self.samples = s
+        self.predictor = create_instance_seg.create_predictor("cuda")
+        # create sam
+        if max == -1:
+            index_frames = np.arange(
+                self.every_frame_seg, self.n_img, self.every_frame_seg
+            )
+            index_frames_predict = np.setdiff1d(
+                np.arange(self.every_frame, self.n_img, self.every_frame), index_frames
+            )
+        else:
+            index_frames = np.arange(self.every_frame_seg, max, self.every_frame_seg)
+            index_frames_predict = np.setdiff1d(
+                np.arange(self.every_frame, max, self.every_frame), index_frames
+            )
+
+        for idx in tqdm(index_frames, desc="Segmenting frames"):
+            self.segment_idx_forAuto(idx)
+            # self.plot()
+            # print(f'outside samples: {np.unique(self.samples[-1])}')
+
+        del self.predictor
+        torch.cuda.empty_cache()
+
+        visualizerForId = vis.visualizerForIds()
+       
         self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
 
         # store the segmentations, such that the dataset class (frame_reader) can read them
