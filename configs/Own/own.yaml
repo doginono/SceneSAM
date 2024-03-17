@@ -21,7 +21,7 @@ Segmenter:
   store_vis: False
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
-  border: 30
+  border: 15
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
