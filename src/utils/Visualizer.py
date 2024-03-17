@@ -155,7 +155,7 @@ class Visualizer(object):
                 plt.subplots_adjust(wspace=0, hspace=0)
                 #plt.title(f'first_iter: {self.iters_first}, num_iter: {self.num_iter}')
                 #
-                #writer.add_figure(f'figure/{idx:05d}_{iter:04d}', fig, idx)
+                writer.add_figure(f'figure/{idx:05d}_{iter:04d}', fig, idx)
                 """plt.clf()
                 fig, ax = plt.subplots()
                 img = ax.imshow(predicted_semantic_probs, cmap='bwr', vmin=0, vmax=1)
@@ -164,8 +164,8 @@ class Visualizer(object):
                 ax.set_xticks([])
                 ax.set_yticks([])
                 writer.add_figure(f'figure/{idx:05d}_{iter:04d}_probs', fig, idx)"""
-                plt.savefig(
-                     f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
+                #plt.savefig(
+                #     f'{self.vis_dir}/{idx:05d}_{iter:04d}.jpg', bbox_inches='tight', pad_inches=0.2)
                 
                 plt.clf()
 

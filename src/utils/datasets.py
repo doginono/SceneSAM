@@ -212,13 +212,13 @@ class Replica(BaseDataset):
             # Create one-hot encoding using numpy.eye
             negative = np.where(semantic_data < 0)
             semantic_data[negative] = 0
-            semantic_data = np.eye(self.output_dimension_semantic)[semantic_data].astype(bool)
+            semantic_data = np.eye(self.output_dimension_semantic[0])[semantic_data].astype(bool)
             semantic_data[negative] = False
             #TODO set sematic data corresponding to negative ids, set one-hot encoding to zero
-            assert self.output_dimension_semantic >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
+            assert self.output_dimension_semantic[0] >= semantic_data.shape[-1], "Number of classes is smaller than the number of unique values in the semantic data"
             semantic_data = torch.from_numpy(semantic_data)
         else:
-            semantic_data = torch.ones((H, W, self.output_dimension_semantic)).to(bool)*-1
+            semantic_data = torch.ones((H, W, self.output_dimension_semantic[0])).to(bool)*-1
             
 
         # ----------------------
