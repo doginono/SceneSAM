@@ -957,7 +957,7 @@ class Mapper(object):
             if round == 1:
                 idx += self.every_frame_seg
                 print("round 2 idx: ", idx)
-                if idx >= self.n_img - 1:
+                if idx > self.n_img - 1:
                     break
 
             prev_idx = idx
@@ -1112,12 +1112,12 @@ class Mapper(object):
                     if (idx % self.keyframe_every == 0 or (idx == self.n_img - 2)) and (
                         idx not in self.keyframe_list
                     ):
-                        self.keyframe_list.append(idx)
+                        self.keyframe_list.append(idx.clone())
                         ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
                         self.keyframe_dict.append(
                             {
                                 "gt_c2w": gt_c2w.cpu(),
-                                "idx": idx,
+                                "idx": idx.clone(),
                                 "color": gt_color.cpu(),
                                 "depth": gt_depth.cpu(),
                                 "est_c2w": cur_c2w.clone(),
@@ -1196,7 +1196,7 @@ class Mapper(object):
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
                     if round == 0:
                         self.mesher.get_mesh(
-                            mesh_out_file_seg,
+                            mesh_out_file_color,
                             self.c,
                             self.decoders,
                             self.keyframe_dict,
@@ -1212,7 +1212,7 @@ class Mapper(object):
                         )
                     else:
                         self.mesher.get_mesh(
-                            mesh_out_file_color,
+                            mesh_out_file_seg,
                             self.c,
                             self.decoders,
                             self.keyframe_dict,
