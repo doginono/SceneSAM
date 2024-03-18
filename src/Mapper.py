@@ -576,7 +576,7 @@ class Mapper(object):
             inc = max(int(self.semantic_iter_ratio * num_joint_iters), 1)
         else:
             start = 0
-            if self.is_full_slam and idx % self.seg_freq == 0:
+            if self.is_full_slam and (idx % self.seg_freq == 0 or round == 2):
                 inc = int(self.semantic_iter_ratio * num_joint_iters)
             else:
                 inc = 0
@@ -1053,6 +1053,7 @@ class Mapper(object):
                 # TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
                 # -> check when semantics are available
                 if idx == self.n_img - 1 and self.color_refine:
+                    round = 2
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
                     self.middle_iter_ratio = 0.0
@@ -1176,7 +1177,7 @@ class Mapper(object):
                             clean_mesh=self.clean_mesh,
                             get_mask_use_all_frames=False,
                         )  # mesh on color
-                    else:
+                    if round == 1 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file + "_seg.ply",
                             self.c,
@@ -1217,7 +1218,7 @@ class Mapper(object):
                         os.system(
                             f"cp {mesh_out_file_color} {self.output}/mesh/{idx:05d}_mesh_color.ply"
                         )
-                    else:
+                    if round == 1 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file_seg,
                             self.c,

@@ -164,6 +164,9 @@ class Replica(BaseDataset):
         self.n_img = len(self.color_paths)
         self.load_poses(f"{self.input_folder}/traj.txt")
 
+    def get_zero_pose(self):
+        return self.poses[0]
+
     def __post_init__(self, slam):
         # self.semantic_frames = slam.semantic_frames
         assert False, "should not be entered, not used anymore"

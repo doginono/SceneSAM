@@ -18,8 +18,9 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 
 class Segmenter(object):
 
-    def __init__(self, slam, cfg, args, store_directory):
+    def __init__(self, slam, cfg, args, zero_pos, store_directory):
         self.store_directory = store_directory
+        self.zero_pos = zero_pos
         os.makedirs(f"{store_directory}", exist_ok=True)
 
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
@@ -182,11 +183,11 @@ class Segmenter(object):
         )
 
         # wait for tracker to estimate first frame
-        while self.idx[0] < 1:
-            time.sleep(0.1)
+        """while self.idx[0] < 1:
+            time.sleep(0.1)"""
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.estimate_c2w_list[0].cpu() * self.shift,
+            self.zero_pos,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -228,6 +229,8 @@ class Segmenter(object):
         print("segment first frame")
         s = self.segment_first()
         if self.is_full_slam:
+            path = os.path.join(self.store_directory, f"seg_{0}.npy")
+            np.save(path, self.semantic_frames[0].numpy())
             self.idx_segmenter[0] = 0
         self.samples = s
         self.predictor = create_instance_seg.create_predictor("cuda")
@@ -250,6 +253,10 @@ class Segmenter(object):
             while self.idx[0] < idx:
                 time.sleep(0.1)
             self.segment_idx(idx)
+            if self.is_full_slam:
+                path = os.path.join(self.store_directory, f"seg_{idx}.npy")
+                np.save(path, self.semantic_frames[idx // self.every_frame_seg].numpy())
+                self.idx_segmenter[0] = idx
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
 
@@ -284,9 +291,12 @@ class Segmenter(object):
             visualizerForId.visualizer(self.semantic_frames[i])"""
 
         # store the segmentations, such that the dataset class (frame_reader) can read them
-        for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
-            path = os.path.join(self.store_directory, f"seg_{index}.npy")
-            np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
+        if not self.is_full_slam:
+            for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.npy")
+                np.save(
+                    path, self.semantic_frames[index // self.every_frame_seg].numpy()
+                )
 
         if self.store_vis:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
@@ -297,7 +307,7 @@ class Segmenter(object):
                 )
         # EDIT THIS
 
-        return self.semantic_frames, max_id + 1
+        return self.semantic_frames, None
 
     def plot(self):
         data = self.samples.copy()

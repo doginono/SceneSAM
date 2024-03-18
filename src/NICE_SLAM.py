@@ -164,10 +164,12 @@ class NICE_SLAM:
             np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
         ).int()
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
+
         self.segmenter = Segmenter(
             self,
             cfg,
             args,
+            zero_pos=self.frame_reader.get_zero_pose(),
             store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
         )
 
