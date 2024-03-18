@@ -1219,8 +1219,8 @@ class Mapper(object):
                             idx,
                             self.device,
                             show_forecast=self.mesh_coarse_level,
-                            color=True,
-                            semantic=False,
+                            color=False,
+                            semantic=True,
                             clean_mesh=self.clean_mesh,
                             get_mask_use_all_frames=False,
                         )

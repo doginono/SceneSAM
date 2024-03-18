@@ -501,7 +501,11 @@ class NICE_SLAM:
             frames, max_id = self.segmenter.run()
             self.set_output_dimension_semantic(max_id)
             print(max_id)
-            gifMaker.make_gif_from_array(frames, store="gif.gif", duration=100)
+            gifMaker.make_gif_from_array(
+                frames,
+                store=f"{self.cfg['data']['input_folder']}/gif.gif",
+                duration=100,
+            )
             self.round[0] = 1
             self.mapper = Mapper(self.cfg, self.args, self, coarse_mapper=False)
             self.mapper.run()

@@ -6,5 +6,5 @@ data:
   input_folder: 'Datasets/Replica/room1'
   logs: 'logs/room1'
   output: 'output/Own/room1'
-output_dimension_semantic: 30
-load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1/ckpts/01999.tar
+output_dimension_semantic: 100
+#load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1/ckpts/01999.tar
