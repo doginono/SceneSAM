@@ -18,9 +18,7 @@ def calculate_position_error(gt_pose, est_pose):
 
 
 def log_tracking_error(gt_poses, est_poses, writer):
-    s = np.ones((4, 4), int)
-    s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-    est_poses = est_poses * s
+
     # Calculate errors
     position_errors = [
         calculate_position_error(gt, est) for gt, est in zip(gt_poses, est_poses)
