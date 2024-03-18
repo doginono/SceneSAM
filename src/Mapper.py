@@ -15,6 +15,7 @@ from src.common import (
     get_samples,
     get_tensor_from_camera,
     random_select,
+    log_tracking_error,
 )
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
@@ -36,6 +37,7 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         # -------added------------------
+        self.gt_c2w_list = slam.gt_c2w_list
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.round = slam.round
         # self.wait_segmenter = cfg['Segmenter']['mask_generator']
@@ -1186,6 +1188,9 @@ class Mapper(object):
                     round == 1 and idx + self.every_frame_seg >= self.n_img - 1
                 ):
                     print("end, at round: ", round)
+                    log_tracking_error(
+                        self.gt_c2w_list.cpu(), self.estimate_c2w_list.cpu(), writer
+                    )
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
                     if round == 0:
