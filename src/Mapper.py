@@ -1182,7 +1182,9 @@ class Mapper(object):
                             get_mask_use_all_frames=False,
                         )  # mesh on segmentation
 
-                if idx == self.n_img - 1:
+                if (round == 0 and idx == self.n_img - 1) or (
+                    round == 1 and idx + self.every_frame_seg >= self.n_img - 1
+                ):
                     print("end, at round: ", round)
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
