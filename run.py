@@ -71,7 +71,7 @@ def main():
         args,
         store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
     )
-    frames, max_id = segmenter.run()
+    frames, max_id = segmenter.run() # TODO
     gifMaker.make_gif_from_array(
         frames,
         store=os.path.join(cfg["data"]["input_folder"], "segmentation", "gif.gif"),
