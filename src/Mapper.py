@@ -611,8 +611,13 @@ class Mapper(object):
                 else:
                     mapping_first_frame[0] = 1
                     while idx > self.idx_segmenter[0]:
+                        print("wait segmenter")
                         time.sleep(0.1)
+                    if self.stage != "semantic":
+                        cur_gt_semantic = self.frame_reader.get_segmentation(idx)
                     self.stage = "semantic"
+
+                    # TODO read semantic from segmenter
                     # DONE: add semantics, we should probably increase the
                     # num_joint_iters and decrease the ratios to train on semantics
                     # as long as on colors and keeping the rest the same
@@ -657,18 +662,18 @@ class Mapper(object):
                 and (joint_iter % self.inside_freq == 0)
                 and self.stage != "coarse"
             ):
-                _, gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic = (
+                """_, gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic = (
                     self.frame_reader[idx - self.vis_offset]
-                )
+                )"""
                 self.visualizer.vis(
                     idx,
                     joint_iter,
-                    gt_vis_depth,
-                    gt_vis_color,
+                    cur_gt_depth,
+                    cur_gt_color,
                     cur_c2w,
                     self.c,
                     self.decoders,
-                    gt_vis_semantic,
+                    cur_gt_semantic,
                     only_semantic=False,
                     stage=self.stage,
                     writer=writer,
@@ -902,9 +907,10 @@ class Mapper(object):
                     c2w = torch.cat([c2w, bottom], dim=0)
                     cur_c2w = c2w.clone()
         if self.BA:
-            return cur_c2w
+            assert False, "Though we do notenter here"
+            return cur_c2w, gt_semantic
         else:
-            return None
+            return gt_semantic
 
     def run(self):
         writer = SummaryWriter(self.writer_path)
@@ -932,7 +938,7 @@ class Mapper(object):
 
             # the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
             # this ensures that the current frame has always been segmented before the mappers start training on it
-            # TODO: will need to update this according to postsegmentatoin or full-SLAM
+            # Done: will need to update this according to postsegmentatoin or full-SLAM
             while round == 0:
                 """print(
                     "in while loop: ",
@@ -1050,7 +1056,7 @@ class Mapper(object):
                 num_joint_iters = cfg["mapping"]["iters"]
 
                 # here provides a color refinement postprocess
-                # TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
+                # Done maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
                 # -> check when semantics are available
                 if idx == self.n_img - 1 and self.color_refine:
                     round = 2
@@ -1091,7 +1097,7 @@ class Mapper(object):
                 )
 
                 # Done: add semantics to optimize_map
-                _ = self.optimize_map(
+                gt_semantic = self.optimize_map(
                     num_joint_iters,
                     lr_factor,
                     idx,
@@ -1194,7 +1200,7 @@ class Mapper(object):
                         )  # mesh on segmentation
 
                 if (round == 0 and idx == self.n_img - 1) or (
-                    round == 1 and idx + self.every_frame_seg >= self.n_img - 1
+                    round >= 1 and idx + self.every_frame_seg >= self.n_img - 1
                 ):
                     print("end, at round: ", round)
                     log_tracking_error(
@@ -1202,7 +1208,7 @@ class Mapper(object):
                     )
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
-                    if round == 0:
+                    if round == 0 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file_color,
                             self.c,
@@ -1228,8 +1234,8 @@ class Mapper(object):
                             idx,
                             self.device,
                             show_forecast=self.mesh_coarse_level,
-                            color=True,
-                            semantic=False,
+                            color=False,
+                            semantic=True,
                             clean_mesh=self.clean_mesh,
                             get_mask_use_all_frames=False,
                         )

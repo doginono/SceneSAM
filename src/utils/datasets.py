@@ -171,6 +171,27 @@ class Replica(BaseDataset):
         # self.semantic_frames = slam.semantic_frames
         assert False, "should not be entered, not used anymore"
 
+    def get_segmentation(self, index):
+        # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
+        semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
+        semantic_data = np.load(semantic_path)
+        # Create one-hot encoding using numpy.eye
+        negative = np.where(semantic_data < 0)
+        semantic_data[negative] = 0
+        semantic_data = np.eye(self.output_dimension_semantic[0])[semantic_data].astype(
+            bool
+        )
+        semantic_data[negative] = False
+        # TODO set sematic data corresponding to negative ids, set one-hot encoding to zero
+        assert (
+            self.output_dimension_semantic[0] >= semantic_data.shape[-1]
+        ), "Number of classes is smaller than the number of unique values in the semantic data"
+        semantic_data = torch.from_numpy(semantic_data)
+        edge = self.crop_edge
+        if edge > 0:
+            semantic_data = semantic_data[edge:-edge, edge:-edge]
+        return semantic_data.to(self.device)
+
     def __getitem__(self, index):
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]

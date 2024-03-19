@@ -129,10 +129,9 @@ class Segmenter(object):
         )
         self.samples = s
         self.max_id = max_id
-
-        self.semantic_frames[idx // self.every_frame_seg] = torch.from_numpy(
-            masksCreated
-        )
+        frame = torch.from_numpy(masksCreated)
+        self.semantic_frames[idx // self.every_frame_seg] = frame
+        return frame
 
     def predict_idx(self, idx):
         assert False
@@ -238,6 +237,7 @@ class Segmenter(object):
             index_frames = np.arange(
                 self.every_frame_seg, self.n_img, self.every_frame_seg
             )
+            index_frames = np.concatenate((index_frames, [self.n_img - 1]))
             index_frames_predict = np.setdiff1d(
                 np.arange(self.every_frame, self.n_img, self.every_frame), index_frames
             )
@@ -252,10 +252,11 @@ class Segmenter(object):
             # wait for tracker to estimate pose first
             while self.idx[0] < idx:
                 time.sleep(0.1)
-            self.segment_idx(idx)
+            frame = self.segment_idx(idx)
             if self.is_full_slam:
                 path = os.path.join(self.store_directory, f"seg_{idx}.npy")
-                np.save(path, self.semantic_frames[idx // self.every_frame_seg].numpy())
+                # TODO: shouldn't work for last frame
+                np.save(path, frame.numpy())
                 self.idx_segmenter[0] = idx
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
