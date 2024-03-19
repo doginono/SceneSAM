@@ -146,6 +146,12 @@ class NICE_SLAM:
             self.shared_c[key] = val
         self.shared_decoders = self.shared_decoders.to(self.cfg["mapping"]["device"])
         self.shared_decoders.share_memory()
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.semantic_frames = torch.from_numpy(
+            np.zeros((self.n_img // self.every_frame_seg + 1, self.H, self.W))
+        ).int()
+        self.semantic_frames.share_memory_()
+        self.frame_reader.__post_init__(self)
         self.renderer = Renderer(
             cfg, args, self
         )  # J: changed from default in renderer constructor, thisis the train renderer
@@ -160,9 +166,7 @@ class NICE_SLAM:
 
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.semantic_frames = torch.from_numpy(
-            np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
-        ).int()
+
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
 
         self.segmenter = Segmenter(

@@ -60,6 +60,7 @@ class Tracker(object):
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, tracker=True, slam=slam
         )
+        self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
             self.frame_reader, batch_size=1, shuffle=False, num_workers=1

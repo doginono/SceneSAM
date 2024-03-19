@@ -216,10 +216,17 @@ class Segmenter(object):
 
     def run(self, max=-1):
         if self.use_stored:
-            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
+            index_frames = np.arange(
+                -self.every_frame_seg, self.n_img, self.every_frame_seg
+            )
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.npy")
                 self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
+                    np.load(path).astype(np.int32)
+                )
+            if self.n_img - 1 % self.every_frame_seg != 0:
+                path = os.path.join(self.store_directory, f"seg_{self.n_img - 1}.npy")
+                self.semantic_frames[-1] = torch.from_numpy(
                     np.load(path).astype(np.int32)
                 )
             self.idx_segmenter[0] = self.n_img
@@ -229,7 +236,7 @@ class Segmenter(object):
         s = self.segment_first()
         if self.is_full_slam:
             path = os.path.join(self.store_directory, f"seg_{0}.npy")
-            np.save(path, self.semantic_frames[0].numpy())
+            # np.save(path, self.semantic_frames[0].numpy())
             self.idx_segmenter[0] = 0
         self.samples = s
         self.predictor = create_instance_seg.create_predictor("cuda")
@@ -252,14 +259,17 @@ class Segmenter(object):
             # wait for tracker to estimate pose first
             while self.idx[0] < idx:
                 time.sleep(0.1)
-            frame = self.segment_idx(idx)
+            _ = self.segment_idx(idx)
             if self.is_full_slam:
-                path = os.path.join(self.store_directory, f"seg_{idx}.npy")
+                # path = os.path.join(self.store_directory, f"seg_{idx}.npy")
                 # TODO: shouldn't work for last frame
-                np.save(path, frame.numpy())
+                # np.save(path, frame.numpy())
                 self.idx_segmenter[0] = idx
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
+        if self.n_img - 1 % self.every_frame_seg != 0:
+            _ = self.segment_idx(self.n_img - 1)
+            self.idx_segmenter[0] = self.n_img - 1
 
         if not self.is_full_slam:
             for old_instance in self.deleted.keys():
@@ -292,13 +302,15 @@ class Segmenter(object):
             visualizerForId.visualizer(self.semantic_frames[i])"""
 
         # store the segmentations, such that the dataset class (frame_reader) can read them
-        if not self.is_full_slam:
-            for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
-                path = os.path.join(self.store_directory, f"seg_{index}.npy")
-                np.save(
-                    path, self.semantic_frames[index // self.every_frame_seg].numpy()
-                )
-
+        for index in tqdm(
+            [0] + list(index_frames),
+            desc="Storing segmentations",
+        ):
+            path = os.path.join(self.store_directory, f"seg_{index}.npy")
+            np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
+        if self.n_img - 1 % self.every_frame_seg != 0:
+            path = os.path.join(self.store_directory, f"seg_{self.n_img - 1}.npy")
+            np.save(path, self.semantic_frames[-1].numpy())
         if self.store_vis:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.png")
