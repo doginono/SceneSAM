@@ -127,27 +127,27 @@ class Segmenter(object):
         self.semantic_frames[idx // self.every_frame_seg] = torch.from_numpy(
             masksCreated
         )
-    
+
     def segment_idx_forAuto(self, idx):
         img = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
-                idx,
-                self.T_wc,
-                self.K,
-                self.depth_paths,
-                self.predictor,
-                max_id=self.max_id,
-                current_frame=img,
-                samples=self.samples,
-                smallesMaskSize=1000,
-                border=self.border
-                )
-        
+            idx,
+            self.estimate_c2w_list.cpu() * self.shift,
+            self.K,
+            self.depth_paths,
+            self.predictor,
+            max_id=self.max_id,
+            current_frame=img,
+            samples=self.samples,
+            smallesMaskSize=1000,
+            border=self.border,
+        )
+
         self.samples = s
         self.max_id = max_id
 
-        self.semantic_frames[idx // self.every_frame_seg] = torch.from_numpy(
+        self.semantic_frames[idx // self.every_frame_seg ] = torch.from_numpy(
             masksCreated
         )
 
@@ -218,7 +218,7 @@ class Segmenter(object):
         del sam
         torch.cuda.empty_cache()
 
-        ids = id_generation.generateIds_Auto(masks, min_area=self.first_min_area)
+        ids = backproject.generateIds_Auto(masks, min_area=self.first_min_area)
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
         self.semantic_frames[0] = torch.from_numpy(ids)
@@ -230,7 +230,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.T_wc[0],
+            self.estimate_c2w_list[0].cpu() * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -238,6 +238,7 @@ class Segmenter(object):
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
         )
         return realWorldSamples
+
     def process_keys(self, deleted):
         assert False
         for target in deleted.values():
@@ -257,7 +258,7 @@ class Segmenter(object):
         semantic_frames[:, :, :] = result
         return result, len(ids) - 1
 
-    def run(self,max=-1):
+    def run(self, max=-1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
@@ -335,7 +336,7 @@ class Segmenter(object):
 
         return self.semantic_frames, max_id + 1
 
-    def runAuto(self,max=-1):
+    def runAuto(self, max=-1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
@@ -346,6 +347,7 @@ class Segmenter(object):
             return self.semantic_frames, self.semantic_frames.max() + 1
 
         print("segment first frame")
+
         s = self.segment_first_ForAuto()
         self.samples = s
         self.predictor = create_instance_seg.create_sam_forauto("cuda")
@@ -372,7 +374,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
 
         visualizerForId = vis.visualizerForIds()
-       
+
         self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
 
         # store the segmentations, such that the dataset class (frame_reader) can read them

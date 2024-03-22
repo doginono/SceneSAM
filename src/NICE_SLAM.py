@@ -441,7 +441,8 @@ class NICE_SLAM:
         Segmenting Thread. (updates semantic level)
         """
         print("Segmenting Thread Started ", rank)
-        self.segmenter.run()
+        # RunAutomaticsegmentation
+        self.segmenter.runAuto()
 
     def run(self):
         """
@@ -498,7 +499,7 @@ class NICE_SLAM:
                     self.cfg["data"]["input_folder"], "segmentation"
                 ),
             )
-            frames, max_id = self.segmenter.run()
+            frames, max_id = self.segmenter.runAuto()
             self.set_output_dimension_semantic(max_id)
             print(max_id)
             gifMaker.make_gif_from_array(
