@@ -25,7 +25,9 @@ def setup_seed(seed):
 def main():
     # setup_seed(20)
 
-    parser = argparse.ArgumentParser(description="Arguments for running the NICE-SLAM.")
+    parser = argparse.ArgumentParser(
+        description="Arguments for running the NICE-SLAM/iMAP*."
+    )
     parser.add_argument("config", type=str, help="Path to config file.")
     parser.add_argument(
         "--input_folder",
@@ -66,7 +68,7 @@ def main():
     # writer.close()
     print("read in hparams")
     # -----------------------------------------------------------------------------------
-    segmenter = Segmenter(
+    '''segmenter = Segmenter(
         cfg,
         args,
         store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
@@ -80,7 +82,7 @@ def main():
     del segmenter
     cfg["output_dimension_semantic"] = (
         max_id  # ensures that we have enough ids which we can predict
-    )
+    )'''
     slam = NICE_SLAM(cfg, args)
 
     slam.run()
