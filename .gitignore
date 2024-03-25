@@ -12,6 +12,7 @@ segmentation/data
 segmentation/our_gen
 .metals/*
 sam/*
+*.tar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
