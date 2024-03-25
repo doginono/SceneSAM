@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+from scripts.gifMaker import make_gif_from_array
 from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
@@ -253,13 +254,17 @@ class Segmenter(object):
             index_frames_predict = np.setdiff1d(
                 np.arange(self.every_frame, max, self.every_frame), index_frames
             )
-
+        visualizerForId = vis.visualizerForIds()  # for testign
         for idx in tqdm(index_frames, desc="Segmenting frames"):
 
             # wait for tracker to estimate pose first
             while self.idx[0] < idx:
                 time.sleep(0.1)
             _ = self.segment_idx(idx)
+            visualizerForId.visualize(
+                self.semantic_frames[idx // self.every_frame_seg],
+                path=f"{self.store_directory}/seg_{idx}.png",
+            )
             if self.is_full_slam:
                 # path = os.path.join(self.store_directory, f"seg_{idx}.npy")
                 # TODO: shouldn't work for last frame
@@ -278,7 +283,12 @@ class Segmenter(object):
                 )
             _, max_id = self.process_frames(self.semantic_frames)
         # if self.verbose:
-        #    make_gif_from_array(self.semantic_frames[index_frames//self.every_frame], os.path.join(self.store_directory, 'segmentation.gif'))
+        visualizerForId = vis.visualizerForIds()
+        # for i in range(len(self.semantic_frames)):Fself.estim
+        make_gif_from_array(
+            self.semantic_frames[index_frames // self.every_frame_seg],
+            os.path.join(self.store_directory, "segmentation.gif"),
+        )
 
         """for idx in tqdm(index_frames_predict, desc='Predicting frames'):
             print(f'predicting frame {idx}')
@@ -320,7 +330,7 @@ class Segmenter(object):
                 )
         # EDIT THIS
 
-        return self.semantic_frames, None
+        return self.semantic_frames, max_id
 
     def plot(self):
         data = self.samples.copy()

@@ -188,11 +188,11 @@ class Replica(BaseDataset):
             bool
         )
         semantic_data[negative] = False
-        # semantic_data = torch.from_numpy(semantic_data)
+        semantic_data = torch.from_numpy(semantic_data)
         edge = self.crop_edge
         if edge > 0:
             semantic_data = semantic_data[edge:-edge, edge:-edge]
-        return torch.tensor(semantic_data).to(self.device)
+        return semantic_data.to(self.device)
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]

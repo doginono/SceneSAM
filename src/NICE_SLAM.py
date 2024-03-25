@@ -504,6 +504,7 @@ class NICE_SLAM:
                 self,
                 self.cfg,
                 self.args,
+                zero_pos=self.frame_reader.get_zero_pose(),
                 store_directory=os.path.join(
                     self.cfg["data"]["input_folder"], "segmentation"
                 ),
