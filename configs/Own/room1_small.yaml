@@ -7,4 +7,4 @@ data:
   logs: 'logs/room1_small'
   output: 'output/Own/room1_small'
 output_dimension_semantic: 100
-load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1_small/00059.tar
+load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1_small/ckpts/00059.tar

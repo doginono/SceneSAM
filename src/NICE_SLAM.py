@@ -510,7 +510,7 @@ class NICE_SLAM:
                 ),
             )
             frames, max_id = self.segmenter.run()
-            self.set_output_dimension_semantic(max_id)
+            self.set_output_dimension_semantic(max_id + 1)
             print(max_id)
             gifMaker.make_gif_from_array(frames, store="gif.gif", duration=100)
             self.round[0] = 1
