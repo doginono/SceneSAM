@@ -192,7 +192,7 @@ class Replica(BaseDataset):
         edge = self.crop_edge
         if edge > 0:
             semantic_data = semantic_data[edge:-edge, edge:-edge]
-        return semantic_data.to(self.device)
+        return torch.tensor(semantic_data).to(self.device)
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]
