@@ -15,3 +15,5 @@ cam:  #intrinsic is different per scene in TUM
   crop_edge: 8
   crop_size: [384,512]
   distortion: [0.2312, -0.7849, -0.0033, -0.0001, 0.9172]
+mapping:
+  every_frame: 100

@@ -56,7 +56,7 @@ def get_dataset(cfg, args, scale, device="cuda:0", tracker=False, slam=None):
 
 
 class BaseDataset(Dataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
+    def __init__(self, cfg, args, scale, slam, tracker, device="cuda:0"):
         super(BaseDataset, self).__init__()
 
         self.name = cfg["dataset"]
@@ -65,6 +65,16 @@ class BaseDataset(Dataset):
         if self.name == "replica":
             self.output_dimension_semantic = cfg["output_dimension_semantic"]
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.seg_folder = f"{self.input_folder}/segmentation"
+        self.round = slam.round
+        self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
+        self.output_dimension_semantic = slam.output_dimension_semantic
+        self.every_frame = cfg["mapping"]["every_frame"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.istracker = tracker
+        self.points_per_instance = cfg["mapping"]["points_per_instance"]
+        self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+        self.id_counter = slam.id_counter
         # ------------------end-added-----------------------------------------------
 
         self.device = device
@@ -94,6 +104,35 @@ class BaseDataset(Dataset):
 
     def __len__(self):
         return self.n_img
+
+    def get_zero_pose(self):
+        return self.poses[0]
+
+    def __post_init__(self, slam):
+        self.semantic_frames = slam.semantic_frames
+
+    def get_segmentation(self, index):
+        # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
+        """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
+        semantic_data = np.load(semantic_path)"""
+        # Create one-hot encoding using numpy.eye
+        if index % self.every_frame_seg == 0:
+            semantic_data = (
+                self.semantic_frames[index // self.every_frame_seg].clone().int()
+            )
+        else:
+            semantic_data = self.semantic_frames[-1].clone().int()
+        negative = np.where(semantic_data < 0)
+        semantic_data[negative] = 0
+        semantic_data = np.eye(self.output_dimension_semantic[0])[semantic_data].astype(
+            bool
+        )
+        semantic_data[negative] = False
+        semantic_data = torch.from_numpy(semantic_data)
+        edge = self.crop_edge
+        if edge > 0:
+            semantic_data = semantic_data[edge:-edge, edge:-edge]
+        return semantic_data.to(self.device)
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]
@@ -144,12 +183,12 @@ class BaseDataset(Dataset):
 class Replica(BaseDataset):
 
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
-        super(Replica, self).__init__(cfg, args, scale, device)
+        super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
         self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
-        self.seg_folder = f"{self.input_folder}/segmentation"
-        # -------------------added-----------------------------------------------
+
+        """# -------------------added-----------------------------------------------
         # self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
         self.round = slam.round
         self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
@@ -161,38 +200,9 @@ class Replica(BaseDataset):
         # self.T_wc = slam.T_wc
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
-        # -------------------end added-----------------------------------------------
+        # -------------------end added-----------------------------------------------"""
         self.n_img = len(self.color_paths)
         self.load_poses(f"{self.input_folder}/traj.txt")
-
-    def get_zero_pose(self):
-        return self.poses[0]
-
-    def __post_init__(self, slam):
-        self.semantic_frames = slam.semantic_frames
-
-    def get_segmentation(self, index):
-        # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
-        """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
-        semantic_data = np.load(semantic_path)"""
-        # Create one-hot encoding using numpy.eye
-        if index % self.every_frame_seg == 0:
-            semantic_data = (
-                self.semantic_frames[index // self.every_frame_seg].clone().int()
-            )
-        else:
-            semantic_data = self.semantic_frames[-1].clone().int()
-        negative = np.where(semantic_data < 0)
-        semantic_data[negative] = 0
-        semantic_data = np.eye(self.output_dimension_semantic[0])[semantic_data].astype(
-            bool
-        )
-        semantic_data[negative] = False
-        semantic_data = torch.from_numpy(semantic_data)
-        edge = self.crop_edge
-        if edge > 0:
-            semantic_data = semantic_data[edge:-edge, edge:-edge]
-        return semantic_data.to(self.device)
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]
@@ -410,7 +420,7 @@ class CoFusion(BaseDataset):
 
 
 class TUM_RGBD(BaseDataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(TUM_RGBD, self).__init__(cfg, args, scale, device)
         self.color_paths, self.depth_paths, self.poses = self.loadtum(
             self.input_folder, frame_rate=32
