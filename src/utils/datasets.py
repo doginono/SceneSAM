@@ -236,7 +236,7 @@ class Replica(BaseDataset):
             self.crop_size is not None
         ):  # TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
             # follow the pre-processing step in lietorch, actually is resize
-            assert False, "crop_size is not None -> need to crop semantic data"
+            # assert False, "crop_size is not None -> need to crop semantic data"
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True

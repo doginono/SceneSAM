@@ -79,5 +79,5 @@ cam:
   cy: 724.7766
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 0
-  crop_size: 2
+  crop_size: [720,960]
 #parames2finetune: ['mapping', ]
