@@ -279,7 +279,7 @@ class Segmenter(object):
                 self.semantic_frames[self.semantic_frames == old_instance] = (
                     self.deleted[old_instance]
                 )
-            _, max_id = self.process_frames(self.semantic_frames)
+            _, self.max_id = self.process_frames(self.semantic_frames)
         # if self.verbose:
         visualizerForId = vis.visualizerForIds()
         # for i in range(len(self.semantic_frames)):Fself.estim
@@ -328,7 +328,7 @@ class Segmenter(object):
                 )
         # EDIT THIS
 
-        return self.semantic_frames, max_id
+        return self.semantic_frames, self.max_id
 
     def plot(self):
         data = self.samples.copy()

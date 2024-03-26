@@ -147,9 +147,14 @@ class NICE_SLAM:
         self.shared_decoders = self.shared_decoders.to(self.cfg["mapping"]["device"])
         self.shared_decoders.share_memory()
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.semantic_frames = torch.from_numpy(
-            np.zeros((self.n_img // self.every_frame_seg + 1, self.H, self.W))
-        ).int()
+        if self.n_img % self.every_frame_seg == 0:
+            self.semantic_frames = torch.from_numpy(
+                np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
+            ).int()
+        else:
+            self.semantic_frames = torch.from_numpy(
+                np.zeros((self.n_img // self.every_frame_seg + 1, self.H, self.W))
+            ).int()
         self.semantic_frames.share_memory_()
         self.frame_reader.__post_init__(self)
         self.renderer = Renderer(
