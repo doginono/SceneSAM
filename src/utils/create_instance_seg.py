@@ -51,6 +51,34 @@ def create_sam(device):
     return mask_generator
 
 
+def create_sam_forauto(device):
+    """_summary_
+
+    Returns:
+        SamAutomaticMaskGenerator: An SamAutomaticMaskGenerator object
+    """
+    # sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
+    sam_checkpoint = "/home/rozenberszki/project/wsnsl/sam/sam_vit_h_4b8939.pth"
+    model_type = "vit_h"
+
+    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+    sam.to(device=device)
+
+    mask_generator = SamAutomaticMaskGenerator(
+        sam,
+        points_per_side=16,
+        pred_iou_thresh=0.9,
+        stability_score_thresh=0.9,
+        crop_nms_thresh=0.2,
+        box_nms_thresh=0.4,
+        crop_n_layers=0,
+        crop_n_points_downscale_factor=2,
+        min_mask_region_area=10000,
+    )
+
+    return mask_generator
+
+
 def create_instance_seg(img_path, store_directory, mask_generator):
     """combines the functions in this file to create an instance segmentation of an image and save it to a file
         and return it

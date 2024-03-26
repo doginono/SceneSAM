@@ -171,7 +171,6 @@ class NICE_SLAM:
 
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
 
         self.segmenter = Segmenter(
@@ -456,7 +455,8 @@ class NICE_SLAM:
         Segmenting Thread. (updates semantic level)
         """
         print("Segmenting Thread Started ", rank)
-        self.segmenter.run()
+        # RunAutomaticsegmentation
+        self.segmenter.runAuto()
 
     def run(self):
         """

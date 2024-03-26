@@ -17,7 +17,7 @@ Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
-  use_stored: False
+  use_stored: True
   store_vis: False
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
@@ -25,7 +25,7 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 10
+  every_frame: 50
   verbose: True
   hit_percent: 0.4
 

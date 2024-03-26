@@ -21,7 +21,7 @@ def show_anns(anns):
     img[:, :, 3] = 0
     for ann in sorted_anns:
         m = ann["segmentation"]
-        color_mask = np.concatenate([np.random.random(3), [0.35]])
+        color_mask = np.concatenate([np.random.random(3), [1]])
         img[m] = color_mask
     ax.imshow(img)
 
@@ -100,15 +100,13 @@ class visualizerForIds:
         
         return ax, im
 
-    def visualizer(self, anns, title="", prompts = None):
+    def visualizer(self, anns, path, title="", prompts = None):
         # Create a 2D numpy array
         #plt.title(title)
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:
+            plt.scatter(prompts[0,:], prompts[1,:], s=100, c="red", marker="o")
+        plt.savefig(path)
 
-            #iterate through all elements of the prompts directory
-
-            for p in prompts.values():
-                plt.scatter(p[:,0], p[:,1], s=100, c="red", marker="o")
         plt.show()

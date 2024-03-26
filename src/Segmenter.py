@@ -25,6 +25,7 @@ class Segmenter(object):
         os.makedirs(f"{store_directory}", exist_ok=True)
 
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
+        self.is_full_slam = cfg["Segmenter"]["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
@@ -41,8 +42,15 @@ class Segmenter(object):
         self.shift = s
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
+        self.estimate_c2w_list = slam.estimate_c2w_list
+        s = np.ones((4, 4), int)
+        s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s
+        self.id_counter = slam.id_counter
+        self.idx_mapper = slam.mapping_idx
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
 
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = (
@@ -78,19 +86,28 @@ class Segmenter(object):
         self.num_clusters = cfg["Segmenter"]["num_clusters"]
         self.overlap = cfg["Segmenter"]["overlap"]
         self.relevant = cfg["Segmenter"]["relevant"]
+        self.border = cfg["Segmenter"]["border"]
+        self.num_clusters = cfg["Segmenter"]["num_clusters"]
+        self.overlap = cfg["Segmenter"]["overlap"]
+        self.relevant = cfg["Segmenter"]["relevant"]
         self.max_id = 0
         self.update = {}
+        self.verbose = cfg["Segmenter"]["verbose"]
+        self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
+        self.hit_percent = cfg["Segmenter"]["hit_percent"]
         self.verbose = cfg["Segmenter"]["verbose"]
         self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
 
     def segment_reverse(self, idx):
         assert False
+        assert False
         img = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         masksCreated, self.samples = id_generation.createReverseReverseMappingCombined(
             idx,
+            self.T_wc,
             self.T_wc,
             self.K,
             self.depth_paths,
@@ -146,6 +163,8 @@ class Segmenter(object):
             predictor=self.predictor,
             max_id=self.max_id,
             update=self.update,
+            max_id=self.max_id,
+            update=self.update,
             points_per_instance=self.points_per_instance,
             current_frame=img,
             samples=self.samples,
@@ -157,7 +176,15 @@ class Segmenter(object):
             overlap_threshold=self.overlap,
             relevant_threshhold=self.relevant,
             every_frame=self.every_frame_seg,
+            smallesMaskSize=40 * 40,
+            deleted=self.deleted,
+            num_of_clusters=self.num_clusters,
+            border=self.border,
+            overlap_threshold=self.overlap,
+            relevant_threshhold=self.relevant,
+            every_frame=self.every_frame_seg,
         )
+
 
         self.semantic_frames[idx // self.every_frame] = torch.from_numpy(masksCreated)
 
@@ -175,19 +202,50 @@ class Segmenter(object):
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
         self.semantic_frames[0] = torch.from_numpy(ids)
+        print(np.sum(ids == -100) / (ids.shape[0] * ids.shape[1]))
+        # visualizerForId = vis.visualizerForIds()
+        # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
+        self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
+        self.max_id = ids.max() + 1
         self.max_id = ids.max() + 1
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids, self.max_id, points_per_instance=100
         )
-
-        # wait for tracker to estimate first frame
-        """while self.idx[0] < 1:
-            time.sleep(0.1)"""
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos * self.shift,
+             self.zero_pos * self.shift,
+            self.K,
+            id_generation.readDepth(self.depth_paths[0]),
+        )
+        realWorldSamples = np.concatenate(
+            (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
+        )
+        return realWorldSamples
+
+    def segment_first_ForAuto(self):
+        color_path = self.color_paths[0]
+        color_data = cv2.imread(color_path)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        sam = create_instance_seg.create_sam_forauto("cuda")
+        masks = sam.generate(image)
+        del sam
+        torch.cuda.empty_cache()
+
+        ids = backproject.generateIds_Auto(masks, min_area=self.first_min_area)
+        # visualizerForId = vis.visualizerForIds()
+        # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
+        self.semantic_frames[0] = torch.from_numpy(ids)
+        self.frame_numbers.append(0)
+        self.max_id = ids.max() + 1
+
+        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+            ids, self.max_id, points_per_instance=100
+        )
+        realWorldSamples = backproject.realWorldProject(
+            samplesFromCurrent[:2, :],
+             self.zero_pos * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -198,12 +256,14 @@ class Segmenter(object):
 
     def process_keys(self, deleted):
         assert False
+        assert False
         for target in deleted.values():
             if target in deleted.keys():
                 update_keys = [key for key, value in deleted.items() if value == target]
                 for uk in update_keys:
                     deleted[uk] = deleted[target]
         return deleted
+
 
     def process_frames(self, semantic_frames):
         """process the semantic ids such that we have the minimum max(id), number"""
@@ -212,6 +272,8 @@ class Segmenter(object):
         for i in range(len(ids)):
             result[semantic_frames == ids[i]] = i
         result[semantic_frames == -100] = -100
+        semantic_frames[:, :, :] = result
+        return result, len(ids) - 1
         semantic_frames[:, :, :] = result
         return result, len(ids) - 1
 
@@ -297,7 +359,21 @@ class Segmenter(object):
             self.segment_reverse(idx)"""
         del self.predictor
         torch.cuda.empty_cache()
+        """for idx in tqdm(index_frames_predict, desc='Predicting frames'):
+            print(f'predicting frame {idx}')
+            self.predict_idx(idx)"""
 
+        """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
+        for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
+            self.segment_reverse(idx)"""
+        del self.predictor
+        torch.cuda.empty_cache()
+
+        # print('unprocessed map: ', self.deleted)
+        # self.deleted = self.process_keys(self.deleted)
+        # print('preocessed map: ', self.deleted)
+        # if self.verbose:
+        #    make_gif_from_array(self.semantic_frames, os.path.join(self.store_directory, f'segmentation_full.gif'))
         # print('unprocessed map: ', self.deleted)
         # self.deleted = self.process_keys(self.deleted)
         # print('preocessed map: ', self.deleted)
@@ -329,18 +405,78 @@ class Segmenter(object):
         # EDIT THIS
 
         return self.semantic_frames, self.max_id
+     def runAuto(self, max=-1):
+        if self.use_stored:
+            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
+            for index in tqdm(index_frames, desc="Loading stored segmentations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.npy")
+                self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
+                    np.load(path).astype(np.int32)
+                )
+            return self.semantic_frames, self.semantic_frames.max() + 1
+
+        print("segment first frame")
+
+        s = self.segment_first_ForAuto()
+        self.samples = s
+        self.predictor = create_instance_seg.create_sam_forauto("cuda")
+        # create sam
+        if max == -1:
+            index_frames = np.arange(
+                self.every_frame_seg, self.n_img, self.every_frame_seg
+            )
+            index_frames_predict = np.setdiff1d(
+                np.arange(self.every_frame, self.n_img, self.every_frame), index_frames
+            )
+        else:
+            index_frames = np.arange(self.every_frame_seg, max, self.every_frame_seg)
+            index_frames_predict = np.setdiff1d(
+                np.arange(self.every_frame, max, self.every_frame), index_frames
+            )
+
+        for idx in tqdm(index_frames, desc="Segmenting frames"):
+            self.segment_idx_forAuto(idx)
+            # self.plot()
+            # print(f'outside samples: {np.unique(self.samples[-1])}')
+
+        del self.predictor
+        torch.cuda.empty_cache()
+
+        visualizerForId = vis.visualizerForIds()
+
+        self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
+
+        # store the segmentations, such that the dataset class (frame_reader) can read them
+        for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
+            path = os.path.join(self.store_directory, f"seg_{index}.npy")
+            np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
+
+        if self.store_vis:
+            for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.png")
+                self.visualizer.visualize(
+                    self.semantic_frames[index // self.every_frame_seg].numpy(),
+                    path=path,
+                )
+        # EDIT THIS
+
+        return self.semantic_frames, max_id + 1
 
     def plot(self):
         data = self.samples.copy()
         data = data[:, data[1] > -2]
+        data = self.samples.copy()
+        data = data[:, data[1] > -2]
         x = data[0]
         y = data[1]
+        z = data[2] * -1
         z = data[2] * -1
         labels = data[3]
 
         # Create a scatter plot
         fig = plt.figure()
         fig.set_size_inches(18.5, 10.5)
+        ax = fig.add_subplot(111, projection="3d")
         ax = fig.add_subplot(111, projection="3d")
 
         # Plot each point with a color corresponding to its label
@@ -350,6 +486,10 @@ class Segmenter(object):
             ax.scatter(x[indices], y[indices], z[indices], s=3)
 
         # Set axis labels
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_ylim((-2, 2))
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")

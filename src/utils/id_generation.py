@@ -311,6 +311,109 @@ def overlap(ids1, ids2):
     return overlap1
 
 
+def createFrontMappingAutosort(
+    curr_frame_number,
+    T,
+    K,
+    depths,
+    automaticMask,
+    max_id=None,
+    current_frame=None,
+    samples=None,
+    smallesMaskSize=1000,
+    border=25,
+):
+    
+    if curr_frame_number==0:
+        masks = automaticMask.generate(current_frame)
+        ids = backproject.generateIds_Auto(masks, min_area=smallesMaskSize)
+        #idler sortlancak
+        
+        max_id = ids.max()+1
+        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+            ids, max_id, points_per_instance=1000
+        )
+        realWorldSamples = backproject.realWorldProject(
+            samplesFromCurrent[:2, :],
+            T[0],
+            K,
+            readDepth(depths[0]),
+        )
+        realWorldSamples = np.concatenate(
+            (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
+        )
+
+        return ids, realWorldSamples, max_id
+
+    T_current = T[curr_frame_number]
+    depthf = readDepth(depths[curr_frame_number])
+    
+    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+    frontProjectedSamples = checkIfInsideImage(
+        frontProjectedSamples, projDepth, depthf, border=border
+    )
+    if frontProjectedSamples.ndim == 3:
+        frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
+
+    mask = automaticMask.generate(current_frame)
+    # TODO suna bakilcak
+    ids = backproject.generateIds_Auto(mask, min_area=smallesMaskSize)
+    current_unique_ids=np.unique(ids)
+    
+    
+    """ 
+    # Projected everything onto the current frame
+    # Now for each sample project on to the image and check if it is inside the each mask instance
+    # on to the each currentMask take majority of the samples and assign to the mask
+    # some are pruned do not take the max_id into account
+    """
+    copyOfIds = np.full(ids.shape, -100)
+    for currentMaskId in current_unique_ids:
+        if currentMaskId < 0:
+            continue
+        currentMask= ids == currentMaskId
+        dictOfIds = {-100: -100}
+        for instance in np.unique(frontProjectedSamples[2, :]):
+            if instance >= 0:
+                samplesInside= frontProjectedSamples[:, frontProjectedSamples[2, :] == instance]
+                insideTheMask= currentMask[samplesInside[1, :] , samplesInside[0, :]]
+                dictOfIds[instance] = np.sum(insideTheMask)
+        maxForMask= max(dictOfIds, key=dictOfIds.get)
+        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
+            copyOfIds[ids==currentMaskId ] = maxForMask
+        elif maxForMask != -100:
+            copyOfIds[ ids==currentMaskId ] = max_id
+            max_id += 1
+            
+       
+    ids=copyOfIds
+    
+    if border != 0:
+        ids[0 : 2 * border] = -100
+        ids[-2 * border :] = -100
+        ids[:, 0 : 2 * border] = -100
+        ids[:, -2 * border :] = -100
+    
+    numberOfMasks = len(np.unique(ids))
+
+    # TODO sample according to the areas of the masks
+    samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+        ids, numberOfMasks, points_per_instance=100
+    )
+    # 3d
+    realWorldProjectCurr = backproject.realWorldProject(
+        samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
+    )
+    # add the ids
+    realWorldProjectCurr = np.concatenate(
+        (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
+    )
+    samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
+    #max_id = np.max(samples[2:, :])
+    #print(samples)
+
+    return ids, samples, max_id
+
 def createReverseMappingCombined_area_sort(
     curr_frame_number,
     T,
@@ -541,6 +644,7 @@ def createReverseMappingCombined_area_sort(
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
 
     return masks, samples, max_id, update
+    
 
 
 def createReverseMappingCombined(
