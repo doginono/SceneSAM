@@ -187,7 +187,7 @@ class Segmenter(object):
             time.sleep(0.1)"""
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos,
+            self.zero_pos * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -217,9 +217,7 @@ class Segmenter(object):
 
     def run(self, max=-1):
         if self.use_stored:
-            index_frames = np.arange(
-                -self.every_frame_seg, self.n_img, self.every_frame_seg
-            )
+            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.npy")
                 self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
