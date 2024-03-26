@@ -327,14 +327,14 @@ class ScanNet(BaseDataset):
         super(ScanNet, self).__init__(cfg, args, scale, device)
         self.input_folder = os.path.join(self.input_folder, "frames")
         self.color_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "color", "*.jpg")),
+            glob.glob(os.path.join(self.input_folder, "rgb", "*.jpg")),
             key=lambda x: int(os.path.basename(x)[:-4]),
         )
         self.depth_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "depth", "*.png")),
+            glob.glob(os.path.join(self.input_folder, "processedData/depth", "*.png")),
             key=lambda x: int(os.path.basename(x)[:-4]),
         )
-        self.load_poses(os.path.join(self.input_folder, "pose"))
+        self.load_poses(os.path.join(self.input_folder, "processedData"))
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):

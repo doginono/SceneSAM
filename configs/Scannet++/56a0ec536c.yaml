@@ -3,7 +3,7 @@ mapping:
   bound: [[-5.5,5.9],[-6.7,5.4],[-4.7,5.3]]
   marching_cubes_bound: [[-5.5,5.9],[-6.7,5.4],[-4.7,5.3]]
 data:
-  input_folder: Datasets/Replica/office0
-  output: output/Own/office0
-  logs: logs/office0
+  input_folder: /home/rozenberszki/project/wsnsl/Datasets/Scannet++/data/56a0ec536c/iphone/rgb
+  output: output/Scannet++/56a0ec536c
+  logs: logs/Scannet++/56a0ec536c
 output_dimension_semantic: 200
