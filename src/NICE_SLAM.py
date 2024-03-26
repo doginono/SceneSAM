@@ -456,7 +456,7 @@ class NICE_SLAM:
         """
         print("Segmenting Thread Started ", rank)
         # RunAutomaticsegmentation
-        self.segmenter.run()
+        self.segmenter.runAuto()
 
     def run(self):
         """

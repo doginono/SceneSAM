@@ -141,6 +141,29 @@ class Segmenter(object):
         self.semantic_frames[idx // self.every_frame_seg] = frame
         return frame
 
+    def segment_idx_forAuto(self, idx):
+        img = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
+            idx,
+            self.estimate_c2w_list.cpu() * self.shift,
+            self.K,
+            self.depth_paths,
+            self.predictor,
+            max_id=self.max_id,
+            current_frame=img,
+            samples=self.samples,
+            smallesMaskSize=1000,
+            border=self.border,
+        )
+
+        self.samples = s
+        self.max_id = max_id
+
+        frame = torch.from_numpy(masksCreated)
+        self.semantic_frames[idx // self.every_frame_seg] = frame
+        return frame
+
     def predict_idx(self, idx):
         assert False
         img = cv2.imread(self.color_paths[idx])
@@ -294,7 +317,7 @@ class Segmenter(object):
 
             # wait for tracker to estimate pose first
             while self.idx[0] < idx:
-                print("segmenter stuck")
+                # print("segmenter stuck")
                 time.sleep(0.1)
             _ = self.segment_idx(idx)
             visualizerForId.visualize(
@@ -302,9 +325,6 @@ class Segmenter(object):
                 path=f"{self.store_directory}/seg_{idx}.png",
             )
             if self.is_full_slam:
-                # path = os.path.join(self.store_directory, f"seg_{idx}.npy")
-                # TODO: shouldn't work for last frame
-                # np.save(path, frame.numpy())
                 self.idx_segmenter[0] = idx
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
@@ -319,7 +339,6 @@ class Segmenter(object):
                 )
             _, self.max_id = self.process_frames(self.semantic_frames)
         # if self.verbose:
-        visualizerForId = vis.visualizerForIds()
         # for i in range(len(self.semantic_frames)):Fself.estim
         make_gif_from_array(
             self.semantic_frames[index_frames // self.every_frame_seg],
@@ -390,11 +409,21 @@ class Segmenter(object):
                 self.semantic_frames[index // self.every_frame_seg] = torch.from_numpy(
                     np.load(path).astype(np.int32)
                 )
+            if self.n_img - 1 % self.every_frame_seg != 0:
+                path = os.path.join(self.store_directory, f"seg_{self.n_img - 1}.npy")
+                self.semantic_frames[-1] = torch.from_numpy(
+                    np.load(path).astype(np.int32)
+                )
+            self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
         print("segment first frame")
 
         s = self.segment_first_ForAuto()
+        if self.is_full_slam:
+            path = os.path.join(self.store_directory, f"seg_{0}.npy")
+            # np.save(path, self.semantic_frames[0].numpy())
+            self.idx_segmenter[0] = 0
         self.samples = s
         self.predictor = create_instance_seg.create_sam_forauto("cuda")
         # create sam
@@ -410,20 +439,32 @@ class Segmenter(object):
             index_frames_predict = np.setdiff1d(
                 np.arange(self.every_frame, max, self.every_frame), index_frames
             )
-
+        visualizerForId = vis.visualizerForIds()
         for idx in tqdm(index_frames, desc="Segmenting frames"):
+            while self.idx[0] < idx:
+                # print("segmenter stuck")
+                time.sleep(0.1)
             self.segment_idx_forAuto(idx)
+            visualizerForId.visualize(
+                self.semantic_frames[idx // self.every_frame_seg],
+                path=f"{self.store_directory}/seg_{idx}.png",
+            )
+            if self.is_full_slam:
+                self.idx_segmenter[0] = idx
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
+        if self.n_img - 1 % self.every_frame_seg != 0:
+            _ = self.segment_idx(self.n_img - 1)
+            self.idx_segmenter[0] = self.n_img - 1
 
         del self.predictor
         torch.cuda.empty_cache()
 
-        visualizerForId = vis.visualizerForIds()
+        if not self.is_full_slam:
+            self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
 
-        self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
-
-        # store the segmentations, such that the dataset class (frame_reader) can read them
+        # store the segmentations, such that the dataset class (frame_reader) can read them -> outdated
+        # maybe the stored segmentations can be used for loading segmentations
         for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
             path = os.path.join(self.store_directory, f"seg_{index}.npy")
             np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
