@@ -613,6 +613,7 @@ class Mapper(object):
                     mapping_first_frame[0] = 1
                     while idx > self.idx_segmenter[0]:
                         # print("wait segmenter")
+                        print("mapper stuck")
                         time.sleep(0.1)
                     if self.stage != "semantic":
                         cur_gt_semantic = self.frame_reader.get_segmentation(idx)

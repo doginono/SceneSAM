@@ -25,7 +25,6 @@ class Segmenter(object):
         os.makedirs(f"{store_directory}", exist_ok=True)
 
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
-        self.is_full_slam = cfg["Segmenter"]["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
@@ -50,7 +49,6 @@ class Segmenter(object):
         self.idx_mapper = slam.mapping_idx
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
 
-        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.H, self.W, self.fx, self.fy, self.cx, self.cy = (
@@ -86,15 +84,8 @@ class Segmenter(object):
         self.num_clusters = cfg["Segmenter"]["num_clusters"]
         self.overlap = cfg["Segmenter"]["overlap"]
         self.relevant = cfg["Segmenter"]["relevant"]
-        self.border = cfg["Segmenter"]["border"]
-        self.num_clusters = cfg["Segmenter"]["num_clusters"]
-        self.overlap = cfg["Segmenter"]["overlap"]
-        self.relevant = cfg["Segmenter"]["relevant"]
         self.max_id = 0
         self.update = {}
-        self.verbose = cfg["Segmenter"]["verbose"]
-        self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
-        self.hit_percent = cfg["Segmenter"]["hit_percent"]
         self.verbose = cfg["Segmenter"]["verbose"]
         self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
@@ -107,7 +98,6 @@ class Segmenter(object):
 
         masksCreated, self.samples = id_generation.createReverseReverseMappingCombined(
             idx,
-            self.T_wc,
             self.T_wc,
             self.K,
             self.depth_paths,
@@ -163,18 +153,10 @@ class Segmenter(object):
             predictor=self.predictor,
             max_id=self.max_id,
             update=self.update,
-            max_id=self.max_id,
-            update=self.update,
             points_per_instance=self.points_per_instance,
             current_frame=img,
             samples=self.samples,
             kernel_size=40,
-            smallesMaskSize=40 * 40,
-            deleted=self.deleted,
-            num_of_clusters=self.num_clusters,
-            border=self.border,
-            overlap_threshold=self.overlap,
-            relevant_threshhold=self.relevant,
             every_frame=self.every_frame_seg,
             smallesMaskSize=40 * 40,
             deleted=self.deleted,
@@ -182,9 +164,7 @@ class Segmenter(object):
             border=self.border,
             overlap_threshold=self.overlap,
             relevant_threshhold=self.relevant,
-            every_frame=self.every_frame_seg,
         )
-
 
         self.semantic_frames[idx // self.every_frame] = torch.from_numpy(masksCreated)
 
@@ -208,14 +188,13 @@ class Segmenter(object):
         self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.max_id = ids.max() + 1
-        self.max_id = ids.max() + 1
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids(
             ids, self.max_id, points_per_instance=100
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-             self.zero_pos * self.shift,
+            self.zero_pos * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -245,7 +224,7 @@ class Segmenter(object):
         )
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-             self.zero_pos * self.shift,
+            self.zero_pos * self.shift,
             self.K,
             id_generation.readDepth(self.depth_paths[0]),
         )
@@ -256,14 +235,12 @@ class Segmenter(object):
 
     def process_keys(self, deleted):
         assert False
-        assert False
         for target in deleted.values():
             if target in deleted.keys():
                 update_keys = [key for key, value in deleted.items() if value == target]
                 for uk in update_keys:
                     deleted[uk] = deleted[target]
         return deleted
-
 
     def process_frames(self, semantic_frames):
         """process the semantic ids such that we have the minimum max(id), number"""
@@ -272,8 +249,6 @@ class Segmenter(object):
         for i in range(len(ids)):
             result[semantic_frames == ids[i]] = i
         result[semantic_frames == -100] = -100
-        semantic_frames[:, :, :] = result
-        return result, len(ids) - 1
         semantic_frames[:, :, :] = result
         return result, len(ids) - 1
 
@@ -319,6 +294,7 @@ class Segmenter(object):
 
             # wait for tracker to estimate pose first
             while self.idx[0] < idx:
+                print("segmenter stuck")
                 time.sleep(0.1)
             _ = self.segment_idx(idx)
             visualizerForId.visualize(
@@ -405,7 +381,8 @@ class Segmenter(object):
         # EDIT THIS
 
         return self.semantic_frames, self.max_id
-     def runAuto(self, max=-1):
+
+    def runAuto(self, max=-1):
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):

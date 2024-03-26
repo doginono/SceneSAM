@@ -60,22 +60,10 @@ class BaseDataset(Dataset):
         super(BaseDataset, self).__init__()
 
         self.name = cfg["dataset"]
-
-        # -------------------added-----------------------------------------------
-        if self.name == "replica":
-            self.output_dimension_semantic = cfg["output_dimension_semantic"]
-        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.seg_folder = f"{self.input_folder}/segmentation"
-        self.round = slam.round
-        self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
-        self.output_dimension_semantic = slam.output_dimension_semantic
-        self.every_frame = cfg["mapping"]["every_frame"]
-        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.istracker = tracker
-        self.points_per_instance = cfg["mapping"]["points_per_instance"]
-        self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
-        self.id_counter = slam.id_counter
-        # ------------------end-added-----------------------------------------------
+        if args.input_folder is None:
+            self.input_folder = cfg["data"]["input_folder"]
+        else:
+            self.input_folder = args.input_folder
 
         self.device = device
         self.scale = scale
@@ -95,12 +83,22 @@ class BaseDataset(Dataset):
         )
         self.crop_size = cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else None
 
-        if args.input_folder is None:
-            self.input_folder = cfg["data"]["input_folder"]
-        else:
-            self.input_folder = args.input_folder
-
         self.crop_edge = cfg["cam"]["crop_edge"]
+        # -------------------added-----------------------------------------------
+        if self.name == "replica":
+            self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.seg_folder = f"{self.input_folder}/segmentation"
+        self.round = slam.round
+        self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
+        self.output_dimension_semantic = slam.output_dimension_semantic
+        self.every_frame = cfg["mapping"]["every_frame"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.istracker = tracker
+        self.points_per_instance = cfg["mapping"]["points_per_instance"]
+        self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+        self.id_counter = slam.id_counter
+        # ------------------end-added-----------------------------------------------
 
     def __len__(self):
         return self.n_img

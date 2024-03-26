@@ -209,6 +209,7 @@ class Tracker(object):
                 # initiate mapping every self.every_frame frames
                 if idx > 0 and (idx % self.every_frame == 1 or self.every_frame == 1):
                     while self.mapping_idx[0] != idx - 1:
+                        print("tracker stuck")
                         time.sleep(0.1)
                     pre_c2w = self.estimate_c2w_list[idx - 1].to(device)
             elif self.sync_method == "loose":
@@ -217,6 +218,7 @@ class Tracker(object):
                 while (
                     self.mapping_idx[0] < idx - self.every_frame - self.every_frame // 2
                 ):
+                    print("tracker stuck in loose")
                     time.sleep(0.1)
             elif self.sync_method == "free":
                 # pure parallel, if mesh/vis happens may cause inbalance
