@@ -132,7 +132,11 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]
         return semantic_data.to(self.device)
 
-    def __getitem__(self, index):
+    def get_colorAndDepth(self, index, edge=False):
+        if edge:
+            edge = self.crop_edge
+        else:
+            edge = 0
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
@@ -163,6 +167,44 @@ class BaseDataset(Dataset):
             )[0, 0]
             color_data = color_data.permute(1, 2, 0).contiguous()
 
+        if edge > 0:
+            # crop image edge, there are invalid value on the edge of the color image
+            color_data = color_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]
+        return color_data.to(self.device), depth_data.to(self.device)
+
+    def __getitem__(self, index):
+        color_path = self.color_paths[index]
+        depth_path = self.depth_paths[index]
+        color_data = cv2.imread(color_path)
+        if ".png" in depth_path:
+            depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        elif ".exr" in depth_path:
+            depth_data = readEXR_onlydepth(depth_path)
+        if self.distortion is not None:
+            K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+            # undistortion is only applied on color image, not depth!
+            color_data = cv2.undistort(color_data, K, self.distortion)
+
+        color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        color_data = color_data / 255.0
+        depth_data = depth_data.astype(np.float32) / self.png_depth_scale
+        H, W = depth_data.shape
+        color_data = cv2.resize(color_data, (W, H))
+        color_data = torch.from_numpy(color_data)
+        depth_data = torch.from_numpy(depth_data) * self.scale
+        semantic_data = self.get_segmentation(index)
+        if self.crop_size is not None:
+            # follow the pre-processing step in lietorch, actually is resize
+            color_data = color_data.permute(2, 0, 1)
+            color_data = F.interpolate(
+                color_data[None], self.crop_size, mode="bilinear", align_corners=True
+            )[0]
+            depth_data = F.interpolate(
+                depth_data[None, None], self.crop_size, mode="nearest"
+            )[0, 0]
+            color_data = color_data.permute(1, 2, 0).contiguous()
+
         edge = self.crop_edge
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
@@ -175,6 +217,7 @@ class BaseDataset(Dataset):
             color_data.to(self.device),
             depth_data.to(self.device),
             pose.to(self.device),
+            semantic_data.to(self.device),
         )
 
 
@@ -288,7 +331,7 @@ class Replica(BaseDataset):
             color_data = color_data[edge:-edge, edge:-edge]
             depth_data = depth_data[edge:-edge, edge:-edge]
             # -------------------added-----------------------------------------------
-            semantic_data = semantic_data[edge:-edge, edge:-edge]
+            # semantic_data = semantic_data[edge:-edge, edge:-edge]
             # ------------------end-added-----------------------------------------------
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
@@ -419,7 +462,7 @@ class CoFusion(BaseDataset):
 
 class TUM_RGBD(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
-        super(TUM_RGBD, self).__init__(cfg, args, scale, device)
+        super(TUM_RGBD, self).__init__(cfg, args, scale, slam, tracker, device)
         self.color_paths, self.depth_paths, self.poses = self.loadtum(
             self.input_folder, frame_rate=32
         )

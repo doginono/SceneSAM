@@ -75,7 +75,9 @@ def backproject(uv, Tf, Tg, K, depthf):
     Tg_inv = T_inv(Tg)
     tmp = np.concatenate([uv, np.ones((1, uv.shape[1]))])
     tmp = K_inv @ tmp
-    tmp = tmp * depthf[uv[1].long(), uv[0].long()].numpy()  # real world in camera coordinates
+    tmp = (
+        tmp * depthf[uv[1].long(), uv[0].long()].numpy()
+    )  # real world in camera coordinates
     tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
     tmp = Tf @ tmp  # real world coordinates
 
@@ -87,8 +89,10 @@ def backproject(uv, Tf, Tg, K, depthf):
     tmp = tmp[:2, :]  # uv coordinates of g
 
     return tmp.astype(int), zg  # 1D array for each element of tmp
-#First part of the Backprojection
-def realWorldProject(uv,Tf,K,depthf):
+
+
+# First part of the Backprojection
+def realWorldProject(uv, Tf, K, depthf):
     K_inv = np.array(
         [
             [1 / K[0, 0], 0.0, -K[0, 2] / K[0, 0]],
@@ -96,37 +100,26 @@ def realWorldProject(uv,Tf,K,depthf):
             [0.0, 0.0, 1.0],
         ]
     )
-    
+
     tmp = np.concatenate([uv, np.ones((1, uv.shape[1]))])
     tmp = K_inv @ tmp
     if isinstance(uv, np.ndarray):
         tmp = tmp * depthf[uv[1].astype(np.int64), uv[0].astype(np.int64)].numpy()
     else:
-        tmp = tmp * depthf[uv[1].long(), uv[0].long()].numpy()  # real world in camera coordinates
+        tmp = (
+            tmp * depthf[uv[1].long(), uv[0].long()].numpy()
+        )  # real world in camera coordinates
     tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
     tmp = Tf @ tmp  # real world coordinates
-    tmp = tmp[:3, :]  # real world coordinates 
+    tmp = tmp[:3, :]  # real world coordinates
 
     return tmp
 
-#Later Part of backprojection
-def camProject(samples,Tg,K):
-    Tg_inv = T_inv(Tg)
-    tmp=samples[:3,:]
-    tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
-    tmp = Tg_inv @ tmp
-    tmp = tmp[:3, :]  # real world coordinates in camera coordinates of g
-    zg = tmp[-1]  # zg has to align with the depthg
-    tmp = tmp / tmp[-1]
-    tmp = K @ tmp
-    tmp = tmp[:2, :]  # uv coordinates of g
-    tmp=np.concatenate([tmp, samples[3:,:]])
-    return tmp.astype(int), zg 
 
-def camProjectBoundingBoxes(bbox_1,Tg,K):
+# Later Part of backprojection
+def camProject(samples, Tg, K):
     Tg_inv = T_inv(Tg)
-    tmp=bbox_1
-    #print(tmp.shape)
+    tmp = samples[:3, :]
     tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
     tmp = Tg_inv @ tmp
     tmp = tmp[:3, :]  # real world coordinates in camera coordinates of g
@@ -134,7 +127,22 @@ def camProjectBoundingBoxes(bbox_1,Tg,K):
     tmp = tmp / tmp[-1]
     tmp = K @ tmp
     tmp = tmp[:2, :]  # uv coordinates of g
-    return tmp.astype(int), zg 
+    tmp = np.concatenate([tmp, samples[3:, :]])
+    return tmp.astype(int), zg
+
+
+def camProjectBoundingBoxes(bbox_1, Tg, K):
+    Tg_inv = T_inv(Tg)
+    tmp = bbox_1
+    # print(tmp.shape)
+    tmp = np.concatenate([tmp, np.ones((1, tmp.shape[1]))])
+    tmp = Tg_inv @ tmp
+    tmp = tmp[:3, :]  # real world coordinates in camera coordinates of g
+    zg = tmp[-1]  # zg has to align with the depthg
+    tmp = tmp / tmp[-1]
+    tmp = K @ tmp
+    tmp = tmp[:2, :]  # uv coordinates of g
+    return tmp.astype(int), zg
 
 
 def frontProject(uv, Tf, Tg, K, depthf):
@@ -164,36 +172,47 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
         indices = list(zip(labels[0], labels[1]))
         if len(indices) > 0:  # Check if there are any True pixels
             sampled_indices = np.random.choice(len(indices), points_per_instance)
-            
+
             torch_sampled_indices[:, :, i] = torch.tensor(
                 [indices[j][::-1] for j in sampled_indices]
             ).T
     return torch_sampled_indices.to(torch.int32)
 
-#id list better
+
+# id list better
+
 
 def sample_from_instances_with_ids_area(ids, numberOfMasks, points_per_instance=1):
     tensors = []
 
-    temp=np.unique(ids)[1:]
-    for i,element in enumerate(list(temp.astype(int))):
-        if element >=0:            
+    temp = np.unique(ids)[1:]
+    for i, element in enumerate(list(temp.astype(int))):
+        if element >= 0:
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
-            points_per_instance= np.sum(ids == element)
-            #points_per_instance=int(2*np.log2(points_per_instance))
-            points_per_instance=2*points_per_instance//(30*30)
-            if len(indices) > points_per_instance and len(indices)>1 and points_per_instance>1:  # Check if there are any True pixels
-                sampled_indices = np.linspace(0, len(indices)-1, points_per_instance, dtype=int)
-                sampled_tensor = torch.tensor([indices[j][::-1] for j in sampled_indices]).T
+            points_per_instance = np.sum(ids == element)
+            # points_per_instance=int(2*np.log2(points_per_instance))
+            points_per_instance = 2 * points_per_instance // (30 * 30)
+            if (
+                len(indices) > points_per_instance
+                and len(indices) > 1
+                and points_per_instance > 1
+            ):  # Check if there are any True pixels
+                sampled_indices = np.linspace(
+                    0, len(indices) - 1, points_per_instance, dtype=int
+                )
+                sampled_tensor = torch.tensor(
+                    [indices[j][::-1] for j in sampled_indices]
+                ).T
                 element_tensor = torch.full((sampled_tensor.shape[1],), element)
-                
+
                 element_tensor = element_tensor.unsqueeze(0)
-                
+
                 tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
 
     torch_sampled_indices = torch.cat(tensors, axis=1)
     return torch_sampled_indices.to(torch.int32)
+
 
 def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """samples uv from the instances
@@ -207,26 +226,26 @@ def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
     """
     tensors = []
 
-    temp=np.unique(ids)[1:]
-    for i,element in enumerate(list(temp.astype(int))):
-        if element >=0:            
+    temp = np.unique(ids)[1:]
+    for i, element in enumerate(list(temp.astype(int))):
+        if element >= 0:
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
             if len(indices) > points_per_instance:  # Check if there are any True pixels
-                sampled_indices = np.linspace(0, len(indices)-1, points_per_instance, dtype=int)
+                sampled_indices = np.linspace(
+                    0, len(indices) - 1, points_per_instance, dtype=int
+                )
                 sampled_tensor = torch.tensor(
-                [indices[j][::-1] for j in sampled_indices]
+                    [indices[j][::-1] for j in sampled_indices]
                 ).T
                 element_tensor = torch.full((sampled_tensor.shape[1],), element)
-                
+
                 element_tensor = element_tensor.unsqueeze(0)
-                
+
                 tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
 
     torch_sampled_indices = torch.cat(tensors, axis=1)
     return torch_sampled_indices.to(torch.int32)
-
-
 
 
 def generateIds(masks, min_area=1000):
@@ -249,14 +268,16 @@ def generateIds(masks, min_area=1000):
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
     ids = np.full(
-            (sortedMasks[0]["segmentation"].shape[0],
-            sortedMasks[0]["segmentation"].shape[1]),
-            -100,
-        )
+        (
+            sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1],
+        ),
+        -100,
+    )
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
-    unique_ids,counts = np.unique(ids, return_counts=True)
+    unique_ids, counts = np.unique(ids, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
             ids[ids == unique_ids[i]] = -100
@@ -268,14 +289,16 @@ def generateIds_Auto(masks, min_area=1000):
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
     ids = np.full(
-            (sortedMasks[0]["segmentation"].shape[0],
-            sortedMasks[0]["segmentation"].shape[1]),
-            -100,
-        )
+        (
+            sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1],
+        ),
+        -100,
+    )
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
-    unique_ids,counts = np.unique(ids, return_counts=True)
+    unique_ids, counts = np.unique(ids, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
             ids[ids == unique_ids[i]] = -100
@@ -284,7 +307,7 @@ def generateIds_Auto(masks, min_area=1000):
 
 def generateIdsNew(masks):
     sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
-    
+
     ids = np.ones(
         (
             sortedMasks[0]["segmentation"].shape[0],
@@ -294,10 +317,10 @@ def generateIdsNew(masks):
     )
     # maybe more efficient
     # first frame has 85 instances so not too bad
-    bbox={}
+    bbox = {}
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         idsForEachMask = np.concatenate([[i]])
         ids[m] = idsForEachMask
-        bbox[i]=ann["bbox"]
+        bbox[i] = ann["bbox"]
     return ids.squeeze().astype(np.int32), bbox

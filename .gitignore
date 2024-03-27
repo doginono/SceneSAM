@@ -13,6 +13,8 @@ segmentation/our_gen
 .metals/*
 sam/*
 *.tar
+*.png
+*.npy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

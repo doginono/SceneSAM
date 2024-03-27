@@ -12,6 +12,7 @@ from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
 from tqdm import tqdm
+from src.utils.datasets import get_dataset
 
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
@@ -65,9 +66,16 @@ class Segmenter(object):
         else:
             self.input_folder = args.input_folder
         self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
-        self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
-
-        self.n_img = len(self.color_paths)
+        # self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
+        self.frame_reader = get_dataset(
+            cfg,
+            args,
+            cfg["scale"],
+            device=cfg["mapping"]["device"],
+            tracker=True,
+            slam=slam,
+        )
+        self.n_img = self.frame_reader.n_img
         self.semantic_frames = slam.semantic_frames
         self.idx_segmenter = slam.idx_segmenter
         if not self.is_full_slam:
@@ -80,7 +88,11 @@ class Segmenter(object):
         self.frame_numbers = []
         self.samples = None
         self.deleted = {}
-        self.border = cfg["Segmenter"]["border"]
+        self.border = (
+            cfg["cam"]["crop_edge"]
+            if "crop_edge" in cfg["cam"]
+            else cfg["Segmenter"]["border"]
+        )
         self.num_clusters = cfg["Segmenter"]["num_clusters"]
         self.overlap = cfg["Segmenter"]["overlap"]
         self.relevant = cfg["Segmenter"]["relevant"]
@@ -91,7 +103,6 @@ class Segmenter(object):
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
 
     def segment_reverse(self, idx):
-        assert False
         assert False
         img = cv2.imread(self.color_paths[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -109,14 +120,17 @@ class Segmenter(object):
         self.semantic_frames[idx // self.every_frame] = torch.from_numpy(masksCreated)
 
     def segment_idx(self, idx):
-        img = cv2.imread(self.color_paths[idx])
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        """img = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)"""
+        img, depth = self.frame_reader.get_colorAndDepth(idx)
+        img = (img.cpu().numpy() * 255).astype(np.uint8)
+
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
                 self.estimate_c2w_list.cpu() * self.shift,
                 self.K,
-                self.depth_paths,
+                depth.cpu(),
                 predictor=self.predictor,
                 max_id=self.max_id,
                 update=self.update,
@@ -142,13 +156,15 @@ class Segmenter(object):
         return frame
 
     def segment_idx_forAuto(self, idx):
-        img = cv2.imread(self.color_paths[idx])
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        """img = cv2.imread(self.color_paths[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)"""
+        img, depth = self.frame_reader.get_colorAndDepth(idx)
+        img = (img.cpu().numpy() * 255).astype(np.uint8)
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
             self.estimate_c2w_list.cpu() * self.shift,
             self.K,
-            self.depth_paths,
+            depth.cpu(),
             self.predictor,
             max_id=self.max_id,
             current_frame=img,
@@ -192,9 +208,11 @@ class Segmenter(object):
         self.semantic_frames[idx // self.every_frame] = torch.from_numpy(masksCreated)
 
     def segment_first(self):
-        color_path = self.color_paths[0]
+        """color_path = self.color_paths[0]
         color_data = cv2.imread(color_path)
-        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)"""
+        image, depth = self.frame_reader.get_colorAndDepth(0)
+        image = (image.cpu().numpy() * 255).astype(np.uint8)
         sam = create_instance_seg.create_sam("cuda")
         masks = sam.generate(image)
         del sam
@@ -219,7 +237,7 @@ class Segmenter(object):
             samplesFromCurrent[:2, :],
             self.zero_pos * self.shift,
             self.K,
-            id_generation.readDepth(self.depth_paths[0]),
+            depth.cpu(),
         )
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
@@ -227,9 +245,11 @@ class Segmenter(object):
         return realWorldSamples
 
     def segment_first_ForAuto(self):
-        color_path = self.color_paths[0]
+        """color_path = self.color_paths[0]
         color_data = cv2.imread(color_path)
-        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)"""
+        image, depth = self.frame_reader.get_colorAndDepth(0)
+        image = (image.cpu().numpy() * 255).astype(np.uint8)
         sam = create_instance_seg.create_sam_forauto("cuda")
         masks = sam.generate(image)
         del sam
@@ -249,7 +269,7 @@ class Segmenter(object):
             samplesFromCurrent[:2, :],
             self.zero_pos * self.shift,
             self.K,
-            id_generation.readDepth(self.depth_paths[0]),
+            depth.cpu(),
         )
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
@@ -329,6 +349,9 @@ class Segmenter(object):
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
         if self.n_img - 1 % self.every_frame_seg != 0:
+            while self.idx[0] < self.n_img - 1:
+                # print("segmenter stuck")
+                time.sleep(0.1)
             _ = self.segment_idx(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
 
@@ -454,7 +477,10 @@ class Segmenter(object):
             # self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
         if self.n_img - 1 % self.every_frame_seg != 0:
-            _ = self.segment_idx(self.n_img - 1)
+            while self.idx[0] < self.n_img - 1:
+                # print("segmenter stuck")
+                time.sleep(0.1)
+            _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
 
         del self.predictor
@@ -478,7 +504,7 @@ class Segmenter(object):
                 )
         # EDIT THIS
 
-        return self.semantic_frames, max_id + 1
+        return self.semantic_frames, self.max_id + 1
 
     def plot(self):
         data = self.samples.copy()

@@ -6,5 +6,5 @@ data:
   input_folder: 'Demo_Data/room1_small'
   logs: 'logs/room1_small'
   output: 'output/Own/room1_small'
-output_dimension_semantic: 100
+output_dimension_semantic: 300
 #load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1_small/ckpts/00059.tar

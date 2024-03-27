@@ -5,7 +5,7 @@ scale: 1
 verbose: True
 occupancy: True
 low_gpu_mem: True
-output_dimension_semantic: 32 #this is a default value, it should be overwritten in the specific room config
+output_dimension_semantic: 300 #this is a default value, it should be overwritten in the specific room config
 grid_len:
   coarse: 2 
   middle: 0.32 
@@ -61,6 +61,8 @@ Segmenter:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
+  use_mesh: True
+  points_per_instance: 4
   vis_offset: 0
   use_vis: True #J: added, whether to use visualization in mapping
   device: "cuda:0"
