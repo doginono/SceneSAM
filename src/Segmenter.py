@@ -13,6 +13,7 @@ from torch.utils.data import Dataset
 import threading
 from tqdm import tqdm
 from src.utils.datasets import get_dataset
+import time
 
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
@@ -37,15 +38,12 @@ class Segmenter(object):
         self.every_frame = cfg["mapping"]["every_frame"]
         # self.slam = slam
         self.estimate_c2w_list = slam.estimate_c2w_list
-        s = np.ones((4, 4), int)
-        s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        self.shift = s
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         self.estimate_c2w_list = slam.estimate_c2w_list
         s = np.ones((4, 4), int)
         s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        self.shift = s
+        self.shift = 1  # s
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
@@ -441,8 +439,8 @@ class Segmenter(object):
             return self.semantic_frames, self.semantic_frames.max() + 1
 
         print("segment first frame")
-
         s = self.segment_first_ForAuto()
+        print("finished segmenting first frame")
         if self.is_full_slam:
             path = os.path.join(self.store_directory, f"seg_{0}.npy")
             # np.save(path, self.semantic_frames[0].numpy())
@@ -467,7 +465,9 @@ class Segmenter(object):
             while self.idx[0] < idx:
                 # print("segmenter stuck")
                 time.sleep(0.1)
+            print("start segmenting frame: ", idx)
             self.segment_idx_forAuto(idx)
+            print("finished segmenting frame: ", idx)
             visualizerForId.visualize(
                 self.semantic_frames[idx // self.every_frame_seg],
                 path=f"{self.store_directory}/seg_{idx}.png",

@@ -199,7 +199,6 @@ class Tracker(object):
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 
             idx = idx[0]
-            print("Tracking Frame:", idx)
             gt_depth = gt_depth[0]
             gt_color = gt_color[0]
             gt_c2w = gt_c2w[0]

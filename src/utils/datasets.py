@@ -85,8 +85,8 @@ class BaseDataset(Dataset):
 
         self.crop_edge = cfg["cam"]["crop_edge"]
         # -------------------added-----------------------------------------------
-        if self.name == "replica":
-            self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        # if self.name == "replica":
+        self.output_dimension_semantic = cfg["output_dimension_semantic"]
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.seg_folder = f"{self.input_folder}/segmentation"
         self.round = slam.round
@@ -167,7 +167,7 @@ class BaseDataset(Dataset):
             )[0, 0]
             color_data = color_data.permute(1, 2, 0).contiguous()
 
-        if edge > 0:
+        if edge > 0 and edge:
             # crop image edge, there are invalid value on the edge of the color image
             color_data = color_data[edge:-edge, edge:-edge]
             depth_data = depth_data[edge:-edge, edge:-edge]

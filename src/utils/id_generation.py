@@ -325,6 +325,9 @@ def createFrontMappingAutosort(
 ):
 
     if curr_frame_number == 0:
+        assert (
+            False
+        ), "sjouldnt be entered, if it is entered use passed groundtruth pose instead of the estimated one since this is the 0 frame"
         masks = automaticMask.generate(current_frame)
         ids = backproject.generateIds_Auto(masks, min_area=smallesMaskSize)
         # idler sortlancak

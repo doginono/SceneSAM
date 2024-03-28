@@ -8,3 +8,6 @@ possible efficiency improvements:
 -unnecessary read of segmetnation in full_slam
 -technically the self.semenatic_frames array is not used, since the segmentations are written to file, but with the 
     bigger machine we could also consider not writing to file but just using that array
+
+full slam:
+    implement merging on Automatic Maskgenerator and fix the previous keyframes
