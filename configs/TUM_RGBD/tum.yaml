@@ -16,7 +16,7 @@ tracking:
   gt_camera: True
   lr: 0.01     
   pixels: 5000
-  iters: 20 #200
+  iters: 200 #200
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
