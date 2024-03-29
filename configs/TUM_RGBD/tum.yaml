@@ -42,7 +42,7 @@ mapping:
   vis_freq: 40
   vis_inside_freq: 100
   mesh_freq: 60
-  ckpt_freq: 500
+  ckpt_freq: 20
   keyframe_every: 50
   mapping_window_size: 10
   pixels: 5000

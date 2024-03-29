@@ -76,8 +76,8 @@ class visualizerForIds:
         np.random.seed(seed)
         self.colors = [np.random.random(3) for i in range(0, 1000)]
 
-        # self.colors.insert(0,[1,1,1])
-        # self.colors.insert(0,[0,0,0])
+        self.colors.insert(0, [1, 1, 1])
+        self.colors.insert(0, [0, 0, 0])
         self.cmap = mcolors.ListedColormap(self.colors)
 
     def get_colors(self, ids):

@@ -8,4 +8,4 @@ data:
   input_folder: 'Demo_Data/room0_small'
   logs: 'logs/room0_small'
   output: 'output/Own/room0_small'
-output_dimension_semantic: 700
+output_dimension_semantic: 400
