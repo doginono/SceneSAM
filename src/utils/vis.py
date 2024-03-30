@@ -86,21 +86,22 @@ class visualizerForIds:
 
     def visualize(self, anns, path=None, ax=None, title="", prompts=None):
 
-        anns = copy.deepcopy(anns)
-        anns[anns == 0] = anns.max() + 1
-        anns[anns == -100] = 0
+        ids = copy.deepcopy(anns)
+        ids[:, :] += 1
+        ids[ids < 0] = 0
         if path is not None:
-            plt.imshow(anns, cmap=self.cmap, vmin=-1, vmax=len(self.colors) - 1)
+            plt.imshow(ids, cmap=self.cmap, vmin=-1, vmax=len(self.colors) - 1)
             if prompts is not None:
-                plt.scatter(prompts[:, 0], prompts[:, 1], s=100, c="red", marker="o")
+                plt.scatter(prompts[:, 0], prompts[:, 1], s=10, c="blue", marker="o")
+                plt.title(title)
             plt.savefig(path)
             plt.clf()
             return
         if ax is None:
-            im = plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
+            im = plt.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
             return im
         ax.set_title(title)
-        im = ax.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
+        im = ax.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
 
         return ax, im
 

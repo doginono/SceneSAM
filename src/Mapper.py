@@ -814,7 +814,7 @@ class Mapper(object):
             )
 
             depth_mask = batch_gt_depth > 0
-            loss = torch.abs(  # J: we backpropagate only through depth in stage middle and fine
+            loss = torch.abs(  # J: we backpropagate only through depth in stage middle and fine and color
                 batch_gt_depth[depth_mask] - depth[depth_mask]
             ).sum()
             if writer is not None:

@@ -366,6 +366,9 @@ def createFrontMappingAutosort(
         H=depthf.shape[0],
         W=depthf.shape[1],
     )
+    verbose = True
+    if verbose:
+        visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
         # this should be the same as unsqueezing the middle dimension
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
@@ -373,6 +376,8 @@ def createFrontMappingAutosort(
     mask = automaticMask.generate(current_frame)
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, min_area=smallesMaskSize)
+    depth_mask = depthf == 0
+    ids[depth_mask] = -100
     current_unique_ids = np.unique(ids)
 
     """ 
@@ -382,6 +387,11 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
+    if verbose:
+        visualizer.visualize(
+            ids,
+            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_before.png",
+        )
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
@@ -394,6 +404,14 @@ def createFrontMappingAutosort(
                 ]
                 insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
+                if verbose:
+                    visualizer.visualize(
+                        currentMask.astype(int),
+                        path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_{currentMaskId}_{instance}.png",
+                        title=f"currentMaskId: {currentMaskId} number of prompts: {len(samplesInside[0])}, id: {instance}",
+                        prompts=samplesInside[:2, :][[1, 0]].T,
+                    )
+
         maxForMask = max(dictOfIds, key=dictOfIds.get)
         if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
             copyOfIds[ids == currentMaskId] = maxForMask
@@ -403,7 +421,6 @@ def createFrontMappingAutosort(
 
     ids = copyOfIds
 
-    depth_mask = depthf == 0
     ids[depth_mask] = -100  # ask Dogu if this makes sense
 
     if border != 0:
@@ -416,7 +433,7 @@ def createFrontMappingAutosort(
 
     # TODO sample according to the areas of the masks
     samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        ids, numberOfMasks, points_per_instance=100
+        ids, numberOfMasks, points_per_instance=200
     )
     # 3d
     realWorldProjectCurr = backproject.realWorldProject(
