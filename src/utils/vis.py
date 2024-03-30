@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import matplotlib.colors as mcolors
+import copy
 
 
 def show_anns(anns):
@@ -84,8 +85,12 @@ class visualizerForIds:
         return self.cmap(ids)
 
     def visualize(self, anns, path=None, ax=None, title="", prompts=None):
+
+        anns = copy.deepcopy(anns)
+        anns[anns == 0] = anns.max() + 1
+        anns[anns == -100] = 0
         if path is not None:
-            plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
+            plt.imshow(anns, cmap=self.cmap, vmin=-1, vmax=len(self.colors) - 1)
             if prompts is not None:
                 plt.scatter(prompts[:, 0], prompts[:, 1], s=100, c="red", marker="o")
             plt.savefig(path)

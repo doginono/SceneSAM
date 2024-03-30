@@ -26,4 +26,4 @@ cam:  #intrinsic is different per scene in TUM
   distortion: [0.2312, -0.7849, -0.0033, -0.0001, 0.9172]
 output_dimension_semantic: 500  
 Segmenter:
-  every_frame: 20
+  every_frame: 10

@@ -84,7 +84,11 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
     indices = np.where(abs(depthCheck) < 0.01)
-    filteredBackProj = filteredBackProj[:, indices]
+    filteredBackProj = np.squeeze(filteredBackProj[:, indices])
+    bad_depth_mask = (
+        Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
+    )  # filter out samples hitting pixels with error in depths
+    filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
     return filteredBackProj
 
 
@@ -351,7 +355,9 @@ def createFrontMappingAutosort(
     T_current = T[curr_frame_number]
     depthf = depths
 
-    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )  # project to current frame
     frontProjectedSamples = checkIfInsideImage(
         frontProjectedSamples,
         projDepth,
@@ -361,6 +367,7 @@ def createFrontMappingAutosort(
         W=depthf.shape[1],
     )
     if frontProjectedSamples.ndim == 3:
+        # this should be the same as unsqueezing the middle dimension
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
 
     mask = automaticMask.generate(current_frame)
@@ -395,6 +402,9 @@ def createFrontMappingAutosort(
             max_id += 1
 
     ids = copyOfIds
+
+    depth_mask = depthf == 0
+    ids[depth_mask] = -100  # ask Dogu if this makes sense
 
     if border != 0:
         ids[0 : 2 * border] = -100
