@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
 import os
+import copy
 
 
 def readDepth(filepath):
@@ -377,7 +378,7 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, min_area=smallesMaskSize)
     depth_mask = depthf == 0
-    ids[depth_mask] = -100
+    # ids[depth_mask] = -100
     current_unique_ids = np.unique(ids)
 
     """ 
@@ -405,11 +406,15 @@ def createFrontMappingAutosort(
                 insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
                 if verbose:
+                    b = ids.copy()
+                    b[~currentMask] = 0
+
+                    b[currentMask] = -100
                     visualizer.visualize(
-                        currentMask.astype(int),
+                        b,
                         path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_{currentMaskId}_{instance}.png",
                         title=f"currentMaskId: {currentMaskId} number of prompts: {len(samplesInside[0])}, id: {instance}",
-                        prompts=samplesInside[:2, :][[1, 0]].T,
+                        prompts=samplesInside[:2, :].T,
                     )
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
@@ -421,7 +426,7 @@ def createFrontMappingAutosort(
 
     ids = copyOfIds
 
-    ids[depth_mask] = -100  # ask Dogu if this makes sense
+    # ids[depth_mask] = -100  # ask Dogu if this makes sense
 
     if border != 0:
         ids[0 : 2 * border] = -100
@@ -432,8 +437,10 @@ def createFrontMappingAutosort(
     numberOfMasks = len(np.unique(ids))
 
     # TODO sample according to the areas of the masks
+    idcopy = copy.deepcopy(ids)
+    idcopy[depth_mask] = -100
     samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        ids, numberOfMasks, points_per_instance=200
+        idcopy, numberOfMasks, points_per_instance=200
     )
     # 3d
     realWorldProjectCurr = backproject.realWorldProject(

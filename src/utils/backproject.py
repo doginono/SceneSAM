@@ -182,7 +182,9 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 # id list better
 
 
-def sample_from_instances_with_ids_area(ids, numberOfMasks, points_per_instance=1):
+def sample_from_instances_with_ids_area(
+    ids, numberOfMasks, points_per_instance=1, min_points=50
+):
     tensors = []
 
     temp = np.unique(ids)[1:]
@@ -192,7 +194,9 @@ def sample_from_instances_with_ids_area(ids, numberOfMasks, points_per_instance=
             indices = list(zip(labels[0], labels[1]))
             points_per_instance = np.sum(ids == element)
             # points_per_instance=int(2*np.log2(points_per_instance))
-            points_per_instance = 2 * points_per_instance // (30 * 30)
+            points_per_instance = np.max(
+                (2 * points_per_instance // (30 * 30), min_points)
+            )
             if (
                 len(indices) > points_per_instance
                 and len(indices) > 1

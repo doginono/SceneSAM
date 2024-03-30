@@ -87,8 +87,7 @@ class visualizerForIds:
     def visualize(self, anns, path=None, ax=None, title="", prompts=None):
 
         ids = copy.deepcopy(anns)
-        ids[:, :] += 1
-        ids[ids < 0] = 0
+        ids[ids < 0] = 100
         if path is not None:
             plt.imshow(ids, cmap=self.cmap, vmin=-1, vmax=len(self.colors) - 1)
             if prompts is not None:
