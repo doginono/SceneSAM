@@ -151,8 +151,8 @@ class NICE_SLAM:
         H, W = (
             cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else (self.H, self.W)
         )
-        """H = H - 2 * self.crop_edge
-        W = W - 2 * self.crop_edge"""
+        H = H - 2 * self.crop_edge
+        W = W - 2 * self.crop_edge
         if (self.n_img - 1) % self.every_frame_seg == 0:
             self.semantic_frames = torch.from_numpy(
                 np.zeros(((self.n_img - 1) // self.every_frame_seg, H, W))

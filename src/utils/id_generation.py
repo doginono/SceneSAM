@@ -89,7 +89,7 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     bad_depth_mask = (
         Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
     )  # filter out samples hitting pixels with error in depths
-    filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
+    # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
     return filteredBackProj
 
 
@@ -367,7 +367,7 @@ def createFrontMappingAutosort(
         H=depthf.shape[0],
         W=depthf.shape[1],
     )
-    verbose = False
+    verbose = True
     if verbose:
         visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
@@ -418,8 +418,10 @@ def createFrontMappingAutosort(
                     )
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
+        # i do not get this part, inside TheMask is defined in loop
         if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
             copyOfIds[ids == currentMaskId] = maxForMask
+        # dictOfIds has -100: -100 so only if some point of samples hit the current mask we could give it a new id
         elif maxForMask != -100:
             copyOfIds[ids == currentMaskId] = max_id
             max_id += 1
