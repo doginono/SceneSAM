@@ -89,7 +89,7 @@ class visualizerForIds:
         ids = copy.deepcopy(anns)
         ids[ids < 0] = 100
         if path is not None:
-            plt.imshow(ids, cmap=self.cmap, vmin=-1, vmax=len(self.colors) - 1)
+            plt.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
             if prompts is not None:
                 plt.scatter(prompts[:, 0], prompts[:, 1], s=10, c="blue", marker="o")
                 plt.title(title)

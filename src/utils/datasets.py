@@ -132,7 +132,7 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]
         return semantic_data.to(self.device)
 
-    def get_colorAndDepth(self, index, edge=False):
+    def get_colorAndDepth(self, index, edge=True):
         if edge:
             edge = self.crop_edge
         else:
@@ -527,11 +527,11 @@ class TUM_RGBD(BaseDataset):
             images += [os.path.join(datapath, image_data[i, 1])]
             depths += [os.path.join(datapath, depth_data[j, 1])]
             c2w = self.pose_matrix_from_quaternion(pose_vecs[k])
-            if inv_pose is None:
+            """if inv_pose is None:
                 inv_pose = np.linalg.inv(c2w)
                 c2w = np.eye(4)
             else:
-                c2w = inv_pose @ c2w
+                c2w = inv_pose @ c2w"""
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
             c2w = torch.from_numpy(c2w).float()

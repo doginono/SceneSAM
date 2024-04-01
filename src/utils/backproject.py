@@ -183,7 +183,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 
 def sample_from_instances_with_ids_area(
-    ids, numberOfMasks, points_per_instance=1, min_points=50
+    ids, numberOfMasks, points_per_instance=1, min_points=500
 ):
     tensors = []
 
@@ -288,7 +288,7 @@ def generateIds(masks, min_area=1000):
     return ids
 
 
-def generateIds_Auto(masks, min_area=1000):
+def generateIds_Auto(masks, depth, min_area=1000):
     sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
@@ -302,6 +302,7 @@ def generateIds_Auto(masks, min_area=1000):
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
+    ids[depth == 0] = -100
     unique_ids, counts = np.unique(ids, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:

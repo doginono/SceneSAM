@@ -84,7 +84,7 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < 0.01)
+    indices = np.where(abs(depthCheck) < 0.5)
     filteredBackProj = np.squeeze(filteredBackProj[:, indices])
     bad_depth_mask = (
         Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
@@ -367,7 +367,7 @@ def createFrontMappingAutosort(
         H=depthf.shape[0],
         W=depthf.shape[1],
     )
-    verbose = True
+    verbose = False
     if verbose:
         visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
@@ -376,7 +376,7 @@ def createFrontMappingAutosort(
 
     mask = automaticMask.generate(current_frame)
     # TODO suna bakilcak
-    ids = backproject.generateIds_Auto(mask, min_area=smallesMaskSize)
+    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     depth_mask = depthf == 0
     # ids[depth_mask] = -100
     current_unique_ids = np.unique(ids)
@@ -426,7 +426,7 @@ def createFrontMappingAutosort(
 
     ids = copyOfIds
 
-    # ids[depth_mask] = -100  # ask Dogu if this makes sense
+    ids[depth_mask] = -100  # ask Dogu if this makes sense
 
     if border != 0:
         ids[0 : 2 * border] = -100
@@ -439,8 +439,13 @@ def createFrontMappingAutosort(
     # TODO sample according to the areas of the masks
     idcopy = copy.deepcopy(ids)
     idcopy[depth_mask] = -100
+    if verbose:
+        visualizer.visualize(
+            idcopy,
+            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_after.png",
+        )
     samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        idcopy, numberOfMasks, points_per_instance=200
+        idcopy, numberOfMasks, points_per_instance=50
     )
     # 3d
     realWorldProjectCurr = backproject.realWorldProject(

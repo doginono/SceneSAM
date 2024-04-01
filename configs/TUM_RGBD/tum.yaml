@@ -13,19 +13,19 @@ tracking:
   ignore_edge_H: 20
   seperate_LR: True
   const_speed_assumption: True
-  gt_camera: True
+  gt_camera: False
   lr: 0.01     
   pixels: 5000
   iters: 200 #200
 Segmenter:
-  full_slam: True
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
   store_vis: False
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
-  border: 15
+  border: 0
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
