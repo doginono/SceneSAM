@@ -109,11 +109,11 @@ class BaseDataset(Dataset):
     def __len__(self):
         return self.n_img
 
-    def get_zero_pose(self):
-        return self.poses[0] * self.shift
-
     def __post_init__(self, slam):
         self.semantic_frames = slam.semantic_frames
+
+    def get_zero_pose(self):
+        return self.poses[0] #* self.shift
 
     def get_segmentation(self, index):
         # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
@@ -218,7 +218,7 @@ class BaseDataset(Dataset):
             depth_data = depth_data[edge:-edge, edge:-edge]
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
-        pose = pose * self.shift.float()
+        #pose = pose * self.shift.float()
         return (
             index,
             color_data.to(self.device),
@@ -535,7 +535,7 @@ class TUM_RGBD(BaseDataset):
             depths += [os.path.join(datapath, depth_data[j, 1])]
             c2w = self.pose_matrix_from_quaternion(pose_vecs[k])
             """if inv_pose is None:
-                inv_pose = np.linalg.inv(c2w)
+                inv_pose = np.linalg.inv(c2w) #
                 c2w = np.eye(4)
             else:
                 c2w = inv_pose @ c2w"""

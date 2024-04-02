@@ -41,13 +41,13 @@ class Segmenter(object):
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         self.estimate_c2w_list = slam.estimate_c2w_list
-        """s = np.ones((4, 4), int)
+        s = np.ones((4, 4), int)
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+            print("tumrgbd")
         elif cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         self.shift = s  # s"""
-        self.shift = 1
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
@@ -221,11 +221,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
 
         ids = id_generation.generateIds(masks, min_area=self.first_min_area)
-        print(np.sum(ids == -100) / (ids.shape[0] * ids.shape[1]))
-        # visualizerForId = vis.visualizerForIds()
-        # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
-        self.semantic_frames[0] = torch.from_numpy(ids)
-        print(np.sum(ids == -100) / (ids.shape[0] * ids.shape[1]))
+        ids[depth.cpu() == 0] = -100
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
         self.semantic_frames[0] = torch.from_numpy(ids)
@@ -373,15 +369,6 @@ class Segmenter(object):
             os.path.join(self.store_directory, "segmentation.gif"),
         )
 
-        """for idx in tqdm(index_frames_predict, desc='Predicting frames'):
-            print(f'predicting frame {idx}')
-            self.predict_idx(idx)"""
-
-        """reverse_index_frames = np.arange(self.n_img-1, -1, -self.every_frame)
-        for idx in tqdm(reverse_index_frames, desc='Segmenting frames in reverse'):
-            self.segment_reverse(idx)"""
-        del self.predictor
-        torch.cuda.empty_cache()
         """for idx in tqdm(index_frames_predict, desc='Predicting frames'):
             print(f'predicting frame {idx}')
             self.predict_idx(idx)"""

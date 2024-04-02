@@ -67,12 +67,17 @@ def main():
     writer.add_text("hparams", yaml_string)
     writer.close()
     print("read in hparams")
+    slam = NICE_SLAM(cfg, args)
     # -----------------------------------------------------------------------------------
     segmenter = Segmenter(
-        cfg, args, store_directory=os.path.join(cfg["data"]["output"], "segmentation")
+        slam,
+        cfg,
+        args,
+        slam.frame_reader.get_zero_pose(),
+        store_directory=os.path.join(cfg["data"]["output"], "segmentation"),
     )
     # TODO
-    semanticFrames, _ = segmenter.runAuto()
+    semanticFrames, _ = segmenter.run()
     make_gif_from_array(
         semanticFrames,
         store=os.path.join(cfg["data"]["output"], "segmentation", "gif.gif"),

@@ -194,9 +194,10 @@ def sample_from_instances_with_ids_area(
             indices = list(zip(labels[0], labels[1]))
             points_per_instance = np.sum(ids == element)
             # points_per_instance=int(2*np.log2(points_per_instance))
-            points_per_instance = np.max(
-                (2 * points_per_instance // (30 * 30), min_points)
-            )
+            """points_per_instance = np.max(
+                (points_per_instance // (5 * 5), min_points)
+            )"""
+            points_per_instance = points_per_instance // (5 * 5)
             if (
                 len(indices) > points_per_instance
                 and len(indices) > 1

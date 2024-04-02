@@ -84,7 +84,7 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < 0.5)
+    indices = np.where(abs(depthCheck) < 10)
     filteredBackProj = np.squeeze(filteredBackProj[:, indices])
     bad_depth_mask = (
         Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
@@ -493,7 +493,9 @@ def createReverseMappingCombined_area_sort(
     predictor.set_image(current_frame)
 
     # projected to current camera frame, they also have ids
-    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )  # project to current frame
 
     frontProjectedSamples = checkIfInsideImage(
         frontProjectedSamples,
@@ -560,6 +562,7 @@ def createReverseMappingCombined_area_sort(
 
     # Reverse false start with the smaller one
     # Reverse True start with the bigger one
+    visualizer = visualizerForIds()
     sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
     for d in sortedMasks:
         instance = d["instance"]
@@ -623,6 +626,11 @@ def createReverseMappingCombined_area_sort(
                     update[instance][target_id] = 1
         condition = mask.squeeze() & (masks == -100)
         masks[condition] = instance
+        visualizer.visualize(
+            masks,
+            prompts=theRelevant,
+            path=f"/home/rozenberszki/project/wsnsl/old/{curr_frame_number}_{instance}.png",
+        )
 
     unique_ids = np.unique(masks).astype(int)
     for instance in unique_ids:
@@ -685,6 +693,7 @@ def createReverseMappingCombined_area_sort(
         masks[-2 * border :] = -100
         masks[:, 0 : 2 * border] = -100
         masks[:, -2 * border :] = -100
+    masks[depthf == 0] = -100
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, numberOfMasks, points_per_instance=30
     )

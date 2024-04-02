@@ -18,7 +18,7 @@ tracking:
   pixels: 5000
   iters: 200 #200
 Segmenter:
-  full_slam: True
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -41,13 +41,13 @@ mapping:
   every_frame: 10 #originally 1 but for testing set to 10
   vis_freq: 40
   vis_inside_freq: 100
-  mesh_freq: 20
+  mesh_freq: 50
   ckpt_freq: 20
   keyframe_every: 50
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 1500 #1500
-  iters: 100 #60
+  iters_first: 600 #1500
+  iters: 60 #60
 
 cam:  #NOTE: intrinsic is different per scene in TUM
   H: 480 
