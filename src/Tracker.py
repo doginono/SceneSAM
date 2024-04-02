@@ -16,6 +16,7 @@ from src.utils.Visualizer import Visualizer
 
 class Tracker(object):
     def __init__(self, cfg, args, slam):
+
         self.cfg = cfg
         self.args = args
 
@@ -231,7 +232,7 @@ class Tracker(object):
                 print(Style.RESET_ALL)
 
             if idx == 0 or self.gt_camera:
-                c2w = gt_c2w
+                c2w = gt_c2w  # * self.shift.to(device)
                 # if not self.no_vis_on_first_frame:
                 # self.visualizer.vis(
                 #   idx, 0, gt_depth, gt_color, c2w, self.c, self.decoders)

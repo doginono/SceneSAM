@@ -1,13 +1,20 @@
 inherit_from: configs/TUM_RGBD/tum.yaml
 mapping:
-  bound: [[-4.96930981,  5.54755211],
-       [-3.98643184,  0.55671239],
-       [ 0.49400002,  9.75700092]]
-  marching_cubes_bound: [[-4.96930981,  5.54755211],
-       [-3.98643184,  0.55671239],
-       [ 0.49400002,  9.75700092]]
+  #bound: [[-4.96930981,  5.54755211],
+  #     [-3.98643184,  0.55671239],
+  #     [ 0.49400002,  9.75700092]]
+  #marching_cubes_bound: [[-5.1,  5.7],
+  #     [-4.1,  0.7],
+  #     [ 0.3,  10]]
+  bound: [[-4.8292,  4.1536],
+        [-4.3810,  4.9568],
+        [-1.4766,  2.5906]]
+  marching_cubes_bound: [[-4.8292,  4.1536],
+        [-4.3810,  4.9568],
+        [-1.4766,  2.5906]]
+       
   every_frame: 10
-  keyframe_every: 100
+  keyframe_every: 20
 data:
   input_folder: Datasets/TUM_RGBD/rgbd_dataset_freiburg2_pioneer_slam2
   output: output/TUM_RGBD/rgbd_dataset_freiburg2_pioneer_slam2

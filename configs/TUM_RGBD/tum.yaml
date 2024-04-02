@@ -13,12 +13,12 @@ tracking:
   ignore_edge_H: 20
   seperate_LR: True
   const_speed_assumption: True
-  gt_camera: False
+  gt_camera: True
   lr: 0.01     
   pixels: 5000
   iters: 200 #200
 Segmenter:
-  full_slam: False
+  full_slam: True
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -41,13 +41,13 @@ mapping:
   every_frame: 10 #originally 1 but for testing set to 10
   vis_freq: 40
   vis_inside_freq: 100
-  mesh_freq: 60
+  mesh_freq: 20
   ckpt_freq: 20
   keyframe_every: 50
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 300 #1500
-  iters: 60 #60
+  iters_first: 1500 #1500
+  iters: 100 #60
 
 cam:  #NOTE: intrinsic is different per scene in TUM
   H: 480 

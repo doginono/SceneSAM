@@ -37,6 +37,12 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         # -------added------------------
+        """s = torch.ones((4, 4))
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+        elif cfg["dataset"] == "replica":
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s.int()  # s"""
         self.gt_c2w_list = slam.gt_c2w_list
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.round = slam.round

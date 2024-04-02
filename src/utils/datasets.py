@@ -59,6 +59,12 @@ class BaseDataset(Dataset):
     def __init__(self, cfg, args, scale, slam, tracker, device="cuda:0"):
         super(BaseDataset, self).__init__()
 
+        s = torch.ones((4, 4)).int()
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+        elif cfg["dataset"] == "replica":
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s  # s
         self.name = cfg["dataset"]
         if args.input_folder is None:
             self.input_folder = cfg["data"]["input_folder"]
@@ -104,7 +110,7 @@ class BaseDataset(Dataset):
         return self.n_img
 
     def get_zero_pose(self):
-        return self.poses[0]
+        return self.poses[0] * self.shift
 
     def __post_init__(self, slam):
         self.semantic_frames = slam.semantic_frames
@@ -132,7 +138,7 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]
         return semantic_data.to(self.device)
 
-    def get_colorAndDepth(self, index, edge=True):
+    def get_colorAndDepth(self, index, edge=False):
         if edge:
             edge = self.crop_edge
         else:
@@ -212,6 +218,7 @@ class BaseDataset(Dataset):
             depth_data = depth_data[edge:-edge, edge:-edge]
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
+        pose = pose * self.shift.float()
         return (
             index,
             color_data.to(self.device),

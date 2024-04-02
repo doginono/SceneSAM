@@ -41,9 +41,13 @@ class Segmenter(object):
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         self.estimate_c2w_list = slam.estimate_c2w_list
-        s = np.ones((4, 4), int)
-        s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        self.shift = 1  # s
+        """s = np.ones((4, 4), int)
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+        elif cfg["dataset"] == "replica":
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s  # s"""
+        self.shift = 1
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         # self.idx_coarse_mapper = slam.idx_coarse_mapper
@@ -253,9 +257,12 @@ class Segmenter(object):
         del sam
         torch.cuda.empty_cache()
 
-        ids = backproject.generateIds_Auto(masks, min_area=self.first_min_area)
+        ids = backproject.generateIds_Auto(
+            masks, depth.cpu(), min_area=self.first_min_area
+        )
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
+        ids[depth.cpu() == 0] = -100
         self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.max_id = ids.max() + 1
