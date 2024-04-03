@@ -115,8 +115,12 @@ class NICE_SLAM:
         self.idx_mapper.share_memory_()
         self.idx_coarse_mapper = torch.zeros((1)).int()
         self.idx_coarse_mapper.share_memory_()"""
-        self.idx_segmenter = torch.zeros((1)).int()
+        if self.is_full_slam:
+            self.idx_segmenter = torch.tensor([-1]).int()
+        else:
+            self.idx_segmenter = torch.tensor([self.n_img]).int()
         self.idx_segmenter.share_memory_()
+
         # self.semantic_frames = torch.from_numpy(np.zeros((self.n_img//self.every_frame, self.H, self.W))).int()
         # self.semantic_frames.share_memory_()
 
@@ -142,6 +146,25 @@ class NICE_SLAM:
             self.shared_c[key] = val
         self.shared_decoders = self.shared_decoders.to(self.cfg["mapping"]["device"])
         self.shared_decoders.share_memory()
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        """self.crop_edge = cfg["cam"]["crop_edge"]
+        H, W = (
+            cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else (self.H, self.W)
+        )
+        # H, W = (480, 640)
+        H = H - 2 * self.crop_edge
+        W = W - 2 * self.crop_edge"""
+        H, W = (480, 640)
+        if (self.n_img - 1) % self.every_frame_seg == 0:
+            self.semantic_frames = torch.from_numpy(
+                np.zeros(((self.n_img - 1) // self.every_frame_seg, H, W))
+            ).int()
+        else:
+            self.semantic_frames = torch.from_numpy(
+                np.zeros((self.n_img // self.every_frame_seg + 1, H, W))
+            ).int()
+        self.semantic_frames.share_memory_()
+        self.frame_reader.__post_init__(self)
         self.renderer = Renderer(
             cfg, args, self
         )  # J: changed from default in renderer constructor, thisis the train renderer
@@ -156,14 +179,13 @@ class NICE_SLAM:
 
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.semantic_frames = torch.from_numpy(
-            np.zeros((self.n_img // self.every_frame_seg, self.H, self.W))
-        ).int()
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
+
         self.segmenter = Segmenter(
             self,
             cfg,
             args,
+            zero_pos=self.frame_reader.get_zero_pose(),
             store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
         )
 
@@ -495,18 +517,15 @@ class NICE_SLAM:
                 self,
                 self.cfg,
                 self.args,
+                zero_pos=self.frame_reader.get_zero_pose(),
                 store_directory=os.path.join(
                     self.cfg["data"]["input_folder"], "segmentation"
                 ),
             )
-            frames, max_id = self.segmenter.runAuto()
-            self.set_output_dimension_semantic(max_id)
+            frames, max_id = self.segmenter.run()
+            self.set_output_dimension_semantic(max_id + 1)
             print(max_id)
-            gifMaker.make_gif_from_array(
-                frames,
-                store=f"{self.cfg['data']['input_folder']}/gif.gif",
-                duration=100,
-            )
+            gifMaker.make_gif_from_array(frames, store="gif.gif", duration=100)
             self.round[0] = 1
             self.mapper = Mapper(self.cfg, self.args, self, coarse_mapper=False)
             self.mapper.run()

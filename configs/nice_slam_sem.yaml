@@ -5,7 +5,7 @@ scale: 1
 verbose: True
 occupancy: True
 low_gpu_mem: True
-output_dimension_semantic: 32 #this is a default value, it should be overwritten in the specific room config
+output_dimension_semantic: 300 #this is a default value, it should be overwritten in the specific room config
 grid_len:
   coarse: 2 
   middle: 0.32 
@@ -43,13 +43,33 @@ tracking:
   lr: 0.001
   pixels: 200
   iters: 10
+Segmenter:
+  full_slam: True
+  mask_generator: False # always False -> delete later
+  #store: False    #if use_store True then store and store_vis have no effect
+  use_stored: False
+  store_vis: False
+  store_vis_freq: 50 # not implemented yet
+  num_clusters: 5
+  border: 15
+  overlap: 0.4 # makes more stable
+  relevant: 0.3
+  merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
+  every_frame: 10
+  verbose: True
+  hit_percent: 0.4
+rendering:
+  semantic_occupancy_multiplier: 10
 mapping:
+  use_mesh: True
+  points_per_instance: 4
+  vis_offset: 0
   use_vis: True #J: added, whether to use visualization in mapping
   device: "cuda:0"
   color_refine: True
   middle_iter_ratio: 0.4 #0.4
   fine_iter_ratio: 0.6 #0.6
-  semantic_iter_ratio: 0.4 #0.4
+  semantic_iter_ratio: 0.6 #0.4
   every_frame: 5
   BA: False
   BA_cam_lr: 0.001
@@ -60,7 +80,7 @@ mapping:
   no_log_on_first_frame: True
   vis_freq: 20 #J: frequence of visualization in terms of frames; is true #frames/vis_freq times
   vis_inside_freq: 25 #J:frequence of visualization on a frame where we visualize; is true #iters/vis_inside_freq times 
-  mesh_freq: 50
+  mesh_freq: 500
   ckpt_freq: 500
   keyframe_every: 50
   mapping_window_size: 5
@@ -72,8 +92,8 @@ mapping:
   lr_first_factor: 5
   lr_factor: 1
   pixels: 1000
-  iters_first: 1500 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
-  iters: 100 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
+  iters_first: 3 #J: num_joint_iters in Mapper on optimize_map on first iteration 1500
+  iters: 3 #J: num_joint_iters in Mapper on optimize_map on all but first iteration 60
   stage:
     coarse:
       decoders_lr: 0.0
@@ -104,12 +124,12 @@ mapping:
       color_lr: 0.005
       semantic_lr: 0.0
     semantic: 
-      decoders_lr: 0.005
+      decoders_lr: 00
       coarse_lr: 0.0
-      middle_lr: 0.005
-      fine_lr: 0.005
+      middle_lr: 0.00
+      fine_lr: 0.
       color_lr: 0.0
-      semantic_lr: 0.01 #original: 0.005
+      semantic_lr: 0.4 #original: 0.005
 
 cam:
   H: 680
