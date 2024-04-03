@@ -147,12 +147,14 @@ class NICE_SLAM:
         self.shared_decoders = self.shared_decoders.to(self.cfg["mapping"]["device"])
         self.shared_decoders.share_memory()
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        self.crop_edge = cfg["cam"]["crop_edge"]
+        """self.crop_edge = cfg["cam"]["crop_edge"]
         H, W = (
             cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else (self.H, self.W)
         )
-        # H = H - 2 * self.crop_edge
-        # W = W - 2 * self.crop_edge
+        # H, W = (480, 640)
+        H = H - 2 * self.crop_edge
+        W = W - 2 * self.crop_edge"""
+        H, W = (480, 640)
         if (self.n_img - 1) % self.every_frame_seg == 0:
             self.semantic_frames = torch.from_numpy(
                 np.zeros(((self.n_img - 1) // self.every_frame_seg, H, W))

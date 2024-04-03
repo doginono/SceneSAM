@@ -84,7 +84,7 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < 10)
+    indices = np.where(abs(depthCheck) < 0.2)
     filteredBackProj = np.squeeze(filteredBackProj[:, indices])
     bad_depth_mask = (
         Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
@@ -328,6 +328,7 @@ def createFrontMappingAutosort(
     smallesMaskSize=1000,
     border=25,
 ):
+    verbose = True
 
     if curr_frame_number == 0:
         assert (
@@ -367,7 +368,7 @@ def createFrontMappingAutosort(
         H=depthf.shape[0],
         W=depthf.shape[1],
     )
-    verbose = True
+
     if verbose:
         visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
@@ -418,6 +419,9 @@ def createFrontMappingAutosort(
                     )
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
+        insideTheMask = currentMask[
+            frontProjectedSamples[1, :], frontProjectedSamples[0, :]
+        ]
         # i do not get this part, inside TheMask is defined in loop
         if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
             copyOfIds[ids == currentMaskId] = maxForMask
