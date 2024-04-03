@@ -139,7 +139,7 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]
         return semantic_data.to(self.device)
 
-    def get_colorAndDepth(self, index, edge=False):
+    def get_colorAndDepth(self, index, edge=True):
         if edge:
             edge = self.crop_edge
         else:
@@ -166,7 +166,7 @@ class BaseDataset(Dataset):
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
             print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
-            '''color_data = color_data.permute(2, 0, 1)
+            color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
             )[0]
@@ -174,7 +174,6 @@ class BaseDataset(Dataset):
             plt.title("Depth data before resize")
             plt.show()
             print(depth_data.shape, " before resize")"""
-            # depth_data *= 0.8
             depth_data = F.interpolate(
                 depth_data[None, None], self.crop_size, mode="nearest"
             )[0, 0]
@@ -183,7 +182,7 @@ class BaseDataset(Dataset):
             sns.histplot(depth_data.flatten().reshape(-1))
             plt.title("Depth data after resize")
             plt.show()"""
-            color_data = color_data.permute(1, 2, 0).contiguous()'''
+            color_data = color_data.permute(1, 2, 0).contiguous()
 
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
@@ -192,7 +191,7 @@ class BaseDataset(Dataset):
         return color_data.to(self.device), depth_data.to(self.device)
 
     def __getitem__(self, index):
-        color_path = self.color_paths[index]
+        """color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
         if ".png" in depth_path:
@@ -211,7 +210,7 @@ class BaseDataset(Dataset):
         color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
-        semantic_data = self.get_segmentation(index)
+
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
             color_data = color_data.permute(2, 0, 1)
@@ -227,9 +226,11 @@ class BaseDataset(Dataset):
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
             color_data = color_data[edge:-edge, edge:-edge]
-            depth_data = depth_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]"""
+        color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
+        semantic_data = self.get_segmentation(index)
         # pose = pose * self.shift.float()
         return (
             index,

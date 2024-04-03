@@ -154,7 +154,9 @@ class NICE_SLAM:
         # H, W = (480, 640)
         H = H - 2 * self.crop_edge
         W = W - 2 * self.crop_edge"""
-        H, W = (480, 640)
+        # H, W = (480, 640)
+        H = self.H
+        W = self.W
         if (self.n_img - 1) % self.every_frame_seg == 0:
             self.semantic_frames = torch.from_numpy(
                 np.zeros(((self.n_img - 1) // self.every_frame_seg, H, W))

@@ -435,10 +435,10 @@ def createFrontMappingAutosort(
     ids[depth_mask] = -100  # ask Dogu if this makes sense
 
     if border != 0:
-        ids[0 : 2 * border] = -100
-        ids[-2 * border :] = -100
-        ids[:, 0 : 2 * border] = -100
-        ids[:, -2 * border :] = -100
+        ids[0:border] = -100
+        ids[-border:] = -100
+        ids[:, 0:border] = -100
+        ids[:, -border:] = -100
 
     numberOfMasks = len(np.unique(ids))
 
