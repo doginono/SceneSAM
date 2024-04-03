@@ -71,12 +71,12 @@ mapping:
       semantic_lr: 0.4 #original: 0.005
 
 cam:
-  H: 1440
-  W: 1920
-  fx: 1430.2189
-  fy: 1430.2266
-  cx: 954.92126
-  cy: 724.7766
+  H: 720
+  W: 960
+  fx: 715
+  fy: 715
+  cx: 477.5
+  cy: 362.5
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 0
   crop_size: [720,960]
