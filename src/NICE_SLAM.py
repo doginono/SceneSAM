@@ -182,13 +182,16 @@ class NICE_SLAM:
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
-
+        if "store_seg_path" in cfg["Segmenter"]:
+            store_path = cfg["Segmenter"]["store_seg_path"]
+        else:
+            store_path = os.path.join(cfg["data"]["input_folder"], "segmentation")
         self.segmenter = Segmenter(
             self,
             cfg,
             args,
             zero_pos=self.frame_reader.get_zero_pose(),
-            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
+            store_directory=store_path,
         )
 
         if self.coarse:

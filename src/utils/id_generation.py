@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 import os
 import copy
+import time
 
 
 def readDepth(filepath):
@@ -328,7 +329,7 @@ def createFrontMappingAutosort(
     smallesMaskSize=1000,
     border=25,
 ):
-    verbose = True
+    verbose = False
 
     if curr_frame_number == 0:
         assert (
@@ -374,8 +375,9 @@ def createFrontMappingAutosort(
     if frontProjectedSamples.ndim == 3:
         # this should be the same as unsqueezing the middle dimension
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
-
+    start = time.time()
     mask = automaticMask.generate(current_frame)
+    print("mask generation time: ", time.time() - start)
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     depth_mask = depthf == 0

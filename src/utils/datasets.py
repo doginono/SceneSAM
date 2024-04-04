@@ -63,9 +63,9 @@ class BaseDataset(Dataset):
         s = torch.ones((4, 4)).int()
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
-        elif cfg["dataset"] == "replica":
+        if cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        self.shift = s  # s
+        self.shift = s.numpy()  # s
         self.name = cfg["dataset"]
         if args.input_folder is None:
             self.input_folder = cfg["data"]["input_folder"]
@@ -165,7 +165,6 @@ class BaseDataset(Dataset):
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
-            print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
@@ -336,7 +335,6 @@ class Replica(BaseDataset):
             self.crop_size is not None
         ):  # TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
             # follow the pre-processing step in lietorch, actually is resize
-            assert False, "crop_size is not None -> need to crop semantic data"
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
