@@ -91,7 +91,9 @@ class visualizerForIds:
         if path is not None:
             plt.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
             if prompts is not None:
-                plt.scatter(prompts[:, 0], prompts[:, 1], s=10, c="blue", marker="o")
+                plt.scatter(
+                    prompts[:, 0], prompts[:, 1], s=10, c="blue", marker="o", alpha=0.5
+                )
                 plt.title(title)
             plt.savefig(path)
             plt.clf()
