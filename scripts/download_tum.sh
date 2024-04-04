@@ -10,8 +10,8 @@ cd Datasets/TUM_RGBD
 #tar -xvzf rgbd_dataset_freiburg2_coke.tgz
 #wget https://vision.in.tum.de/rgbd/dataset/freiburg2/rgbd_dataset_freiburg2_pioneer_360.tgz
 #tar -xvzf rgbd_dataset_freiburg2_pioneer_360.tgz
-#wget https://vision.in.tum.de/rgbd/dataset/freiburg2/rgbd_dataset_freiburg2_pioneer_slam2.tgz
-#tar -xvzf rgbd_dataset_freiburg2_pioneer_slam2.tgz
+wget https://vision.in.tum.de/rgbd/dataset/freiburg2/rgbd_dataset_freiburg2_pioneer_slam2.tgz
+tar -xvzf rgbd_dataset_freiburg2_pioneer_slam2.tgz
 #freiburg3_large_cabinet_validation
 wget https://vision.in.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_large_cabinet_validation.tgz
 tar -xvzf rgbd_dataset_freiburg3_large_cabinet_validation.tgz

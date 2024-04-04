@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+import cv2
 
 def T_inv(T):
     R = T[:3, :3]
@@ -183,16 +183,20 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 
 def sample_from_instances_with_ids_area(
-    ids, numberOfMasks, points_per_instance=1, min_points=500
+    ids, numberOfMasks, points_per_instance=1, min_points=500,samplePixelFarther=10
 ):
     tensors = []
 
     temp = np.unique(ids)[1:]
     for i, element in enumerate(list(temp.astype(int))):
         if element >= 0:
+            mask= ids==element
+            kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+            mask= cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
+            labels = np.where(mask)
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
-            points_per_instance = np.sum(ids == element)
+            points_per_instance = len(indices)
             # points_per_instance=int(2*np.log2(points_per_instance))
             """points_per_instance = np.max(
                 (points_per_instance // (5 * 5), min_points)

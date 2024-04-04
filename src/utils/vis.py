@@ -112,7 +112,6 @@ class visualizerForIds:
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:
-<<<<<<< HEAD
             #plt.scatter(prompts[0,0], prompts[1,0], s=100, c="red", marker="o")
             #plt.scatter(prompts[0,1], prompts[1,1], s=100, c="yellow", marker="o")
             #plt.scatter(prompts[0,2], prompts[1,2], s=100, c="blue", marker="o")
@@ -121,9 +120,5 @@ class visualizerForIds:
             plt.scatter(prompts[0,:], prompts[1,:], s=100, c="red", marker="o")
         if path is not None:
             plt.savefig(path)
-=======
-            plt.scatter(prompts[0, :], prompts[1, :], s=100, c="red", marker="o")
-        plt.savefig(path)
->>>>>>> full_slam
 
         plt.show()

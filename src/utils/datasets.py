@@ -52,7 +52,7 @@ def readEXR_onlydepth(filename):
 
 def get_dataset(cfg, args, scale, device="cuda:0", tracker=False, slam=None):
     return dataset_dict[cfg["dataset"]](
-        cfg, args, scale, device=device, tracker=tracker, slam=slam
+        cfg, args, scale, device=device, slam=slam
     )
 
 
@@ -139,7 +139,7 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]
         return semantic_data.to(self.device)
 
-    def get_colorAndDepth(self, index, edge=True):
+    def get_colorAndDepth(self, index, edge=True,):
         if edge:
             edge = self.crop_edge
         else:
@@ -457,6 +457,46 @@ class ScanNet(BaseDataset):
             self.poses.append(c2w)
 
 
+class ScanNetPlusPlus(BaseDataset):
+    def __init__(self, cfg, args, scale, device="cuda:0"):
+        super(ScanNet, self).__init__(cfg, args, scale, device)
+        self.color_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        self.depth_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.png")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        self.load_poses(self.input_folder)
+        self.n_img = len(self.color_paths)
+
+    def load_poses(self, path):
+        self.poses = []
+        T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
+        for i in range(len(T_wc)):
+            c2w = T_wc[i]
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)
+        '''pose_paths = sorted(
+            glob.glob(os.path.join(path, "*.txt")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        for pose_path in pose_paths:
+            with open(pose_path, "r") as f:
+                lines = f.readlines()
+            ls = []
+            for line in lines:
+                l = list(map(float, line.split(" ")))
+                ls.append(l)
+            c2w = np.array(ls).reshape(4, 4)
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)'''
+
 class CoFusion(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0"):
         super(CoFusion, self).__init__(cfg, args, scale, device)
@@ -576,4 +616,5 @@ dataset_dict = {
     "cofusion": CoFusion,
     "azure": Azure,
     "tumrgbd": TUM_RGBD,
+    "scannet++": ScanNetPlusPlus,
 }

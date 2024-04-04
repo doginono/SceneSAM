@@ -67,7 +67,7 @@ def readImage(filepath):
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
-def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
+def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.05):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
@@ -84,11 +84,9 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < 0.05)
+    indices = np.where(abs(depthCheck) < depthCondition)
     filteredBackProj = np.squeeze(filteredBackProj[:, indices])
-    bad_depth_mask = (
-        Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
-    )  # filter out samples hitting pixels with error in depths
+    # filter out samples hitting pixels with error in depths
     # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
     return filteredBackProj
 
@@ -329,30 +327,6 @@ def createFrontMappingAutosort(
     border=25,
 ):
     verbose = True
-
-    if curr_frame_number == 0:
-        assert (
-            False
-        ), "sjouldnt be entered, if it is entered use passed groundtruth pose instead of the estimated one since this is the 0 frame"
-        masks = automaticMask.generate(current_frame)
-        ids = backproject.generateIds_Auto(masks, min_area=smallesMaskSize)
-        # idler sortlancak
-
-        max_id = ids.max() + 1
-        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids, max_id, points_per_instance=1000
-        )
-        realWorldSamples = backproject.realWorldProject(
-            samplesFromCurrent[:2, :],
-            T[0],
-            K,
-            depths,
-        )
-        realWorldSamples = np.concatenate(
-            (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
-        )
-
-        return ids, realWorldSamples, max_id
 
     T_current = T[curr_frame_number]
     depthf = depths

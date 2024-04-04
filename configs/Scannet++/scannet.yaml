@@ -1,4 +1,4 @@
-dataset: 'scannet'
+dataset: 'scannet++'
 coarse: False
 meshing:
   eval_rec: True
