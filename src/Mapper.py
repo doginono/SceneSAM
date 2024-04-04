@@ -37,6 +37,12 @@ class Mapper(object):
         self.coarse_mapper = coarse_mapper
 
         # -------added------------------
+        """s = torch.ones((4, 4))
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+        elif cfg["dataset"] == "replica":
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s.int()  # s"""
         self.gt_c2w_list = slam.gt_c2w_list
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.round = slam.round
@@ -68,7 +74,7 @@ class Mapper(object):
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
         # ------end-added------------------
 
-        self.idx = slam.idx
+        self.idx = slam.idx  # tracking index
         self.nice = slam.nice
         self.c = slam.shared_c
         self.bound = slam.bound
@@ -136,6 +142,7 @@ class Mapper(object):
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, slam=slam, tracker=False
         )
+        self.frame_reader.__post_init__(slam)
         # self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         if "Demo" not in self.output:  # disable this visualization in demo
@@ -358,6 +365,7 @@ class Mapper(object):
         cur_gt_semantic=None,
         writer=None,
         round=0,
+        mapping_first_frame=None,
     ):
         """
         Mapping iterations. Sample pixels from selected keyframes,
@@ -575,7 +583,10 @@ class Mapper(object):
             inc = max(int(self.semantic_iter_ratio * num_joint_iters), 1)
         else:
             start = 0
-            inc = 0
+            if self.is_full_slam and (idx % self.seg_freq == 0 or round == 2):
+                inc = int(self.semantic_iter_ratio * num_joint_iters)
+            else:
+                inc = 0
 
         for joint_iter in tqdm(
             range(start, num_joint_iters + inc), desc=f"Training on Frame {idx.item()}"
@@ -605,7 +616,16 @@ class Mapper(object):
                 elif joint_iter <= num_joint_iters:
                     self.stage = "color"
                 else:
+                    mapping_first_frame[0] = 1
+                    while idx > self.idx_segmenter[0]:
+                        # print("wait segmenter")
+                        # print("mapper stuck")
+                        time.sleep(0.1)
+                    if self.stage != "semantic":
+                        cur_gt_semantic = self.frame_reader.get_segmentation(idx)
                     self.stage = "semantic"
+
+                    # TODO read semantic from segmenter
                     # DONE: add semantics, we should probably increase the
                     # num_joint_iters and decrease the ratios to train on semantics
                     # as long as on colors and keeping the rest the same
@@ -650,18 +670,21 @@ class Mapper(object):
                 and (joint_iter % self.inside_freq == 0)
                 and self.stage != "coarse"
             ):
-                _, gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic = (
+                """_, gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic = (
                     self.frame_reader[idx - self.vis_offset]
+                )"""
+                print(
+                    f"start vis with segmenter index: {self.idx_segmenter[0].item()} and current index: {idx}"
                 )
                 self.visualizer.vis(
                     idx,
                     joint_iter,
-                    gt_vis_depth,
-                    gt_vis_color,
+                    cur_gt_depth,
+                    cur_gt_color,
                     cur_c2w,
                     self.c,
                     self.decoders,
-                    gt_vis_semantic,
+                    cur_gt_semantic,
                     only_semantic=False,
                     stage=self.stage,
                     writer=writer,
@@ -797,7 +820,7 @@ class Mapper(object):
             )
 
             depth_mask = batch_gt_depth > 0
-            loss = torch.abs(  # J: we backpropagate only through depth in stage middle and fine
+            loss = torch.abs(  # J: we backpropagate only through depth in stage middle and fine and color
                 batch_gt_depth[depth_mask] - depth[depth_mask]
             ).sum()
             if writer is not None:
@@ -895,9 +918,10 @@ class Mapper(object):
                     c2w = torch.cat([c2w, bottom], dim=0)
                     cur_c2w = c2w.clone()
         if self.BA:
-            return cur_c2w
+            assert False, "Though we do notenter here"
+            return cur_c2w, gt_semantic
         else:
-            return None
+            return gt_semantic
 
     def run(self):
         writer = SummaryWriter(self.writer_path)
@@ -925,7 +949,7 @@ class Mapper(object):
 
             # the idea here is that the segmenter segments the current frame and after it has finished the two mappers train on that frame
             # this ensures that the current frame has always been segmented before the mappers start training on it
-            # TODO: will need to update this according to postsegmentatoin or full-SLAM
+            # Done: will need to update this according to postsegmentatoin or full-SLAM
             while round == 0:
                 """print(
                     "in while loop: ",
@@ -1043,9 +1067,10 @@ class Mapper(object):
                 num_joint_iters = cfg["mapping"]["iters"]
 
                 # here provides a color refinement postprocess
-                # TODO maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
+                # Done maybe add the same for semantics; this is a postprocessing step which makes the color outputs better
                 # -> check when semantics are available
                 if idx == self.n_img - 1 and self.color_refine:
+                    round = 2
                     outer_joint_iters = 5
                     self.mapping_window_size *= 2
                     self.middle_iter_ratio = 0.0
@@ -1083,7 +1108,7 @@ class Mapper(object):
                 )
 
                 # Done: add semantics to optimize_map
-                _ = self.optimize_map(
+                gt_semantic = self.optimize_map(
                     num_joint_iters,
                     lr_factor,
                     idx,
@@ -1096,6 +1121,7 @@ class Mapper(object):
                     cur_gt_semantic=gt_semantic,
                     writer=writer,
                     round=round,
+                    mapping_first_frame=self.mapping_first_frame,
                 )  # Done add semantics to arguments
                 if self.BA:
                     cur_c2w = _
@@ -1168,7 +1194,7 @@ class Mapper(object):
                             clean_mesh=self.clean_mesh,
                             get_mask_use_all_frames=False,
                         )  # mesh on color
-                    else:
+                    if round == 1 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file + "_seg.ply",
                             self.c,
@@ -1185,7 +1211,7 @@ class Mapper(object):
                         )  # mesh on segmentation
 
                 if (round == 0 and idx == self.n_img - 1) or (
-                    round == 1 and idx + self.every_frame_seg >= self.n_img - 1
+                    round >= 1 and idx + self.every_frame_seg >= self.n_img - 1
                 ):
                     print("end, at round: ", round)
                     log_tracking_error(
@@ -1193,7 +1219,7 @@ class Mapper(object):
                     )
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
-                    if round == 0:
+                    if round == 0 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file_color,
                             self.c,
@@ -1209,7 +1235,7 @@ class Mapper(object):
                         os.system(
                             f"cp {mesh_out_file_color} {self.output}/mesh/{idx:05d}_mesh_color.ply"
                         )
-                    else:
+                    if round == 1 or self.is_full_slam:
                         self.mesher.get_mesh(
                             mesh_out_file_seg,
                             self.c,

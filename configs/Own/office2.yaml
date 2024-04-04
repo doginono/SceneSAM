@@ -6,4 +6,4 @@ data:
   input_folder: /home/rozenberszki/project/wsnsl/Datasets/Replica/office2
   output: output/Own/office2
   logs: logs/office2
-output_dimension_semantic: 250
+output_dimension_semantic: 400

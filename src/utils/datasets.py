@@ -10,7 +10,8 @@ import torch.nn.functional as F
 from src.common import as_intrinsics_matrix
 from torch.utils.data import Dataset
 import threading
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 import torch.multiprocessing as mp
 
 
@@ -56,16 +57,20 @@ def get_dataset(cfg, args, scale, device="cuda:0", tracker=False, slam=None):
 
 
 class BaseDataset(Dataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
+    def __init__(self, cfg, args, scale, slam, tracker, device="cuda:0"):
         super(BaseDataset, self).__init__()
 
+        s = torch.ones((4, 4)).int()
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+        elif cfg["dataset"] == "replica":
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s  # s
         self.name = cfg["dataset"]
-
-        # -------------------added-----------------------------------------------
-        if self.name == "replica":
-            self.output_dimension_semantic = cfg["output_dimension_semantic"]
-        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
-        # ------------------end-added-----------------------------------------------
+        if args.input_folder is None:
+            self.input_folder = cfg["data"]["input_folder"]
+        else:
+            self.input_folder = args.input_folder
 
         self.device = device
         self.scale = scale
@@ -85,17 +90,60 @@ class BaseDataset(Dataset):
         )
         self.crop_size = cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else None
 
-        if args.input_folder is None:
-            self.input_folder = cfg["data"]["input_folder"]
-        else:
-            self.input_folder = args.input_folder
-
         self.crop_edge = cfg["cam"]["crop_edge"]
+        # -------------------added-----------------------------------------------
+        # if self.name == "replica":
+        self.output_dimension_semantic = cfg["output_dimension_semantic"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.seg_folder = f"{self.input_folder}/segmentation"
+        self.round = slam.round
+        self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
+        self.output_dimension_semantic = slam.output_dimension_semantic
+        self.every_frame = cfg["mapping"]["every_frame"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
+        self.istracker = tracker
+        self.points_per_instance = cfg["mapping"]["points_per_instance"]
+        self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+        self.id_counter = slam.id_counter
+        # ------------------end-added-----------------------------------------------
 
     def __len__(self):
         return self.n_img
 
-    def __getitem__(self, index):
+    def __post_init__(self, slam):
+        self.semantic_frames = slam.semantic_frames
+
+    def get_zero_pose(self):
+        return self.poses[0]  # * self.shift
+
+    def get_segmentation(self, index):
+        # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
+        """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
+        semantic_data = np.load(semantic_path)"""
+        # Create one-hot encoding using numpy.eye
+        if index % self.every_frame_seg == 0:
+            semantic_data = (
+                self.semantic_frames[index // self.every_frame_seg].clone().int()
+            )
+        else:
+            semantic_data = self.semantic_frames[-1].clone().int()
+        negative = np.where(semantic_data < 0)
+        semantic_data[negative] = 0
+        semantic_data = np.eye(self.output_dimension_semantic[0])[semantic_data].astype(
+            bool
+        )
+        semantic_data[negative] = False
+        semantic_data = torch.from_numpy(semantic_data)
+        edge = self.crop_edge
+        if edge > 0:
+            semantic_data = semantic_data[edge:-edge, edge:-edge]
+        return semantic_data.to(self.device)
+
+    def get_colorAndDepth(self, index, edge=True):
+        if edge:
+            edge = self.crop_edge
+        else:
+            edge = 0
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
@@ -117,6 +165,55 @@ class BaseDataset(Dataset):
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
+            print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
+            color_data = color_data.permute(2, 0, 1)
+            color_data = F.interpolate(
+                color_data[None], self.crop_size, mode="bilinear", align_corners=True
+            )[0]
+            """sns.histplot(depth_data.numpy().reshape(-1))
+            plt.title("Depth data before resize")
+            plt.show()[384,512]
+            print(depth_data.shape, " before resize")"""
+
+            depth_data = F.interpolate(
+                depth_data[None, None], self.crop_size, mode="nearest"
+            )[0, 0]
+            """print(depth_data.shape, " after resize")
+
+            sns.histplot(depth_data.flatten().reshape(-1))
+            plt.title("Depth data after resize")
+            plt.show()"""
+            color_data = color_data.permute(1, 2, 0).contiguous()
+
+        if edge > 0:
+            # crop image edge, there are invalid value on the edge of the color image
+            color_data = color_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]
+        return color_data.to(self.device), depth_data.to(self.device)
+
+    def __getitem__(self, index):
+        """color_path = self.color_paths[index]
+        depth_path = self.depth_paths[index]
+        color_data = cv2.imread(color_path)
+        if ".png" in depth_path:
+            depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        elif ".exr" in depth_path:
+            depth_data = readEXR_onlydepth(depth_path)
+        if self.distortion is not None:
+            K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
+            # undistortion is only applied on color image, not depth!
+            color_data = cv2.undistort(color_data, K, self.distortion)
+
+        color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        color_data = color_data / 255.0
+        depth_data = depth_data.astype(np.float32) / self.png_depth_scale
+        H, W = depth_data.shape
+        color_data = cv2.resize(color_data, (W, H))
+        color_data = torch.from_numpy(color_data)
+        depth_data = torch.from_numpy(depth_data) * self.scale
+
+        if self.crop_size is not None:
+            # follow the pre-processing step in lietorch, actually is resize
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
@@ -130,43 +227,44 @@ class BaseDataset(Dataset):
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
             color_data = color_data[edge:-edge, edge:-edge]
-            depth_data = depth_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]"""
+        color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
+        semantic_data = self.get_segmentation(index)
+        # pose = pose * self.shift.float()
         return (
             index,
             color_data.to(self.device),
             depth_data.to(self.device),
             pose.to(self.device),
+            semantic_data.to(self.device),
         )
 
 
 class Replica(BaseDataset):
 
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
-        super(Replica, self).__init__(cfg, args, scale, device)
+        super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
         self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
-        self.seg_folder = f"{self.input_folder}/segmentation"
-        # -------------------added-----------------------------------------------
+
+        """# -------------------added-----------------------------------------------
         # self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
         self.round = slam.round
         self.mask_paths = sorted(glob.glob(f"{self.input_folder}/results/mask*.pkl"))
         self.output_dimension_semantic = slam.output_dimension_semantic
         self.every_frame = cfg["mapping"]["every_frame"]
+        self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         self.istracker = tracker
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         # self.T_wc = slam.T_wc
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
-        # -------------------end added-----------------------------------------------
+        # -------------------end added-----------------------------------------------"""
         self.n_img = len(self.color_paths)
         self.load_poses(f"{self.input_folder}/traj.txt")
-
-    def __post_init__(self, slam):
-        # self.semantic_frames = slam.semantic_frames
-        assert False, "should not be entered, not used anymore"
 
     def __getitem__(self, index):
         color_path = self.color_paths[index]
@@ -205,7 +303,9 @@ class Replica(BaseDataset):
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
         # -------------------added-----------------------------------------------
-        if index % self.every_frame_seg == 0:
+        semantic_data = self.get_segmentation(index)
+        """if index % self.every_frame_seg == 0:
+            
             semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
             # semantic_data = semantic_data.resize((H, W, self.output_dimension_semantic)) #TODO check if this works
             # semantic_data = self.semantic_frames[index//self.every_frame].clone().int()
@@ -225,11 +325,11 @@ class Replica(BaseDataset):
             assert (
                 self.output_dimension_semantic[0] >= semantic_data.shape[-1]
             ), "Number of classes is smaller than the number of unique values in the semantic data"
-            semantic_data = torch.from_numpy(semantic_data)
-        else:
+            semantic_data = torch.from_numpy(semantic_data)"""
+        """else:
             semantic_data = (
                 torch.ones((H, W, self.output_dimension_semantic[0])).to(bool) * -1
-            )
+            )"""
 
         # ----------------------
         if (
@@ -252,7 +352,7 @@ class Replica(BaseDataset):
             color_data = color_data[edge:-edge, edge:-edge]
             depth_data = depth_data[edge:-edge, edge:-edge]
             # -------------------added-----------------------------------------------
-            semantic_data = semantic_data[edge:-edge, edge:-edge]
+            # semantic_data = semantic_data[edge:-edge, edge:-edge]
             # ------------------end-added-----------------------------------------------
         pose = self.poses[index]
         pose[:3, 3] *= self.scale
@@ -382,8 +482,8 @@ class CoFusion(BaseDataset):
 
 
 class TUM_RGBD(BaseDataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
-        super(TUM_RGBD, self).__init__(cfg, args, scale, device)
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+        super(TUM_RGBD, self).__init__(cfg, args, scale, slam, tracker, device)
         self.color_paths, self.depth_paths, self.poses = self.loadtum(
             self.input_folder, frame_rate=32
         )
@@ -448,11 +548,11 @@ class TUM_RGBD(BaseDataset):
             images += [os.path.join(datapath, image_data[i, 1])]
             depths += [os.path.join(datapath, depth_data[j, 1])]
             c2w = self.pose_matrix_from_quaternion(pose_vecs[k])
-            if inv_pose is None:
-                inv_pose = np.linalg.inv(c2w)
+            """if inv_pose is None:
+                inv_pose = np.linalg.inv(c2w) #
                 c2w = np.eye(4)
             else:
-                c2w = inv_pose @ c2w
+                c2w = inv_pose @ c2w"""
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
             c2w = torch.from_numpy(c2w).float()

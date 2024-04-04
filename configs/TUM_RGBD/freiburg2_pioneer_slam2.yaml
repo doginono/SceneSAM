@@ -1,0 +1,34 @@
+inherit_from: configs/TUM_RGBD/tum.yaml
+mapping:
+  #bound: [[-4.96930981,  5.54755211],
+  #     [-3.98643184,  0.55671239],
+  #     [ 0.49400002,  9.75700092]]
+  #marching_cubes_bound: [[-5.1,  5.7],
+  #     [-4.1,  0.7],
+  #     [ 0.3,  10]]
+  bound: [[-4.8292,  4.1536],
+        [-4.3810,  4.9568],
+        [-1.4766,  2.5906]]
+  marching_cubes_bound: [[-4.8292,  4.1536],
+        [-4.3810,  4.9568],
+        [-1.4766,  2.5906]]
+       
+  every_frame: 10
+  keyframe_every: 20
+data:
+  input_folder: Datasets/TUM_RGBD/rgbd_dataset_freiburg2_pioneer_slam2
+  output: output/TUM_RGBD/rgbd_dataset_freiburg2_pioneer_slam2
+  logs: logs/TUM_RGBD/freiburg2_pioneer_slam2
+cam:  #intrinsic is different per scene in TUM
+  H: 480 
+  W: 640 
+  fx: 520.9
+  fy: 521.0
+  cx: 325.1
+  cy: 249.7
+  crop_edge: 8
+  crop_size: [384,512]
+  distortion: [0.2312, -0.7849, -0.0033, -0.0001, 0.9172]
+output_dimension_semantic: 500  
+Segmenter:
+  every_frame: 20

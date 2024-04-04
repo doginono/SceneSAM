@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
 import os
+import copy
 
 
 def readDepth(filepath):
@@ -66,15 +67,15 @@ def readImage(filepath):
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
-def checkIfInsideImage(backprojectedSamples, zg, Depthg, border):
+def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
     condition = (
         (backprojectedSamples[1, :] < 0 + border)
         | (backprojectedSamples[0, :] < 0 + border)
-        | (backprojectedSamples[1, :] > 679 - border)
-        | (backprojectedSamples[0, :] > 1199 - border)
+        | (backprojectedSamples[1, :] > H - 1 - border)
+        | (backprojectedSamples[0, :] > W - 1 - border)
     )
     filteredIndices = np.where(condition)
     filteredBackProj = backprojectedSamples[:, ~condition]
@@ -83,8 +84,12 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border):
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < 0.01)
-    filteredBackProj = filteredBackProj[:, indices]
+    indices = np.where(abs(depthCheck) < 0.05)
+    filteredBackProj = np.squeeze(filteredBackProj[:, indices])
+    bad_depth_mask = (
+        Depthg[filteredBackProj[1, :], filteredBackProj[0, :]] == 0
+    )  # filter out samples hitting pixels with error in depths
+    # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
     return filteredBackProj
 
 
@@ -323,13 +328,17 @@ def createFrontMappingAutosort(
     smallesMaskSize=1000,
     border=25,
 ):
-    
-    if curr_frame_number==0:
+    verbose = True
+
+    if curr_frame_number == 0:
+        assert (
+            False
+        ), "sjouldnt be entered, if it is entered use passed groundtruth pose instead of the estimated one since this is the 0 frame"
         masks = automaticMask.generate(current_frame)
         ids = backproject.generateIds_Auto(masks, min_area=smallesMaskSize)
-        #idler sortlancak
-        
-        max_id = ids.max()+1
+        # idler sortlancak
+
+        max_id = ids.max() + 1
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids, max_id, points_per_instance=1000
         )
@@ -337,7 +346,7 @@ def createFrontMappingAutosort(
             samplesFromCurrent[:2, :],
             T[0],
             K,
-            readDepth(depths[0]),
+            depths,
         )
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
@@ -346,21 +355,33 @@ def createFrontMappingAutosort(
         return ids, realWorldSamples, max_id
 
     T_current = T[curr_frame_number]
-    depthf = readDepth(depths[curr_frame_number])
-    
-    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+    depthf = depths
+
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )  # project to current frame
     frontProjectedSamples = checkIfInsideImage(
-        frontProjectedSamples, projDepth, depthf, border=border
+        frontProjectedSamples,
+        projDepth,
+        depthf,
+        border=border,
+        H=depthf.shape[0],
+        W=depthf.shape[1],
     )
+
+    if verbose:
+        visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
+        # this should be the same as unsqueezing the middle dimension
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
 
     mask = automaticMask.generate(current_frame)
     # TODO suna bakilcak
-    ids = backproject.generateIds_Auto(mask, min_area=smallesMaskSize)
-    current_unique_ids=np.unique(ids)
-    
-    
+    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
+    depth_mask = depthf == 0
+    # ids[depth_mask] = -100
+    current_unique_ids = np.unique(ids)
+
     """ 
     # Projected everything onto the current frame
     # Now for each sample project on to the image and check if it is inside the each mask instance
@@ -368,37 +389,69 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
+    if verbose:
+        visualizer.visualize(
+            ids,
+            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_before.png",
+        )
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
-        currentMask= ids == currentMaskId
+        currentMask = ids == currentMaskId
         dictOfIds = {-100: -100}
         for instance in np.unique(frontProjectedSamples[2, :]):
             if instance >= 0:
-                samplesInside= frontProjectedSamples[:, frontProjectedSamples[2, :] == instance]
-                insideTheMask= currentMask[samplesInside[1, :] , samplesInside[0, :]]
+                samplesInside = frontProjectedSamples[
+                    :, frontProjectedSamples[2, :] == instance
+                ]
+                insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
-        maxForMask= max(dictOfIds, key=dictOfIds.get)
+                if verbose:
+                    b = ids.copy()
+                    b[~currentMask] = 0
+
+                    b[currentMask] = -100
+                    visualizer.visualize(
+                        b,
+                        path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_{currentMaskId}_{instance}.png",
+                        title=f"currentMaskId: {currentMaskId} number of prompts: {len(samplesInside[0])}, id: {instance}",
+                        prompts=samplesInside[:2, :].T,
+                    )
+
+        maxForMask = max(dictOfIds, key=dictOfIds.get)
+        insideTheMask = currentMask[
+            frontProjectedSamples[1, :], frontProjectedSamples[0, :]
+        ]
+        # i do not get this part, inside TheMask is defined in loop
         if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
-            copyOfIds[ids==currentMaskId ] = maxForMask
+            copyOfIds[ids == currentMaskId] = maxForMask
+        # dictOfIds has -100: -100 so only if some point of samples hit the current mask we could give it a new id
         elif maxForMask != -100:
-            copyOfIds[ ids==currentMaskId ] = max_id
+            copyOfIds[ids == currentMaskId] = max_id
             max_id += 1
-            
-       
-    ids=copyOfIds
-    
+
+    ids = copyOfIds
+
+    ids[depth_mask] = -100  # ask Dogu if this makes sense
+
     if border != 0:
-        ids[0 : 2 * border] = -100
-        ids[-2 * border :] = -100
-        ids[:, 0 : 2 * border] = -100
-        ids[:, -2 * border :] = -100
-    
+        ids[0:border] = -100
+        ids[-border:] = -100
+        ids[:, 0:border] = -100
+        ids[:, -border:] = -100
+
     numberOfMasks = len(np.unique(ids))
 
     # TODO sample according to the areas of the masks
+    idcopy = copy.deepcopy(ids)
+    idcopy[depth_mask] = -100
+    if verbose:
+        visualizer.visualize(
+            idcopy,
+            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_after.png",
+        )
     samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        ids, numberOfMasks, points_per_instance=100
+        idcopy, numberOfMasks, points_per_instance=50
     )
     # 3d
     realWorldProjectCurr = backproject.realWorldProject(
@@ -409,10 +462,11 @@ def createFrontMappingAutosort(
         (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
     )
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
-    #max_id = np.max(samples[2:, :])
-    #print(samples)
+    # max_id = np.max(samples[2:, :])
+    # print(samples)
 
     return ids, samples, max_id
+
 
 def createReverseMappingCombined_area_sort(
     curr_frame_number,
@@ -438,15 +492,22 @@ def createReverseMappingCombined_area_sort(
 ):
     # print(f'beginning: {np.unique(samples[-1])}')
     T_current = T[curr_frame_number]
-    depthf = readDepth(depths[curr_frame_number])
+    depthf = depths  # readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
     predictor.set_image(current_frame)
 
     # projected to current camera frame, they also have ids
-    frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
+    frontProjectedSamples, projDepth = backproject.camProject(
+        samples, T_current, K
+    )  # project to current frame
 
     frontProjectedSamples = checkIfInsideImage(
-        frontProjectedSamples, projDepth, depthf, border=border
+        frontProjectedSamples,
+        projDepth,
+        depthf,
+        border=border,
+        H=depthf.shape[0],
+        W=depthf.shape[1],
     )
     # check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
@@ -505,6 +566,7 @@ def createReverseMappingCombined_area_sort(
 
     # Reverse false start with the smaller one
     # Reverse True start with the bigger one
+    visualizer = visualizerForIds()
     sortedMasks = sorted(mask_list, key=(lambda x: x["instance"]), reverse=True)
     for d in sortedMasks:
         instance = d["instance"]
@@ -568,6 +630,11 @@ def createReverseMappingCombined_area_sort(
                     update[instance][target_id] = 1
         condition = mask.squeeze() & (masks == -100)
         masks[condition] = instance
+        visualizer.visualize(
+            masks,
+            prompts=theRelevant,
+            path=f"/home/rozenberszki/project/wsnsl/old/{curr_frame_number}_{instance}.png",
+        )
 
     unique_ids = np.unique(masks).astype(int)
     for instance in unique_ids:
@@ -630,6 +697,7 @@ def createReverseMappingCombined_area_sort(
         masks[-2 * border :] = -100
         masks[:, 0 : 2 * border] = -100
         masks[:, -2 * border :] = -100
+    masks[depthf == 0] = -100
     samplesFromCurrent = sample_from_instances_with_ids(
         masks, numberOfMasks, points_per_instance=30
     )
@@ -644,7 +712,6 @@ def createReverseMappingCombined_area_sort(
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
 
     return masks, samples, max_id, update
-    
 
 
 def createReverseMappingCombined(
@@ -676,7 +743,12 @@ def createReverseMappingCombined(
     frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
 
     frontProjectedSamples = checkIfInsideImage(
-        frontProjectedSamples, projDepth, depthf, border=border
+        frontProjectedSamples,
+        projDepth,
+        depthf,
+        border=border,
+        H=depthf.shape[0],
+        W=depthf.shape[1],
     )
     # check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
@@ -957,7 +1029,12 @@ def createReverseMappingCombined_area_sort_predict(
     frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
 
     frontProjectedSamples = checkIfInsideImage(
-        frontProjectedSamples, projDepth, depthf, border=border
+        frontProjectedSamples,
+        projDepth,
+        depthf,
+        border=border,
+        H=depthf.shape[0],
+        W=depthf.shape[1],
     )
     # check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
@@ -1072,7 +1149,9 @@ def createReverseReverseMappingCombined(
     # projected to current camera frame, they also have ids
     frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
 
-    frontProjectedSamples = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
+    frontProjectedSamples = checkIfInsideImage(
+        frontProjectedSamples, projDepth, depthf, H=depthf.shape[0], W=depthf.shape[1]
+    )
     # check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
 
@@ -1127,7 +1206,9 @@ def createReverseReverseMappingCombined(
 
 def cleanSamples(samples, T_current, K, depthf, masks):
     frontProjectedSamples, projDepth = backproject.camProject(samples, T_current, K)
-    proj = checkIfInsideImage(frontProjectedSamples, projDepth, depthf)
+    proj = checkIfInsideImage(
+        frontProjectedSamples, projDepth, depthf, H=depthf.shape[0], W=depthf.shape[1]
+    )
     unique_ids = np.unique(proj[2, :].astype(int))
     for instance in unique_ids:
         filtre = proj[2, :, :] == instance

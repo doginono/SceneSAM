@@ -1,0 +1,16 @@
+31. März
+    check why only a fiew samples are projected into the current frame.
+
+if full_slam:
+    1. start semgent thread
+    2. if tracker tracked the frame: let both mappers and segmenter continue
+    3. if normal mapper reaches stage semantic: wait for segmenter 
+
+possible efficiency improvements:
+-unnecessary reading of depth and color for round 1 in postprocess
+-unnecessary read of segmetnation in full_slam
+-technically the self.semenatic_frames array is not used, since the segmentations are written to file, but with the 
+    bigger machine we could also consider not writing to file but just using that array
+
+full slam:
+    implement merging on Automatic Maskgenerator and fix the previous keyframes

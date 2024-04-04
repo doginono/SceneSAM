@@ -6,4 +6,4 @@ data:
   input_folder: /home/rozenberszki/project/wsnsl/Datasets/Replica/room2
   output: output/Own/room2
   logs: logs/room2
-output_dimension_semantic: 250
+output_dimension_semantic: 400

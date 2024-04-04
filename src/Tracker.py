@@ -16,6 +16,7 @@ from src.utils.Visualizer import Visualizer
 
 class Tracker(object):
     def __init__(self, cfg, args, slam):
+
         self.cfg = cfg
         self.args = args
 
@@ -60,6 +61,7 @@ class Tracker(object):
         self.frame_reader = get_dataset(
             cfg, args, self.scale, device=self.device, tracker=True, slam=slam
         )
+        self.frame_reader.__post_init__(slam)
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
             self.frame_reader, batch_size=1, shuffle=False, num_workers=1
@@ -198,7 +200,6 @@ class Tracker(object):
                 pbar.set_description(f"Tracking Frame {idx[0]}")
 
             idx = idx[0]
-            print("Tracking Frame:", idx)
             gt_depth = gt_depth[0]
             gt_color = gt_color[0]
             gt_c2w = gt_c2w[0]
@@ -208,6 +209,7 @@ class Tracker(object):
                 # initiate mapping every self.every_frame frames
                 if idx > 0 and (idx % self.every_frame == 1 or self.every_frame == 1):
                     while self.mapping_idx[0] != idx - 1:
+                        # print("tracker stuck")
                         time.sleep(0.1)
                     pre_c2w = self.estimate_c2w_list[idx - 1].to(device)
             elif self.sync_method == "loose":
@@ -216,6 +218,7 @@ class Tracker(object):
                 while (
                     self.mapping_idx[0] < idx - self.every_frame - self.every_frame // 2
                 ):
+                    # print("tracker stuck in loose")
                     time.sleep(0.1)
             elif self.sync_method == "free":
                 # pure parallel, if mesh/vis happens may cause inbalance
@@ -229,7 +232,7 @@ class Tracker(object):
                 print(Style.RESET_ALL)
 
             if idx == 0 or self.gt_camera:
-                c2w = gt_c2w
+                c2w = gt_c2w  # * self.shift.to(device)
                 # if not self.no_vis_on_first_frame:
                 # self.visualizer.vis(
                 #   idx, 0, gt_depth, gt_color, c2w, self.c, self.decoders)
