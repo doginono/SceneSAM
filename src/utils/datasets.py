@@ -172,8 +172,9 @@ class BaseDataset(Dataset):
             )[0]
             """sns.histplot(depth_data.numpy().reshape(-1))
             plt.title("Depth data before resize")
-            plt.show()
+            plt.show()[384,512]
             print(depth_data.shape, " before resize")"""
+
             depth_data = F.interpolate(
                 depth_data[None, None], self.crop_size, mode="nearest"
             )[0, 0]
