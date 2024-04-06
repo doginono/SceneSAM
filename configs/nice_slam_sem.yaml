@@ -39,7 +39,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   no_vis_on_first_frame: True
-  gt_camera: True
+  gt_camera: False
   lr: 0.001
   pixels: 200
   iters: 10

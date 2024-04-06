@@ -9,4 +9,6 @@ data:
   logs: 'logs/room0'
   output: 'output/Own/room0'
 output_dimension_semantic: 400
+cam:
+  crop_size: [340,600]
 
