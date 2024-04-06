@@ -48,6 +48,13 @@ class Mapper(object):
         self.round = slam.round
         # self.wait_segmenter = cfg['Segmenter']['mask_generator']
         self.seg_freq = cfg["Segmenter"]["every_frame"]
+        s = np.ones((4, 4), int)
+        if cfg["dataset"] == "tumrgbd":
+            s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
+            print("tumrgbd")
+        elif cfg["dataset"] == "replica" and cfg["tracking"]["gt_camera"]:
+            s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        self.shift = s  # s"""
         # self.T_wc = slam.T_wc
         self.output_dimension_semantic = slam.output_dimension_semantic
         self.semantic_iter_ratio = cfg["mapping"]["semantic_iter_ratio"]
@@ -1215,7 +1222,9 @@ class Mapper(object):
                 ):
                     print("end, at round: ", round)
                     log_tracking_error(
-                        self.gt_c2w_list.cpu(), self.estimate_c2w_list.cpu(), writer
+                        self.gt_c2w_list.cpu(),
+                        self.estimate_c2w_list.cpu() * self.shift,
+                        writer,
                     )
                     mesh_out_file_color = f"{self.output}/mesh/final_mesh_color.ply"
                     mesh_out_file_seg = f"{self.output}/mesh/final_mesh_seg.ply"
