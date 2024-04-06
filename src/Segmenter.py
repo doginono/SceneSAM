@@ -47,6 +47,9 @@ class Segmenter(object):
             print("tumrgbd")
         elif cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        elif cfg["dataset"] == "scannet++":
+            s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
+
         self.shift = s  # s"""
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
@@ -162,9 +165,10 @@ class Segmenter(object):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)"""
         img, depth = self.frame_reader.get_colorAndDepth(idx)
         img = (img.cpu().numpy() * 255).astype(np.uint8)
+        print(len(self.estimate_c2w_list))
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
-            self.estimate_c2w_list.cpu() * self.shift,
+            self.estimate_c2w_list.cpu()* self.shift,
             self.K,
             depth.cpu(),
             self.predictor,
@@ -173,6 +177,7 @@ class Segmenter(object):
             samples=self.samples,
             smallesMaskSize=1000,
             border=self.border,
+           # verbose=True  
         )
 
         self.samples = s
@@ -264,11 +269,14 @@ class Segmenter(object):
         self.max_id = ids.max() + 1
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids, self.max_id, points_per_instance=100
+            ids, self.max_id, points_per_instance=100, samplePixelFarther=20
         )
+        # changed
+        self.zero_pos[:3,3]*=0.5
+        self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos * self.shift,
+            self.zero_pos,
             self.K,
             depth.cpu(),
         )
@@ -408,7 +416,7 @@ class Segmenter(object):
         if self.store_vis:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.png")
-                self.visualizer.visualize(
+                self.visualizer.visualizer(
                     self.semantic_frames[index // self.every_frame_seg].numpy(),
                     path=path,
                 )
@@ -460,7 +468,10 @@ class Segmenter(object):
                 # print("segmenter stuck")
                 time.sleep(0.1)
             print("start segmenting frame: ", idx)
+            Starttime=time.time()
             self.segment_idx_forAuto(idx)
+            stopTime=time.time()
+            print("time taken for segmenting frame: ", stopTime-Starttime)
             print("finished segmenting frame: ", idx)
             visualizerForId.visualize(
                 self.semantic_frames[idx // self.every_frame_seg],

@@ -1,10 +1,11 @@
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
   bound: [[-5.5,5.9],[-6.7,5.4],[-4.7,5.3]]
-  marching_cubes_bound: [[-5.5,5.9],[-6.7,5.4],[-4.7,5.3]]
+  marching_cubes_bound: [[-1,1],[-1,1],[-1,1]]
 data:
-  input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset/Scannet++
+  input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset
   output: output/Scannet++/56a0ec536c
   logs: logs/Scannet++/56a0ec536c
 output_dimension_semantic: 200
-scale: 0.5
+scale: 1
+load_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar

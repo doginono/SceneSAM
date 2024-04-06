@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 import matplotlib.colors as mcolors
 import copy
-
+import os
 
 def show_anns(anns):
     if len(anns) == 0:
@@ -121,4 +121,4 @@ class visualizerForIds:
         if path is not None:
             plt.savefig(path)
 
-        plt.show()
+        #plt.show()

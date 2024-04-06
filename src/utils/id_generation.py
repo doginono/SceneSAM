@@ -46,7 +46,7 @@ def createMapping(
 
     # depth check indices
     # if depth close enough
-    indices = np.where(abs(depthCheck) < 0.1)
+    indices = np.where(abs(depthCheck) < 0.5)
     filteredBackProj = filteredBackProj[:, indices]
 
     if filteredBackProj.size == 0:
@@ -67,7 +67,7 @@ def readImage(filepath):
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
-def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.05):
+def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.1):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
@@ -323,13 +323,20 @@ def createFrontMappingAutosort(
     max_id=None,
     current_frame=None,
     samples=None,
-    smallesMaskSize=1000,
-    border=25,
+    smallesMaskSize=100,
+    border=0,
 ):
     verbose = True
-
+    '''print(K)
+    K/=3
+    print(T[curr_frame_number])'''
     T_current = T[curr_frame_number]
     depthf = depths
+    print(T_current)
+
+    #
+    # T_current[:3,3] *=0.5
+    #print(T_current)
 
     frontProjectedSamples, projDepth = backproject.camProject(
         samples, T_current, K
@@ -341,6 +348,7 @@ def createFrontMappingAutosort(
         border=border,
         H=depthf.shape[0],
         W=depthf.shape[1],
+        depthCondition=0.2,
     )
 
     if verbose:
@@ -352,7 +360,6 @@ def createFrontMappingAutosort(
     mask = automaticMask.generate(current_frame)
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
-    depth_mask = depthf == 0
     # ids[depth_mask] = -100
     current_unique_ids = np.unique(ids)
 
@@ -371,61 +378,39 @@ def createFrontMappingAutosort(
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
-        currentMask = ids == currentMaskId
+        currentMask= ids == currentMaskId
         dictOfIds = {-100: -100}
         for instance in np.unique(frontProjectedSamples[2, :]):
             if instance >= 0:
-                samplesInside = frontProjectedSamples[
-                    :, frontProjectedSamples[2, :] == instance
-                ]
-                insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
+                samplesInside= frontProjectedSamples[:, frontProjectedSamples[2, :] == instance]
+                
+                insideTheMask= currentMask[samplesInside[1, :] , samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
-                if verbose:
-                    b = ids.copy()
-                    b[~currentMask] = 0
-
-                    b[currentMask] = -100
-                    visualizer.visualize(
-                        b,
-                        path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_{currentMaskId}_{instance}.png",
-                        title=f"currentMaskId: {currentMaskId} number of prompts: {len(samplesInside[0])}, id: {instance}",
-                        prompts=samplesInside[:2, :].T,
-                    )
-
-        maxForMask = max(dictOfIds, key=dictOfIds.get)
-        insideTheMask = currentMask[
-            frontProjectedSamples[1, :], frontProjectedSamples[0, :]
-        ]
-        # i do not get this part, inside TheMask is defined in loop
-        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask):
-            copyOfIds[ids == currentMaskId] = maxForMask
-        # dictOfIds has -100: -100 so only if some point of samples hit the current mask we could give it a new id
+                
+        maxForMask= max(dictOfIds, key=dictOfIds.get)
+        ###########################################
+        insideTheMask= currentMask[frontProjectedSamples[1, :] , frontProjectedSamples[0, :]]
+        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and np.sum(insideTheMask) > 2:
+            copyOfIds[ids==currentMaskId ] = maxForMask
         elif maxForMask != -100:
-            copyOfIds[ids == currentMaskId] = max_id
+            copyOfIds[ ids==currentMaskId ] = max_id
             max_id += 1
-
-    ids = copyOfIds
-
-    ids[depth_mask] = -100  # ask Dogu if this makes sense
-
+    
+    ids=copyOfIds
+    
     if border != 0:
-        ids[0:border] = -100
-        ids[-border:] = -100
-        ids[:, 0:border] = -100
-        ids[:, -border:] = -100
-
+        ids[0 : 2 * border] = -100
+        ids[-2 * border :] = -100
+        ids[:, 0 : 2 * border] = -100
+        ids[:, -2 * border :] = -100
+    
     numberOfMasks = len(np.unique(ids))
 
     # TODO sample according to the areas of the masks
-    idcopy = copy.deepcopy(ids)
-    idcopy[depth_mask] = -100
-    if verbose:
-        visualizer.visualize(
-            idcopy,
-            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_after.png",
-        )
+    '''if verbose:
+        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])'''
     samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        idcopy, numberOfMasks, points_per_instance=50
+        ids, numberOfMasks, points_per_instance=50, samplePixelFarther=20
     )
     # 3d
     realWorldProjectCurr = backproject.realWorldProject(
@@ -438,7 +423,11 @@ def createFrontMappingAutosort(
     samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
     # max_id = np.max(samples[2:, :])
     # print(samples)
-
+    print("unique ids", np.unique(ids))
+    if verbose:
+        #for i in range(22,42):
+        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet",str(25)+"later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0]
+        )
     return ids, samples, max_id
 
 

@@ -144,6 +144,7 @@ class BaseDataset(Dataset):
             edge = self.crop_edge
         else:
             edge = 0
+        
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
@@ -160,12 +161,11 @@ class BaseDataset(Dataset):
         color_data = color_data / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
-        color_data = cv2.resize(color_data, (W, H))
+        #color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
             # follow the pre-processing step in lietorch, actually is resize
-            print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
@@ -184,6 +184,7 @@ class BaseDataset(Dataset):
             plt.title("Depth data after resize")
             plt.show()"""
             color_data = color_data.permute(1, 2, 0).contiguous()
+        print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
 
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
@@ -230,7 +231,7 @@ class BaseDataset(Dataset):
             depth_data = depth_data[edge:-edge, edge:-edge]"""
         color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
-        pose[:3, 3] *= self.scale
+        pose[:3, 3] *= 0.5 # self.scale
         semantic_data = self.get_segmentation(index)
         # pose = pose * self.shift.float()
         return (
@@ -373,6 +374,7 @@ class Replica(BaseDataset):
             c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
+            c2w[:3, 3] *= 0.5
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
@@ -458,28 +460,29 @@ class ScanNet(BaseDataset):
 
 
 class ScanNetPlusPlus(BaseDataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
-        super(ScanNet, self).__init__(cfg, args, scale, device)
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+        super(ScanNetPlusPlus, self).__init__(cfg, args, scale, slam, tracker, device)
+        #print("nice")
         self.color_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg")),
-            key=lambda x: int(os.path.basename(x)[:-4]),
-        )
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
+        )[:500]
         self.depth_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "color_path", "*.png")),
-            key=lambda x: int(os.path.basename(x)[:-4]),
-        )
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
+        )[:500]
         self.load_poses(self.input_folder)
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
         T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
-        for i in range(len(T_wc)):
+        for i in range(500):#len(T_wc)):
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
             c2w = torch.from_numpy(c2w).float()
+            #c2w[:3,3]*=0.5
             self.poses.append(c2w)
+            
         '''pose_paths = sorted(
             glob.glob(os.path.join(path, "*.txt")),
             key=lambda x: int(os.path.basename(x)[:-4]),

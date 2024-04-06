@@ -183,7 +183,7 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 
 def sample_from_instances_with_ids_area(
-    ids, numberOfMasks, points_per_instance=1, min_points=500,samplePixelFarther=10
+    ids, numberOfMasks, points_per_instance=1, min_points=500,samplePixelFarther=40
 ):
     tensors = []
 
@@ -201,7 +201,7 @@ def sample_from_instances_with_ids_area(
             """points_per_instance = np.max(
                 (points_per_instance // (5 * 5), min_points)
             )"""
-            points_per_instance = points_per_instance // (5 * 5)
+            points_per_instance = points_per_instance // (samplePixelFarther * samplePixelFarther)
             if (
                 len(indices) > points_per_instance
                 and len(indices) > 1
@@ -218,9 +218,11 @@ def sample_from_instances_with_ids_area(
                 element_tensor = element_tensor.unsqueeze(0)
 
                 tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
-
-    torch_sampled_indices = torch.cat(tensors, axis=1)
-    return torch_sampled_indices.to(torch.int32)
+    if len(tensors) == 0:
+        return torch.zeros((2, 0, 0)).to(torch.int32)
+    else:
+        torch_sampled_indices = torch.cat(tensors, axis=1)
+        return torch_sampled_indices.to(torch.int32)
 
 
 def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):

@@ -1,5 +1,6 @@
 dataset: 'scannet++'
 coarse: False
+low_gpu_mem: True
 meshing:
   eval_rec: True
   resolution: 256 # change to 512 for higher resolution geometry
@@ -11,6 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.001
+  gt_camera: True
   pixels: 200
   iters: 10
 Segmenter:
@@ -25,7 +27,7 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 20
+  every_frame: 25
   verbose: True
   hit_percent: 0.4
 
@@ -48,7 +50,7 @@ mapping:
   mapping_window_size: 5
   pixels: 1000
   iters_first: 1000 #finetune
-  iters: 60 #finetune
+  iters: 100 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -71,13 +73,14 @@ mapping:
       semantic_lr: 0.4 #original: 0.005
 
 cam:
-  H: 1440
-  W: 1920
-  fx: 1430.2189
-  fy: 1430.2266
-  cx: 954.92126
-  cy: 724.7766
+  H: 720
+  W: 960
+  fx: 714.53965
+  fy: 714.53965
+  cx: 477
+  cy: 361
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 0
-  crop_size: [720,960]
+  #crop_size: [480,640]
 #parames2finetune: ['mapping', ]
+# TODO run AUTO with K and print also traj print
