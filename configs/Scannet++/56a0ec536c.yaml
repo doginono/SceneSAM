@@ -1,7 +1,8 @@
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
   bound: [[-5.5,5.9],[-6.7,5.4],[-4.7,5.3]]
-  marching_cubes_bound: [[-1,1],[-1,1],[-1,1]]
+  #bound: [[-4,4],[-4,4],[-4,4]]
+  marching_cubes_bound: [[-6,6],[-6,6],[-6,6]]
 data:
   input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset
   output: output/Scannet++/56a0ec536c

@@ -348,7 +348,7 @@ def createFrontMappingAutosort(
         border=border,
         H=depthf.shape[0],
         W=depthf.shape[1],
-        depthCondition=0.2,
+        depthCondition=0.05,
     )
 
     if verbose:
@@ -409,21 +409,28 @@ def createFrontMappingAutosort(
     # TODO sample according to the areas of the masks
     '''if verbose:
         visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])'''
-    samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-        ids, numberOfMasks, points_per_instance=50, samplePixelFarther=20
-    )
-    # 3d
-    realWorldProjectCurr = backproject.realWorldProject(
-        samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
-    )
-    # add the ids
-    realWorldProjectCurr = np.concatenate(
-        (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
-    )
-    samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
-    # max_id = np.max(samples[2:, :])
-    # print(samples)
-    print("unique ids", np.unique(ids))
+    try:
+    # Your concatenation operation
+        # NEW
+        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+            ids, numberOfMasks, points_per_instance=50, samplePixelFarther=20, normalizePointNumber=40
+        )
+        # 3d
+        
+        realWorldProjectCurr = backproject.realWorldProject(
+            samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
+        )
+        # add the ids
+        realWorldProjectCurr = np.concatenate(
+            (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
+        )
+        samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
+        # max_id = np.max(samples[2:, :])
+        # print(samples)
+        print("unique ids", np.unique(ids))
+    except Exception as e:
+        print(f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}")
+    
     if verbose:
         #for i in range(22,42):
         visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet",str(25)+"later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0]

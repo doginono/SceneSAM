@@ -181,9 +181,9 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 # id list better
 
-
+# NEW Variable normalizePointNumber need to define it according to the dimension of the image
 def sample_from_instances_with_ids_area(
-    ids, numberOfMasks, points_per_instance=1, min_points=500,samplePixelFarther=40
+    ids, numberOfMasks, points_per_instance=1, min_points=500,samplePixelFarther=40, normalizePointNumber=50
 ):
     tensors = []
 
@@ -201,7 +201,7 @@ def sample_from_instances_with_ids_area(
             """points_per_instance = np.max(
                 (points_per_instance // (5 * 5), min_points)
             )"""
-            points_per_instance = points_per_instance // (samplePixelFarther * samplePixelFarther)
+            points_per_instance = points_per_instance // (normalizePointNumber * normalizePointNumber) # new parameter define
             if (
                 len(indices) > points_per_instance
                 and len(indices) > 1
