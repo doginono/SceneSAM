@@ -52,7 +52,7 @@ class Mapper(object):
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
             print("tumrgbd")
-        elif cfg["dataset"] == "replica" and cfg["tracking"]["gt_camera"]:
+        elif cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         self.shift = s  # s"""
         # self.T_wc = slam.T_wc
