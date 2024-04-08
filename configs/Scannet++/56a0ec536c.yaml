@@ -7,6 +7,10 @@ data:
   input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset
   output: output/Scannet++/56a0ec536c
   logs: logs/Scannet++/56a0ec536c
-output_dimension_semantic: 200
+segmenter:
+  samplePixelFarther: 25
+  normalizePointNumber: 25
+  hit_percent: 0.4
+output_dimension_semantic: 500
 scale: 1
-load_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar
+#load_cpt: output/Scannet++/56a0ec536c/ckpts/00049.tar

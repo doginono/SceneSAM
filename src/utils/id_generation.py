@@ -323,8 +323,12 @@ def createFrontMappingAutosort(
     max_id=None,
     current_frame=None,
     samples=None,
-    smallesMaskSize=100,
+    smallesMaskSize=1000,
     border=0,
+    depthCondition=0.04,
+    samplePixelFarther=25,
+    normalizePointNumber=25,
+    verbose=False,
 ):
     verbose = True
     '''print(K)
@@ -332,7 +336,6 @@ def createFrontMappingAutosort(
     print(T[curr_frame_number])'''
     T_current = T[curr_frame_number]
     depthf = depths
-    print(T_current)
 
     #
     # T_current[:3,3] *=0.5
@@ -348,7 +351,7 @@ def createFrontMappingAutosort(
         border=border,
         H=depthf.shape[0],
         W=depthf.shape[1],
-        depthCondition=0.05,
+        depthCondition=depthCondition,
     )
 
     if verbose:
@@ -373,7 +376,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number}_before.png",
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
         )
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
@@ -413,7 +416,7 @@ def createFrontMappingAutosort(
     # Your concatenation operation
         # NEW
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids, numberOfMasks, points_per_instance=50, samplePixelFarther=20, normalizePointNumber=40
+            ids=ids, samplePixelFarther=samplePixelFarther, normalizePointNumber=normalizePointNumber
         )
         # 3d
         

@@ -292,7 +292,7 @@ class Tracker(object):
                         self.tracking_pixels,
                         optimizer_camera,
                     )
-                    print(gt_color.shape)
+                    #print(gt_color.shape)
 
                     if cam_iter == 0:
                         initial_loss = loss

@@ -29,8 +29,11 @@ class Segmenter(object):
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
+        self.samplePixelFarther=cfg["Segmenter"]["samplePixelFarther"]
+        self.normalizePointNumber=cfg["Segmenter"]["normalizePointNumber"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
-
+        #TODO
+        # self.
         """path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:, 1:3] *= -1"""
@@ -177,6 +180,9 @@ class Segmenter(object):
             samples=self.samples,
             smallesMaskSize=1000,
             border=self.border,
+            depthCondition=0.003,
+            samplePixelFarther=self.samplePixelFarther,
+            normalizePointNumber=self.normalizePointNumber,
            # verbose=True  
         )
 
@@ -269,10 +275,11 @@ class Segmenter(object):
         self.max_id = ids.max() + 1
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids, self.max_id, points_per_instance=100, samplePixelFarther=20
+            ids=ids, samplePixelFarther=self.samplePixelFarther,
+            normalizePointNumber=self.normalizePointNumber
         )
         # changed
-        self.zero_pos[:3,3]*=0.5
+        #self.zero_pos[:3,3]*=0.5
         self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
@@ -283,6 +290,7 @@ class Segmenter(object):
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
         )
+        
         return realWorldSamples
 
     def process_keys(self, deleted):
