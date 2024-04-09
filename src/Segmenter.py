@@ -109,7 +109,7 @@ class Segmenter(object):
         self.verbose = cfg["Segmenter"]["verbose"]
         self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
-
+        self.depthCondition = cfg["Segmenter"]["depthCondition"]
     def segment_reverse(self, idx):
         assert False
         img = cv2.imread(self.color_paths[idx])
@@ -169,6 +169,7 @@ class Segmenter(object):
         img, depth = self.frame_reader.get_colorAndDepth(idx)
         img = (img.cpu().numpy() * 255).astype(np.uint8)
         print(len(self.estimate_c2w_list))
+        print(self.border)
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
             self.estimate_c2w_list.cpu()* self.shift,
@@ -178,9 +179,9 @@ class Segmenter(object):
             max_id=self.max_id,
             current_frame=img,
             samples=self.samples,
-            smallesMaskSize=1000,
+            smallesMaskSize=10000,
             border=self.border,
-            depthCondition=0.003,
+            depthCondition=self.depthCondition,
             samplePixelFarther=self.samplePixelFarther,
             normalizePointNumber=self.normalizePointNumber,
            # verbose=True  
@@ -276,14 +277,14 @@ class Segmenter(object):
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, samplePixelFarther=self.samplePixelFarther,
-            normalizePointNumber=self.normalizePointNumber
+            normalizePointNumber=self.normalizePointNumber, 
         )
         # changed
         #self.zero_pos[:3,3]*=0.5
-        self.zero_pos*=self.shift
+        #self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos,
+            self.zero_pos * self.shift,
             self.K,
             depth.cpu(),
         )
@@ -496,6 +497,7 @@ class Segmenter(object):
             _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
 
+        
         del self.predictor
         torch.cuda.empty_cache()
 
@@ -516,7 +518,10 @@ class Segmenter(object):
                     path=path,
                 )
         # EDIT THIS
-
+        make_gif_from_array(
+            self.semantic_frames[index_frames // self.every_frame_seg],
+            os.path.join(self.store_directory, "segmentation.gif"),
+        )
         return self.semantic_frames, self.max_id + 1
 
     def plot(self):

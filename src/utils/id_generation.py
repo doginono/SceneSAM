@@ -373,11 +373,11 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
-    if verbose:
+    '''if verbose:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
-        )
+        )'''
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
@@ -393,7 +393,7 @@ def createFrontMappingAutosort(
         maxForMask= max(dictOfIds, key=dictOfIds.get)
         ###########################################
         insideTheMask= currentMask[frontProjectedSamples[1, :] , frontProjectedSamples[0, :]]
-        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and np.sum(insideTheMask) > 2:
+        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and np.sum(insideTheMask) > 10:
             copyOfIds[ids==currentMaskId ] = maxForMask
         elif maxForMask != -100:
             copyOfIds[ ids==currentMaskId ] = max_id
@@ -407,9 +407,8 @@ def createFrontMappingAutosort(
         ids[:, 0 : 2 * border] = -100
         ids[:, -2 * border :] = -100
     
-    numberOfMasks = len(np.unique(ids))
+    # numberOfMasks = len(np.unique(ids))
 
-    # TODO sample according to the areas of the masks
     '''if verbose:
         visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])'''
     try:
