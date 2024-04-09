@@ -1,3 +1,8 @@
+8 April
+    -run panoptic lifting
+    -run novel trajectory from NERF model
+    -why output dimension semantic affects runtime of only normal nice-slam
+
 31. März
     check why only a fiew samples are projected into the current frame.
 

@@ -595,6 +595,8 @@ class Mapper(object):
             else:
                 inc = 0
 
+        loss_function = torch.nn.CrossEntropyLoss() #loss for semantics
+
         for joint_iter in tqdm(
             range(start, num_joint_iters + inc), desc=f"Training on Frame {idx.item()}"
         ):
@@ -716,15 +718,18 @@ class Mapper(object):
                     gt_color = keyframe_dict[frame]["color"].to(device)
                     # -----------------added-------------------
                     # jkl%
-                    gt_semantic = (
-                        torch.eye(self.output_dimension_semantic[0])[
-                            keyframe_dict[frame]["semantic"]
-                        ]
-                        .to(bool)
-                        .to(device)
-                    )
-                    ignore_pixel = keyframe_dict[frame]["ignore_pixel"].to(device)
-                    gt_semantic[ignore_pixel] = 0
+                    if self.stage == "semantic":
+                        gt_semantic = (
+                            torch.eye(self.output_dimension_semantic[0])[
+                                keyframe_dict[frame]["semantic"]
+                            ]
+                            .to(bool)
+                            .to(device)
+                        ) 
+                        ignore_pixel = keyframe_dict[frame]["ignore_pixel"].to(device)
+                        gt_semantic[ignore_pixel] = 0
+                    else:
+                        gt_semantic = None
                     # gt_semantic = keyframe_dict[frame]['semantic'].to(device)
                     # -----------------end-added-------------------
                     if self.BA and frame != oldest_frame:
@@ -742,7 +747,7 @@ class Mapper(object):
                         gt_semantic = cur_gt_semantic.to(device)
                     else:
                         gt_semantic = None"""
-                    gt_semantic = cur_gt_semantic.to(device)
+                    gt_semantic = cur_gt_semantic.to(device) if self.stage == "semantic" else None
                     # -----------------end-added-------------------
                     if self.BA:
                         camera_tensor = camera_tensor_list[camera_tensor_id]
@@ -774,14 +779,15 @@ class Mapper(object):
                     gt_color,
                     gt_semantic,
                     self.device,
-                )
+                ) # give gt_semantic = None if stage is not semantic
                 # -----------------end-added-------------------
                 batch_rays_o_list.append(batch_rays_o.float())
                 batch_rays_d_list.append(batch_rays_d.float())
                 batch_gt_depth_list.append(batch_gt_depth.float())
                 batch_gt_color_list.append(batch_gt_color.float())
                 # -----------------added-------------------
-                batch_gt_semantic_list.append(batch_gt_semantic.float())
+                if self.stage == "semantic":
+                    batch_gt_semantic_list.append(batch_gt_semantic.float())
                 # -----------------end-added-------------------
 
             batch_rays_d = torch.cat(batch_rays_d_list)
@@ -789,7 +795,7 @@ class Mapper(object):
             batch_gt_depth = torch.cat(batch_gt_depth_list)
             batch_gt_color = torch.cat(batch_gt_color_list)
             # -----------------added-------------------
-            batch_gt_semantic = torch.cat(batch_gt_semantic_list)
+            batch_gt_semantic = torch.cat(batch_gt_semantic_list) if self.stage == "semantic" else None
             # -----------------end-added-------------------
 
             if self.nice:
@@ -809,7 +815,7 @@ class Mapper(object):
                 batch_gt_depth = batch_gt_depth[inside_mask]
                 batch_gt_color = batch_gt_color[inside_mask]
                 # -----------------added-------------------
-                batch_gt_semantic = batch_gt_semantic[inside_mask]
+                batch_gt_semantic = batch_gt_semantic[inside_mask] if self.stage == "semantic" else None
                 # -----------------end-added-------------------
 
                 # Done: add semantics in Render output
@@ -847,7 +853,7 @@ class Mapper(object):
                 loss += weighted_color_loss
             # -----------------added-------------------
             elif self.stage == "semantic":
-                loss_function = torch.nn.CrossEntropyLoss()
+                
 
                 """mask = (batch_gt_semantic >= 0)
                 color_semantics = color_semantics[mask].reshape(-1, self.output_dimension_semantic)
