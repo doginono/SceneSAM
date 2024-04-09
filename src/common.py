@@ -19,6 +19,7 @@ def calculate_position_error(gt_pose, est_pose):
 
 def log_tracking_error(gt_poses, est_poses, writer):
 
+    # Calculate errors
     position_errors = [
         calculate_position_error(gt, est) for gt, est in zip(gt_poses, est_poses)
     ]
