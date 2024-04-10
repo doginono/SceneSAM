@@ -47,7 +47,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1000 #finetune
+  iters_first: 10 #finetune
   iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
@@ -79,6 +79,6 @@ cam:
   cy: 339.5
   crop_size: [340, 600]
   png_depth_scale: 6553.5 #for depth image in png format
-  crop_edge: 0
+  crop_edge: 8
 
 #parames2finetune: ['mapping', ]

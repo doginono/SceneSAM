@@ -135,8 +135,8 @@ class BaseDataset(Dataset):
         semantic_data[negative] = False
         semantic_data = torch.from_numpy(semantic_data)
         edge = self.crop_edge
-        if edge > 0:
-            semantic_data = semantic_data[edge:-edge, edge:-edge]
+        """if edge > 0:
+            semantic_data = semantic_data[edge:-edge, edge:-edge]"""  # just wrong, already included in the semantic data
         return semantic_data.to(self.device)
 
     def get_colorAndDepth(self, index, edge=True):

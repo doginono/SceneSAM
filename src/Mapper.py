@@ -790,9 +790,9 @@ class Mapper(object):
                     batch_gt_semantic_list.append(batch_gt_semantic.float())
                 # -----------------end-added-------------------
 
-            batch_rays_d = torch.cat(batch_rays_d_list)
-            batch_rays_o = torch.cat(batch_rays_o_list)
             batch_gt_depth = torch.cat(batch_gt_depth_list)
+            batch_rays_o = torch.cat(batch_rays_o_list)
+            batch_rays_d = torch.cat(batch_rays_d_list)
             batch_gt_color = torch.cat(batch_gt_color_list)
             # -----------------added-------------------
             batch_gt_semantic = torch.cat(batch_gt_semantic_list) if self.stage == "semantic" else None
