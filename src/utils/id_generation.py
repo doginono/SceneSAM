@@ -329,7 +329,7 @@ def createFrontMappingAutosort(
     smallesMaskSize=1000,
     border=25,
 ):
-    verbose = False
+    verbose = True
 
     if curr_frame_number == 0:
         assert (

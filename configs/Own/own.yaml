@@ -42,13 +42,13 @@ mapping:
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 100
+  mesh_freq: 20
   ckpt_freq: 200
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
   iters_first: 10 #finetune
-  iters: 60 #finetune
+  iters: 6 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -80,5 +80,4 @@ cam:
   crop_size: [340, 600]
   png_depth_scale: 6553.5 #for depth image in png format
   crop_edge: 8
-
 #parames2finetune: ['mapping', ]

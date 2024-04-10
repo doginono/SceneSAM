@@ -1,0 +1,21 @@
+inherit_from: 'configs/Own/own.yaml'
+#tracking:
+#  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt'
+mapping:
+  bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+  marching_cubes_bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+data:
+  input_folder: 'Datasets/Replica/room0_panoptic'
+  logs: 'logs/room0_panoptic'
+  output: 'output/Own/room0_panoptic'
+output_dimension_semantic: 400
+cam:
+  png_depth_scale: 1000
+  H: 480
+  W: 640
+  fx: 320.0
+  fy: 320.0
+  cx: 319.5
+  cy: 239.5
+
+

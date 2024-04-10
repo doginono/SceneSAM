@@ -223,8 +223,10 @@ class NICE_SLAM:
         self.gt_c2w_list = gt_c2w_list.to(self.cfg["mapping"]["device"])
         self.gt_c2w_list.share_memory_()
 
-    def set_log_dict(self, log_dict):
-        log_dict = torch.load(log_dict, map_location=self.cfg["mapping"]["device"])
+    def set_log_dict(self, log_dict, map_location=None):
+        if map_location is None:
+            map_location = self.cfg["mapping"]["device"]
+        log_dict = torch.load(log_dict, map_location=map_location)
         self.set_decoders(log_dict["decoder_state_dict"])
         self.set_grid(log_dict["c"])
         self.set_estimate_c2w_list(log_dict["estimate_c2w_list"])

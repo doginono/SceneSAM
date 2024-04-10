@@ -4,6 +4,7 @@ import os
 from src.utils import vis
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 
 def make_gif(frame_folder):
@@ -20,13 +21,33 @@ def make_gif(frame_folder):
     )
 
 
+def color_gif_from_array(color_frames, store, duration=100):
+    frames = []
+    for frame in color_frames:
+        # Create image from array using plt.plot
+        im = Image.fromarray((frame * 255).astype(np.uint8))
+        frames.append(im)
+
+    frame_one = frames[0]
+    frame_one.save(
+        store,
+        format="GIF",
+        append_images=frames,
+        save_all=True,
+        duration=duration,
+        loop=0,
+    )
+
+
 def make_gif_from_array(semantic_frames, store, max_frame=-1, duration=100):
     frames = []
     visualizerForId = vis.visualizerForIds()
 
     for frame in semantic_frames[:max_frame]:
         # Create image from array using plt.plot
-        colors = visualizerForId.get_colors(frame.numpy()) * 255
+        if isinstance(frame, torch.Tensor):
+            frame = frame.numpy()
+        colors = visualizerForId.get_colors(frame) * 255
         im = Image.fromarray(colors.astype(np.uint8))
         frames.append(im)
 
