@@ -334,9 +334,10 @@ def createFrontMappingAutosort(
     '''print(K)
     K/=3
     print(T[curr_frame_number])'''
+    
     T_current = T[curr_frame_number]
     depthf = depths
-
+    
     #
     # T_current[:3,3] *=0.5
     #print(T_current)

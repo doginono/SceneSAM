@@ -115,10 +115,8 @@ class BaseDataset(Dataset):
         self.semantic_frames = slam.semantic_frames
 
     def get_zero_pose(self):
-        temp=self.poses[0].clone()
-        #self.poses[0][:3,3]*=self.poseScale
-        temp[:3,3]*=self.poseScale
-        return temp  # * self.shift
+
+        return self.poses[0]  # * self.shift
 
     def get_segmentation(self, index):
         # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
@@ -470,17 +468,17 @@ class ScanNetPlusPlus(BaseDataset):
         #print("nice")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[:60]
+        )[:200]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[:60]
+        )[:200]
         self.load_poses(self.input_folder)
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
         T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
-        for i in range(60):#len(T_wc)):
+        for i in range(2000):#len(T_wc)):
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1

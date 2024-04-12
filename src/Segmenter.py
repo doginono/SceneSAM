@@ -96,10 +96,11 @@ class Segmenter(object):
         self.frame_numbers = []
         self.samples = None
         self.deleted = {}
+    # TODO CHANGE THIS just for now rotated
         self.border = (
-            cfg["cam"]["crop_edge"]
-            if "crop_edge" in cfg["cam"]
-            else cfg["Segmenter"]["border"]
+            cfg["Segmenter"]["border"]
+            if cfg["Segmenter"]["border"]
+            else "crop_edge" in cfg["cam"]
         )
         self.num_clusters = cfg["Segmenter"]["num_clusters"]
         self.overlap = cfg["Segmenter"]["overlap"]
@@ -170,6 +171,9 @@ class Segmenter(object):
         img = (img.cpu().numpy() * 255).astype(np.uint8)
         print(len(self.estimate_c2w_list))
         print(self.border)
+        print(self.estimate_c2w_list[0])
+        print(self.estimate_c2w_list[1])
+
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
             self.estimate_c2w_list.cpu()* self.shift,
@@ -268,12 +272,17 @@ class Segmenter(object):
         ids = backproject.generateIds_Auto(
             masks, depth.cpu(), min_area=self.first_min_area
         )
+        if self.border != 0:
+            ids[0 : 2 * self.border ] = -100
+            ids[-2 * self.border  :] = -100
+            ids[:, 0 : 2 * self.border ] = -100
+            ids[:, -2 * self.border  :] = -100
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
-        ids[depth.cpu() == 0] = -100
+        #ids[depth.cpu() == 0] = -100
         self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
-        self.max_id = ids.max() + 1
+        self.max_id = ids.max()
 
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, samplePixelFarther=self.samplePixelFarther,
@@ -284,10 +293,11 @@ class Segmenter(object):
         #self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos * self.shift,
+            self.estimate_c2w_list.cpu()[0]* self.shift,
             self.K,
             depth.cpu(),
         )
+        print("samplesFromCurrent: ", np.unique(samplesFromCurrent[2:, :]))
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
         )
@@ -434,6 +444,7 @@ class Segmenter(object):
         return self.semantic_frames, self.max_id
 
     def runAuto(self, max=-1):
+        
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
@@ -449,8 +460,14 @@ class Segmenter(object):
             self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
+        visualizerForId = vis.visualizerForIds()
+
         print("segment first frame")
         s = self.segment_first_ForAuto()
+        visualizerForId.visualizer(
+            self.semantic_frames[0],
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
+        )
         print("finished segmenting first frame")
         if self.is_full_slam:
             path = os.path.join(self.store_directory, f"seg_{0}.npy")
@@ -471,7 +488,6 @@ class Segmenter(object):
             index_frames_predict = np.setdiff1d(
                 np.arange(self.every_frame, max, self.every_frame), index_frames
             )
-        visualizerForId = vis.visualizerForIds()
         for idx in tqdm(index_frames, desc="Segmenting frames"):
             while self.idx[0] < idx:
                 # print("segmenter stuck")

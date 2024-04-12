@@ -30,14 +30,14 @@ Segmenter:
   every_frame: 10
   verbose: True
   hit_percent: 0.4
-  samplePixelFarther: 20
-  normalizePointNumber: 10
-  depthCondition: 0.01
+  samplePixelFarther: 20 # Erosion, distance to the next mask
+  normalizePointNumber: 10 # pointsperInstance/normalizePointNumber*normalizePointNumber
+  depthCondition: 0.01 # for depthcheck
 
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
-  first_min_area: 1000
+  first_min_area: 10000
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 5
@@ -83,8 +83,10 @@ cam:
   cx: 477
   cy: 361
   png_depth_scale: 6553.5 #for depth image in png format
-  crop_edge: 20
+  #crop_edge: 20
   poseScale: 0.5
+  crop_edge: 0
+
   #crop_size: [480,640]
 #parames2finetune: ['mapping', ]
 # TODO run AUTO with K and print also traj print
