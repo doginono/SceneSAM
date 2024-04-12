@@ -123,9 +123,10 @@ class BaseDataset(Dataset):
         """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
         semantic_data = np.load(semantic_path)"""
         # Create one-hot encoding using numpy.eye
+        adjusted_index = min(index // self.every_frame_seg, len(self.semantic_frames) - 1)
         if index % self.every_frame_seg == 0:
             semantic_data = (
-                self.semantic_frames[index // self.every_frame_seg].clone().int()
+                self.semantic_frames[adjusted_index].clone().int()
             )
         else:
             semantic_data = self.semantic_frames[-1].clone().int()
@@ -468,21 +469,21 @@ class ScanNetPlusPlus(BaseDataset):
         #print("nice")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[:200]
+        )[:500:10]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[:200]
+        )[:500:10]
         self.load_poses(self.input_folder)
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
-        T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
-        for i in range(2000):#len(T_wc)):
+        T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+        for i in range(50):#len(T_wc)):
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
-            c2w[:3,3]=c2w[:3,3]
+            #c2w[:3,3]=c2w[:3,3] already in the get item
             c2w = torch.from_numpy(c2w).float()
             #c2w[:3,3]*=0.5
             self.poses.append(c2w)

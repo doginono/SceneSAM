@@ -137,7 +137,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.estimate_c2w_list.cpu() * self.shift,
+                self.estimate_c2w_list.cpu()* self.shift,
                 self.K,
                 depth.cpu(),
                 predictor=self.predictor,
@@ -176,14 +176,14 @@ class Segmenter(object):
 
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
-            self.estimate_c2w_list.cpu()* self.shift,
+            self.estimate_c2w_list.cpu(),#* self.shift,
             self.K,
             depth.cpu(),
             self.predictor,
             max_id=self.max_id,
             current_frame=img,
             samples=self.samples,
-            smallesMaskSize=10000,
+            smallesMaskSize=self.first_min_area,
             border=self.border,
             depthCondition=self.depthCondition,
             samplePixelFarther=self.samplePixelFarther,
@@ -195,7 +195,8 @@ class Segmenter(object):
         self.max_id = max_id
 
         frame = torch.from_numpy(masksCreated)
-        self.semantic_frames[idx // self.every_frame_seg] = frame
+        adjusted_index = min(idx // self.every_frame_seg, len(self.semantic_frames) - 1)
+        self.semantic_frames[adjusted_index] = frame
         return frame
 
     def predict_idx(self, idx):
@@ -293,7 +294,7 @@ class Segmenter(object):
         #self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.estimate_c2w_list.cpu()[0]* self.shift,
+            self.estimate_c2w_list.cpu()[0],#* self.shift,
             self.K,
             depth.cpu(),
         )
@@ -534,10 +535,10 @@ class Segmenter(object):
                     path=path,
                 )
         # EDIT THIS
-        make_gif_from_array(
+        '''make_gif_from_array(
             self.semantic_frames[index_frames // self.every_frame_seg],
             os.path.join(self.store_directory, "segmentation.gif"),
-        )
+        )'''
         return self.semantic_frames, self.max_id + 1
 
     def plot(self):

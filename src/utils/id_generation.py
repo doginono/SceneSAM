@@ -365,6 +365,11 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     # ids[depth_mask] = -100
+    if verbose:
+        visualizer.visualize(
+            ids,
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/{str(curr_frame_number).zfill(6)}_before.png",
+        )
     current_unique_ids = np.unique(ids)
 
     """ 
@@ -436,7 +441,7 @@ def createFrontMappingAutosort(
     
     if verbose:
         #for i in range(22,42):
-        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet",str(25)+"later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0]
+        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/",str(curr_frame_number).zfill(6))+"_later", prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0]
         )
     return ids, samples, max_id
 
