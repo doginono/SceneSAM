@@ -246,7 +246,8 @@ class Replica(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
-        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
+        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*"))
+        print(self.color_paths)
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
 
         """# -------------------added-----------------------------------------------
@@ -371,6 +372,24 @@ class Replica(BaseDataset):
             c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)
+
+
+class Panoptic(Replica):
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+        super(Panoptic, self).__init__(
+            cfg, args, scale, device=device, tracker=tracker, slam=slam
+        )
+        self.load_poses(f"{self.input_folder}/traj.txt")
+
+    def load_poses(self, path):
+        self.poses = []
+        with open(path, "r") as f:
+            lines = f.readlines()
+        for i in range(self.n_img):
+            line = lines[i]
+            c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
@@ -574,4 +593,5 @@ dataset_dict = {
     "cofusion": CoFusion,
     "azure": Azure,
     "tumrgbd": TUM_RGBD,
+    "panoptic": Panoptic,
 }
