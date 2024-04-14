@@ -1146,8 +1146,9 @@ class Mapper(object):
                         idx not in self.keyframe_list
                     ):
                         self.keyframe_list.append(idx.clone())
-                        ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
-                        self.keyframe_dict.append(
+                        if self.is_full_slam:
+                            ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
+                            self.keyframe_dict.append(
                             {
                                 "gt_c2w": gt_c2w.cpu(),
                                 "idx": idx.clone(),
@@ -1158,7 +1159,20 @@ class Mapper(object):
                                 "semantic": torch.argmax(
                                     gt_semantic.to(int), dim=-1
                                 ).cpu(),
+                            })
+                        else:
+                            ignore_pixel = torch.zeros_like(gt_depth, dtype=bool)
+                            self.keyframe_dict.append(
+                            {
+                                "gt_c2w": gt_c2w.cpu(),
+                                "idx": idx.clone(),
+                                "color": gt_color.cpu(),
+                                "depth": gt_depth.cpu(),
+                                "est_c2w": cur_c2w.clone(),
+                                "ignore_pixel": None,
+                                "semantic": None
                             }
+                        
                         )  # Done: add semantics ground truth
 
             if self.low_gpu_mem:

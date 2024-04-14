@@ -14,7 +14,7 @@ tracking:
   pixels: 200
   iters: 10
 Segmenter:
-  full_slam: True
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -47,7 +47,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 300 #finetune
+  iters_first: 100 #finetune
   iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS

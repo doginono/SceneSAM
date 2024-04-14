@@ -247,7 +247,7 @@ class Replica(BaseDataset):
         super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
         self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*"))
-        print(self.color_paths)
+
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
 
         """# -------------------added-----------------------------------------------
