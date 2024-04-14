@@ -14,7 +14,7 @@ tracking:
   pixels: 200
   iters: 10
 Segmenter:
-  full_slam: False
+  full_slam: True
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
