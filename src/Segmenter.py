@@ -137,7 +137,7 @@ class Segmenter(object):
         masksCreated, s, max_id, update = (
             id_generation.createReverseMappingCombined_area_sort(
                 idx,
-                self.estimate_c2w_list.cpu()* self.shift,
+                self.estimate_c2w_list.cpu() * self.shift,
                 self.K,
                 depth.cpu(),
                 predictor=self.predictor,
@@ -176,7 +176,7 @@ class Segmenter(object):
 
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
-            self.estimate_c2w_list.cpu(),#* self.shift,
+            self.estimate_c2w_list.cpu()* self.shift,
             self.K,
             depth.cpu(),
             self.predictor,
@@ -196,6 +196,7 @@ class Segmenter(object):
 
         frame = torch.from_numpy(masksCreated)
         adjusted_index = min(idx // self.every_frame_seg, len(self.semantic_frames) - 1)
+
         self.semantic_frames[adjusted_index] = frame
         return frame
 
@@ -271,7 +272,7 @@ class Segmenter(object):
         torch.cuda.empty_cache()
 
         ids = backproject.generateIds_Auto(
-            masks, depth.cpu(), min_area=self.first_min_area
+            masks, depth.cpu(), min_area=self.first_min_area, samplePixelFarther=self.samplePixelFarther,
         )
         if self.border != 0:
             ids[0 : 2 * self.border ] = -100
@@ -284,9 +285,13 @@ class Segmenter(object):
         self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
         self.max_id = ids.max()
-
+        visualizerForId = vis.visualizerForIds()  
+        visualizerForId.visualizer(
+            self.semantic_frames[0],
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/0seg_{0}.png",
+        )
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids=ids, samplePixelFarther=self.samplePixelFarther,
+            ids=ids,
             normalizePointNumber=self.normalizePointNumber, 
         )
         # changed
@@ -294,7 +299,7 @@ class Segmenter(object):
         #self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.estimate_c2w_list.cpu()[0],#* self.shift,
+            self.estimate_c2w_list.cpu()[0]* self.shift,
             self.K,
             depth.cpu(),
         )
@@ -462,7 +467,7 @@ class Segmenter(object):
             return self.semantic_frames, self.semantic_frames.max() + 1
 
         visualizerForId = vis.visualizerForIds()
-
+        #self.estimate_c2w_list[:,:3,3]*=0
         print("segment first frame")
         s = self.segment_first_ForAuto()
         visualizerForId.visualizer(

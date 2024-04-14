@@ -183,17 +183,17 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 # NEW Variable normalizePointNumber need to define it according to the dimension of the image
 def sample_from_instances_with_ids_area(
-    ids, samplePixelFarther=40, normalizePointNumber=50
+    ids, normalizePointNumber=50
 ):
     tensors = []
 
     temp = np.unique(ids)[1:]
     for i, element in enumerate(list(temp.astype(int))):
         if element >= 0:
-            mask= ids==element
+            '''mask= ids==element
             kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
             mask= cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
-            labels = np.where(mask)
+            labels = np.where(mask)'''
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
             points_per_instance = len(indices)
@@ -295,7 +295,7 @@ def generateIds(masks, min_area=1000):
     return ids
 
 
-def generateIds_Auto(masks, depth, min_area=1000):
+def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
     sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
@@ -306,15 +306,34 @@ def generateIds_Auto(masks, depth, min_area=1000):
         ),
         -100,
     )
+    copyOfIds = np.full(
+        (
+            sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1],
+        ),
+        -100,
+    )
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
-    ids[depth == 0] = -100
+    print(np.unique(ids))
     unique_ids, counts = np.unique(ids, return_counts=True)
+    
+    for i in unique_ids:
+        mask = ids == i
+        #print(np.sum(mask))
+        kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+        mask = cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
+        #print(np.sum(mask))
+        label= np.where(mask)
+        copyOfIds[label] = i
+        
+
+    unique_ids, counts = np.unique(copyOfIds, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
-            ids[ids == unique_ids[i]] = -100
-    return ids
+            copyOfIds[copyOfIds == unique_ids[i]] = -100
+    return copyOfIds
 
 
 def generateIdsNew(masks):

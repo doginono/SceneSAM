@@ -337,7 +337,6 @@ def createFrontMappingAutosort(
     
     T_current = T[curr_frame_number]
     depthf = depths
-    
     #
     # T_current[:3,3] *=0.5
     #print(T_current)
@@ -399,7 +398,8 @@ def createFrontMappingAutosort(
         maxForMask= max(dictOfIds, key=dictOfIds.get)
         ###########################################
         insideTheMask= currentMask[frontProjectedSamples[1, :] , frontProjectedSamples[0, :]]
-        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and np.sum(insideTheMask) > 10:
+        # hardcoded need to change
+        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and dictOfIds[maxForMask] > 5:
             copyOfIds[ids==currentMaskId ] = maxForMask
         elif maxForMask != -100:
             copyOfIds[ ids==currentMaskId ] = max_id
@@ -421,7 +421,7 @@ def createFrontMappingAutosort(
     # Your concatenation operation
         # NEW
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids=ids, samplePixelFarther=samplePixelFarther, normalizePointNumber=normalizePointNumber
+            ids=ids, normalizePointNumber=normalizePointNumber
         )
         # 3d
         

@@ -12,7 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.0005
-  gt_camera: False
+  gt_camera: True
   pixels: 5000
   iters: 50
 Segmenter:
@@ -23,7 +23,7 @@ Segmenter:
   store_vis: True
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
-  border: 20
+  border: 0
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
@@ -40,25 +40,25 @@ mapping:
   first_min_area: 10000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 5
+  every_frame: 50
   points_per_instance: 4
   vis_freq: 200
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 500
-  ckpt_freq: 500
+  mesh_freq: 100
+  ckpt_freq: 100
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 1500 #finetune
+  iters_first: 300 #finetune
   iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
   fine_iter_ratio: 0.6 #0.6 #finetune
-  semantic_iter_ratio: 0.4 #0.4 #finetune
+  semantic_iter_ratio: 1 #0.4 #finetune
   stage:
     color: #maybe finetune, because our color results are not as good as in the original paper
       decoders_lr: 0.005
@@ -76,16 +76,17 @@ mapping:
       semantic_lr: 0.4 #original: 0.005
 
 cam:
-  H: 720
-  W: 960
-  fx: 714.53965
-  fy: 714.53965
-  cx: 477
-  cy: 361
+  H: 720 #480
+  W: 960 #680
+  fx: 714.53965 #480
+  fy: 714.53965 #480
+  cx: 477 # 318
+  cy: 361 #  240
   png_depth_scale: 6553.5 #for depth image in png format
   #crop_edge: 20
-  poseScale: 0.5
-  crop_edge: 0
+  poseScale: 0.5 # pose scale for the camera translation changed 0.5 because of depth scaling
+  #crop_edge: 0
+  #distortion: [0.062969, -0.0762557 ,-4.23266e-05, 0.000114417]
 
   #crop_size: [480,640]
 #parames2finetune: ['mapping', ]

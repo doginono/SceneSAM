@@ -378,7 +378,7 @@ class Replica(BaseDataset):
             c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
-            c2w[:3, 3] *= 0.5
+            c2w[:3, 3] *= self.poseScale
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
@@ -469,17 +469,17 @@ class ScanNetPlusPlus(BaseDataset):
         #print("nice")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[:500:10]
+        )[:500]#[:500:10]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[:500:10]
+        )[:500]#[:500:10]
         self.load_poses(self.input_folder)
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
-        T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
-        for i in range(50):#len(T_wc)):
+        T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
+        for i in range(500):#50
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
@@ -487,7 +487,7 @@ class ScanNetPlusPlus(BaseDataset):
             c2w = torch.from_numpy(c2w).float()
             #c2w[:3,3]*=0.5
             self.poses.append(c2w)
-            
+        
         '''pose_paths = sorted(
             glob.glob(os.path.join(path, "*.txt")),
             key=lambda x: int(os.path.basename(x)[:-4]),
