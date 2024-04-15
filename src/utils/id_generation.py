@@ -338,6 +338,7 @@ def createFrontMappingAutosort(
     T_current = T[curr_frame_number]
     depthf = depths
     #
+    print("TRACKED",T_current)
     # T_current[:3,3] *=0.5
     #print(T_current)
 

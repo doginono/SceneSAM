@@ -3,6 +3,7 @@ mapping:
   bound: [[-3,3],[-3,3],[-3,3]]
   #bound: [[-4,4],[-4,4],[-4,4]]
   marching_cubes_bound: [[-3,3],[-3,3],[-3,3]]
+  first_min_area: 10000
 data:
   input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset
   output: output/Scannet++/56a0ec536c
@@ -13,7 +14,6 @@ Segmenter:
   depthCondition: 0.01
   border: 30
   every_frame: 10
-
 output_dimension_semantic: 500
 scale: 1
 #load_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00049.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01000.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01999.tar
