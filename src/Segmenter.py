@@ -199,10 +199,10 @@ class Segmenter(object):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)"""
         img, depth = self.frame_reader.get_colorAndDepth(idx)
         img = (img.cpu().numpy() * 255).astype(np.uint8)
-        print(len(self.estimate_c2w_list))
+        '''print(len(self.estimate_c2w_list))
         print(self.border)
         print(self.estimate_c2w_list[0])
-        print(self.estimate_c2w_list[1])
+        print(self.estimate_c2w_list[1])'''
 
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,

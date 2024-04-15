@@ -14,6 +14,7 @@ Segmenter:
   depthCondition: 0.01
   border: 30
   every_frame: 10
+  smallestMaskSize: 10000
 output_dimension_semantic: 500
 scale: 1
 #load_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00049.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01000.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01999.tar
