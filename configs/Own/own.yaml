@@ -6,13 +6,13 @@ meshing:
 tracking:
   vis_freq: 10
   vis_inside_freq: 25
-  ignore_edge_W: 100
-  ignore_edge_H: 100
+  ignore_edge_W: 10 #100
+  ignore_edge_H: 10 #100
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.001
-  pixels: 200
-  iters: 10
+  pixels: 500
+  iters: 50
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
@@ -37,18 +37,18 @@ mapping:
   no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 4
-  vis_freq: 20
+  vis_freq: 50
   vis_inside_freq: 61
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 50
+  mesh_freq: 200
   ckpt_freq: 200
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1000 #finetune
-  iters: 70 #finetune
+  iters_first: 500 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune

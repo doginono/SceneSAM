@@ -22,6 +22,7 @@ from src.NICE_SLAM import NICE_SLAM
 from src import config
 import seaborn as sns
 from tqdm import tqdm
+from src.utils import vis
 
 
 def main():
@@ -32,32 +33,45 @@ def main():
     parser.add_argument("checkpoint", type=str, help="Path to the checkpoint file.")
     parser.add_argument("trajectory", type=str, help="Path to the trajectory file.")
     parser.add_argument(
-        "--input_folder",
-        type=str,
-        help="input folder, this have higher priority, can overwrite the one in config file",
-    )
-    parser.add_argument(
         "--output",
         type=str,
         help="output folder, this have higher priority, can overwrite the one in config file",
+    )
+    parser.add_argument(
+        "--input_folder",
+        type=str,
+        help="input folder, this have higher priority, can overwrite the one in config file",
     )
     nice_parser = parser.add_mutually_exclusive_group(required=False)
     nice_parser.add_argument("--nice", dest="nice", action="store_true")
     nice_parser.add_argument("--imap", dest="nice", action="store_false")
     parser.set_defaults(nice=True)
+
     args = parser.parse_args()
     cfg = config.load_config(  # J:changed it to use our config file including semantics
         args.config, "configs/nice_slam_sem.yaml" if args.nice else "configs/imap.yaml"
     )
+    if args.output:
+        path = args.output
+    os.makedirs(path, exist_ok=True)
     slam = NICE_SLAM(cfg, args)
     slam.set_log_dict(args.checkpoint)
     poses = np.loadtxt(args.trajectory)
-    render_gif(slam, poses)
+    poses = poses.reshape(-1, 4, 4)
+    poses = torch.from_numpy(poses).float()
+    render_gif(slam, poses, path)
 
 
-def render_gif(slam, poses):
+def render_gif(slam, poses, path=None):
+    if path is None:
+        path = "run_traj/"
+    else:
+        path = path + "/"
+    visualizerForId = vis.visualizerForIds()
     depths, colors, semantics = [], [], []
-    for c2w in tqdm(poses[::20]):
+    for i, c2w in tqdm(enumerate(poses[::20])):
+        c2w[:3, 1] *= -1
+        c2w[:3, 2] *= -1
         depth, _, color, semantic = slam.renderer.render_img(
             slam.shared_c,
             slam.shared_decoders,
@@ -68,11 +82,17 @@ def render_gif(slam, poses):
         )
         depth_np = depth.detach().cpu().numpy()
         color_np = color.detach().cpu().numpy()
+        color_np = np.clip(color_np, 0, 1)
         semantic_np = semantic.detach().cpu().numpy()
         semantic_argmax = np.argmax(semantic_np, axis=2)
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
+        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+        ax[0].imshow(color_np)
+        ax[1].imshow(depth_np / np.max(depth_np))
+        ax[2], im = visualizerForId.visualize(semantic_argmax, ax=ax[2])
+        plt.savefig(f"{path}frame_{i*4}.png")
 
     depths = np.stack(depths)
     depths /= np.max(depths)

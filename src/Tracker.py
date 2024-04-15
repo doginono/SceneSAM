@@ -12,6 +12,7 @@ from tqdm import tqdm
 from src.common import get_camera_from_tensor, get_samples, get_tensor_from_camera
 from src.utils.datasets import get_dataset
 from src.utils.Visualizer import Visualizer
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Tracker(object):
@@ -19,7 +20,7 @@ class Tracker(object):
 
         self.cfg = cfg
         self.args = args
-
+        writer = SummaryWriter(cfg["data"]["logs"])
         self.scale = cfg["scale"]
         self.coarse = cfg["coarse"]
         self.occupancy = cfg["occupancy"]
@@ -187,6 +188,7 @@ class Tracker(object):
             self.prev_mapping_idx = self.mapping_idx[0].clone()
 
     def run(self):
+        writer = SummaryWriter(self.cfg["data"]["logs"])
         device = self.device
         self.c = {}
         if ~self.verbose:  # J: added ~
@@ -304,6 +306,8 @@ class Tracker(object):
                     )
                     if self.verbose:
                         if cam_iter == self.num_cam_iters - 1:
+                            writer.add_scalar("Loss/poses", loss_camera_tensor, idx)
+                            writer.add_scalar("Loss/Re_rendering", loss, idx)
                             print(
                                 f"Re-rendering loss: {initial_loss:.2f}->{loss:.2f} "
                                 + f"camera tensor error: {initial_loss_camera_tensor:.4f}->{loss_camera_tensor:.4f}"
