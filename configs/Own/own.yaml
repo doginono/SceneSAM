@@ -6,8 +6,8 @@ meshing:
 tracking:
   vis_freq: 10
   vis_inside_freq: 25
-  ignore_edge_W: 50 #100
-  ignore_edge_H: 50 #100
+  ignore_edge_W: 10 #100
+  ignore_edge_H: 10 #100
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.001
