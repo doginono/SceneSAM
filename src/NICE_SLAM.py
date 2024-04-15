@@ -182,13 +182,16 @@ class NICE_SLAM:
         self.mapper = Mapper(cfg, args, self, coarse_mapper=False)
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
-
+        if "store_seg_path" in cfg["Segmenter"]:
+            store_path = cfg["Segmenter"]["store_seg_path"]
+        else:
+            store_path = os.path.join(cfg["data"]["input_folder"], "segmentation")
         self.segmenter = Segmenter(
             self,
             cfg,
             args,
             zero_pos=self.frame_reader.get_zero_pose(),
-            store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
+            store_directory=store_path,
         )
 
         if self.coarse:
@@ -220,8 +223,10 @@ class NICE_SLAM:
         self.gt_c2w_list = gt_c2w_list.to(self.cfg["mapping"]["device"])
         self.gt_c2w_list.share_memory_()
 
-    def set_log_dict(self, log_dict):
-        log_dict = torch.load(log_dict, map_location=self.cfg["mapping"]["device"])
+    def set_log_dict(self, log_dict, map_location=None):
+        if map_location is None:
+            map_location = self.cfg["mapping"]["device"]
+        log_dict = torch.load(log_dict, map_location=map_location)
         self.set_decoders(log_dict["decoder_state_dict"])
         self.set_grid(log_dict["c"])
         self.set_estimate_c2w_list(log_dict["estimate_c2w_list"])

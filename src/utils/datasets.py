@@ -63,9 +63,9 @@ class BaseDataset(Dataset):
         s = torch.ones((4, 4)).int()
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
-        elif cfg["dataset"] == "replica":
+        if cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        self.shift = s  # s
+        self.shift = s.numpy()  # s
         self.name = cfg["dataset"]
         if args.input_folder is None:
             self.input_folder = cfg["data"]["input_folder"]
@@ -138,8 +138,8 @@ class BaseDataset(Dataset):
         semantic_data[negative] = False
         semantic_data = torch.from_numpy(semantic_data)
         edge = self.crop_edge
-        if edge > 0:
-            semantic_data = semantic_data[edge:-edge, edge:-edge]
+        """if edge > 0:
+            semantic_data = semantic_data[edge:-edge, edge:-edge]"""  # just wrong, already included in the semantic data
         return semantic_data.to(self.device)
 
     def get_colorAndDepth(self, index, edge=True,):
@@ -252,7 +252,8 @@ class Replica(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
-        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
+        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*"))
+
         self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
 
         """# -------------------added-----------------------------------------------
@@ -379,6 +380,24 @@ class Replica(BaseDataset):
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
             c2w[:3, 3] *= self.poseScale
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)
+
+
+class Panoptic(Replica):
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+        super(Panoptic, self).__init__(
+            cfg, args, scale, device=device, tracker=tracker, slam=slam
+        )
+        self.load_poses(f"{self.input_folder}/traj.txt")
+
+    def load_poses(self, path):
+        self.poses = []
+        with open(path, "r") as f:
+            lines = f.readlines()
+        for i in range(self.n_img):
+            line = lines[i]
+            c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
@@ -625,4 +644,5 @@ dataset_dict = {
     "azure": Azure,
     "tumrgbd": TUM_RGBD,
     "scannet++": ScanNetPlusPlus,
+    "panoptic": Panoptic,
 }

@@ -3,26 +3,37 @@ from src.common import get_rays, raw2outputs_nerf_color, sample_pdf
 
 
 class Renderer(object):
-    def __init__(self, cfg, args, slam, points_batch_size=500000, ray_batch_size=100000):
-        self.semantic_occupancy_multiplier = cfg['rendering']['semantic_occupancy_multiplier']
-        
+    def __init__(
+        self, cfg, args, slam, points_batch_size=500000, ray_batch_size=100000
+    ):
+        self.semantic_occupancy_multiplier = cfg["rendering"][
+            "semantic_occupancy_multiplier"
+        ]
+
         self.ray_batch_size = ray_batch_size
         self.points_batch_size = points_batch_size
 
-        self.lindisp = cfg['rendering']['lindisp']
-        self.perturb = cfg['rendering']['perturb']
-        self.N_samples = cfg['rendering']['N_samples']
-        self.N_surface = cfg['rendering']['N_surface']
-        self.N_importance = cfg['rendering']['N_importance']
+        self.lindisp = cfg["rendering"]["lindisp"]
+        self.perturb = cfg["rendering"]["perturb"]
+        self.N_samples = cfg["rendering"]["N_samples"]
+        self.N_surface = cfg["rendering"]["N_surface"]
+        self.N_importance = cfg["rendering"]["N_importance"]
 
-        self.scale = cfg['scale']
-        self.occupancy = cfg['occupancy']
+        self.scale = cfg["scale"]
+        self.occupancy = cfg["occupancy"]
         self.nice = slam.nice
         self.bound = slam.bound
 
-        self.H, self.W, self.fx, self.fy, self.cx, self.cy = slam.H, slam.W, slam.fx, slam.fy, slam.cx, slam.cy
+        self.H, self.W, self.fx, self.fy, self.cx, self.cy = (
+            slam.H,
+            slam.W,
+            slam.fx,
+            slam.fy,
+            slam.cx,
+            slam.cy,
+        )
 
-    def eval_points(self, p, decoders, c=None, stage='color', device='cuda:0'):
+    def eval_points(self, p, decoders, c=None, stage="color", device="cuda:0"):
         """
         Evaluates the occupancy and/or color value for the points.
 
@@ -55,20 +66,24 @@ class Renderer(object):
             ret = ret.squeeze(0)
             if len(ret.shape) == 1 and ret.shape[0] == 4:
                 ret = ret.unsqueeze(0)
-            
-            #-------------------added-------------------
-            #setting occupancy in this part
-            if stage != 'semantic':
-                ret[~mask, 3] = 100 #TODO: that does not make sense for color and semantics <- check
+
+            # -------------------added-------------------
+            # setting occupancy in this part
+            if stage != "semantic":
+                ret[~mask, 3] = (
+                    100  # TODO: that does not make sense for color and semantics <- check
+                )
             else:
                 ret[~mask, -1] = 100
-            #-------------------------------------------
+            # -------------------------------------------
             rets.append(ret)
 
         ret = torch.cat(rets, dim=0)
         return ret
 
-    def render_batch_ray(self, c, decoders, rays_d, rays_o, device, stage, gt_depth=None):
+    def render_batch_ray(
+        self, c, decoders, rays_d, rays_o, device, stage, gt_depth=None
+    ):
         """
         Render color, depth and uncertainty of a batch of rays.
 
@@ -93,7 +108,7 @@ class Renderer(object):
 
         N_rays = rays_o.shape[0]
 
-        if stage == 'coarse':
+        if stage == "coarse":
             gt_depth = None
         if gt_depth is None:
             N_surface = 0
@@ -101,31 +116,31 @@ class Renderer(object):
         else:
             gt_depth = gt_depth.reshape(-1, 1)
             gt_depth_samples = gt_depth.repeat(1, N_samples)
-            near = gt_depth_samples*0.01
+            near = gt_depth_samples * 0.01
 
         with torch.no_grad():
             det_rays_o = rays_o.clone().detach().unsqueeze(-1)  # (N, 3, 1)
             det_rays_d = rays_d.clone().detach().unsqueeze(-1)  # (N, 3, 1)
-            t = (self.bound.unsqueeze(0).to(device) -
-                 det_rays_o)/det_rays_d  # (N, 3, 2)
+            t = (
+                self.bound.unsqueeze(0).to(device) - det_rays_o
+            ) / det_rays_d  # (N, 3, 2)
             far_bb, _ = torch.min(torch.max(t, dim=2)[0], dim=1)
             far_bb = far_bb.unsqueeze(-1)
             far_bb += 0.01
 
         if gt_depth is not None:
             # in case the bound is too large
-            far = torch.clamp(far_bb, 0,  torch.max(gt_depth*1.2))
+            far = torch.clamp(far_bb, 0, torch.max(gt_depth * 1.2))
         else:
             far = far_bb
         if N_surface > 0:
             if False:
                 # this naive implementation downgrades performance
                 gt_depth_surface = gt_depth.repeat(1, N_surface)
-                t_vals_surface = torch.linspace(
-                    0., 1., steps=N_surface).to(device)
-                z_vals_surface = 0.95*gt_depth_surface * \
-                    (1.-t_vals_surface) + 1.05 * \
-                    gt_depth_surface * (t_vals_surface)
+                t_vals_surface = torch.linspace(0.0, 1.0, steps=N_surface).to(device)
+                z_vals_surface = 0.95 * gt_depth_surface * (
+                    1.0 - t_vals_surface
+                ) + 1.05 * gt_depth_surface * (t_vals_surface)
             else:
                 # since we want to colorize even on regions with no depth sensor readings,
                 # meaning colorize on interpolated geometry region,
@@ -137,36 +152,38 @@ class Renderer(object):
                 gt_none_zero = gt_depth[gt_none_zero_mask]
                 gt_none_zero = gt_none_zero.unsqueeze(-1)
                 gt_depth_surface = gt_none_zero.repeat(1, N_surface)
-                t_vals_surface = torch.linspace(
-                    0., 1., steps=N_surface).double().to(device)
+                t_vals_surface = (
+                    torch.linspace(0.0, 1.0, steps=N_surface).double().to(device)
+                )
                 # emperical range 0.05*depth
-                z_vals_surface_depth_none_zero = 0.95*gt_depth_surface * \
-                    (1.-t_vals_surface) + 1.05 * \
-                    gt_depth_surface * (t_vals_surface)
-                z_vals_surface = torch.zeros(
-                    gt_depth.shape[0], N_surface).to(device).double()
+                z_vals_surface_depth_none_zero = 0.95 * gt_depth_surface * (
+                    1.0 - t_vals_surface
+                ) + 1.05 * gt_depth_surface * (t_vals_surface)
+                z_vals_surface = (
+                    torch.zeros(gt_depth.shape[0], N_surface).to(device).double()
+                )
                 gt_none_zero_mask = gt_none_zero_mask.squeeze(-1)
-                z_vals_surface[gt_none_zero_mask,
-                               :] = z_vals_surface_depth_none_zero
+                z_vals_surface[gt_none_zero_mask, :] = z_vals_surface_depth_none_zero
                 near_surface = 0.001
                 far_surface = torch.max(gt_depth)
-                z_vals_surface_depth_zero = near_surface * \
-                    (1.-t_vals_surface) + far_surface * (t_vals_surface)
-                z_vals_surface_depth_zero.unsqueeze(
-                    0).repeat((~gt_none_zero_mask).sum(), 1)
-                z_vals_surface[~gt_none_zero_mask,
-                               :] = z_vals_surface_depth_zero
+                z_vals_surface_depth_zero = near_surface * (
+                    1.0 - t_vals_surface
+                ) + far_surface * (t_vals_surface)
+                z_vals_surface_depth_zero.unsqueeze(0).repeat(
+                    (~gt_none_zero_mask).sum(), 1
+                )
+                z_vals_surface[~gt_none_zero_mask, :] = z_vals_surface_depth_zero
 
-        t_vals = torch.linspace(0., 1., steps=N_samples, device=device)
+        t_vals = torch.linspace(0.0, 1.0, steps=N_samples, device=device)
 
         if not self.lindisp:
-            z_vals = near * (1.-t_vals) + far * (t_vals)
+            z_vals = near * (1.0 - t_vals) + far * (t_vals)
         else:
-            z_vals = 1./(1./near * (1.-t_vals) + 1./far * (t_vals))
+            z_vals = 1.0 / (1.0 / near * (1.0 - t_vals) + 1.0 / far * (t_vals))
 
-        if self.perturb > 0.:
+        if self.perturb > 0.0:
             # get intervals between samples
-            mids = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
+            mids = 0.5 * (z_vals[..., 1:] + z_vals[..., :-1])
             upper = torch.cat([mids, z_vals[..., -1:]], -1)
             lower = torch.cat([z_vals[..., :1], mids], -1)
             # stratified samples in those intervals
@@ -174,39 +191,63 @@ class Renderer(object):
             z_vals = lower + (upper - lower) * t_rand
 
         if N_surface > 0:
-            z_vals, _ = torch.sort(
-                torch.cat([z_vals, z_vals_surface.double()], -1), -1)
+            z_vals, _ = torch.sort(torch.cat([z_vals, z_vals_surface.double()], -1), -1)
 
-        pts = rays_o[..., None, :] + rays_d[..., None, :] * \
-            z_vals[..., :, None]  # [N_rays, N_samples+N_surface, 3]
+        pts = (
+            rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
+        )  # [N_rays, N_samples+N_surface, 3]
         pointsf = pts.reshape(-1, 3)
 
-        #Done: In eval the predicting of the sampled points takes place depending on stage,
+        # Done: In eval the predicting of the sampled points takes place depending on stage,
         #  so add stage semantics here to predict the semantics
-        raw = self.eval_points(pointsf, decoders, c, stage, device) #J:forward pass of grid decoders and only keeping points inside of boundaries
-        raw = raw.reshape(N_rays, N_samples+N_surface, -1)
+        raw = self.eval_points(
+            pointsf, decoders, c, stage, device
+        )  # J:forward pass of grid decoders and only keeping points inside of boundaries
+        raw = raw.reshape(N_rays, N_samples + N_surface, -1)
 
-        depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
-            raw, z_vals, rays_d, occupancy=self.occupancy, device=device, semantic_occupancy_multiplier = self.semantic_occupancy_multiplier) #J: in semantic stage color will contain the semantic prediction
+        depth, uncertainty, color, weights = raw2outputs_nerf_color(
+            stage,
+            raw,
+            z_vals,
+            rays_d,
+            occupancy=self.occupancy,
+            device=device,
+            semantic_occupancy_multiplier=self.semantic_occupancy_multiplier,
+        )  # J: in semantic stage color will contain the semantic prediction
         if N_importance > 0:
-            z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
+            z_vals_mid = 0.5 * (z_vals[..., 1:] + z_vals[..., :-1])
             z_samples = sample_pdf(
-                z_vals_mid, weights[..., 1:-1], N_importance, det=(self.perturb == 0.), device=device)
+                z_vals_mid,
+                weights[..., 1:-1],
+                N_importance,
+                det=(self.perturb == 0.0),
+                device=device,
+            )
             z_samples = z_samples.detach()
             z_vals, _ = torch.sort(torch.cat([z_vals, z_samples], -1), -1)
 
-            pts = rays_o[..., None, :] + \
-                rays_d[..., None, :] * z_vals[..., :, None]
+            pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
             pts = pts.reshape(-1, 3)
             raw = self.eval_points(pts, decoders, c, stage, device)
-            raw = raw.reshape(N_rays, N_samples+N_importance+N_surface, -1)
+            raw = raw.reshape(N_rays, N_samples + N_importance + N_surface, -1)
 
-            #J: Added stage as argument to raw2outputs_nerf_color
-            depth, uncertainty, color, weights = raw2outputs_nerf_color(stage,
-                raw, z_vals, rays_d, occupancy=self.occupancy, device=device, semantic_occupancy_multiplier = self.semantic_occupancy_multiplier)
+            # J: Added stage as argument to raw2outputs_nerf_color
+            depth, uncertainty, color, weights = raw2outputs_nerf_color(
+                stage,
+                raw,
+                z_vals,
+                rays_d,
+                occupancy=self.occupancy,
+                device=device,
+                semantic_occupancy_multiplier=self.semantic_occupancy_multiplier,
+            )
             return depth, uncertainty, color
 
-        return depth, uncertainty, color #J: color will contain the semantic prediction in semantic stage
+        return (
+            depth,
+            uncertainty,
+            color,
+        )  # J: color will contain the semantic prediction in semantic stage
 
     def render_img(self, c, decoders, c2w, device, stage, gt_depth=None):
         """
@@ -229,7 +270,8 @@ class Renderer(object):
             H = self.H
             W = self.W
             rays_o, rays_d = get_rays(
-                H, W, self.fx, self.fy, self.cx, self.cy,  c2w, device)
+                H, W, self.fx, self.fy, self.cx, self.cy, c2w, device
+            )
             rays_o = rays_o.reshape(-1, 3)
             rays_d = rays_d.reshape(-1, 3)
 
@@ -237,81 +279,141 @@ class Renderer(object):
             uncertainty_list = []
             color_list = []
             semantic_list = []
-            #Done: add sematic list
+            # Done: add sematic list
 
             ray_batch_size = self.ray_batch_size
-            gt_depth = gt_depth.reshape(-1)
 
             for i in range(0, rays_d.shape[0], ray_batch_size):
-                rays_d_batch = rays_d[i:i+ray_batch_size]
-                rays_o_batch = rays_o[i:i+ray_batch_size]
-                #TODO: we might be able to do this more eficiently if we include a simultaneously rendering of color and semantics in render_batch_ray
-                #-------------------added-the if == 'visualize and changed the stages, originaly it was like in else------------------
+                rays_d_batch = rays_d[i : i + ray_batch_size]
+                rays_o_batch = rays_o[i : i + ray_batch_size]
+                # TODO: we might be able to do this more eficiently if we include a simultaneously rendering of color and semantics in render_batch_ray
+                # -------------------added-the if == 'visualize and changed the stages, originaly it was like in else------------------
                 if gt_depth is None:
                     if stage == "visualize":
-                        _,_,semantic = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=None)
+                        _, _, semantic = self.render_batch_ray(
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "semantic",
+                            gt_depth=None,
+                        )
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'color', gt_depth=None)
-                    elif stage== 'visualize_semantic':
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "color",
+                            gt_depth=None,
+                        )
+                    elif stage == "visualize_semantic":
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=None)
-                    else: #stage == 'color'
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "semantic",
+                            gt_depth=None,
+                        )
+                    else:  # stage == 'color'
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=None)
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            stage,
+                            gt_depth=None,
+                        )
                 else:
-                    gt_depth_batch = gt_depth[i:i+ray_batch_size]
+                    gt_depth = gt_depth.reshape(-1)
+                    gt_depth_batch = gt_depth[i : i + ray_batch_size]
                     if stage == "visualize":
-                        _,_,semantic = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=gt_depth_batch)
+                        _, _, semantic = self.render_batch_ray(
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "semantic",
+                            gt_depth=gt_depth_batch,
+                        )
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'color', gt_depth=gt_depth_batch)
-                    elif stage== 'visualize_semantic':
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "color",
+                            gt_depth=gt_depth_batch,
+                        )
+                    elif stage == "visualize_semantic":
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, 'semantic', gt_depth=gt_depth_batch)
-                    else: #stage == 'color'
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            "semantic",
+                            gt_depth=gt_depth_batch,
+                        )
+                    else:  # stage == 'color'
                         ret = self.render_batch_ray(
-                            c, decoders, rays_d_batch, rays_o_batch, device, stage, gt_depth=gt_depth_batch)
-                #-----------------end--added-------------------
+                            c,
+                            decoders,
+                            rays_d_batch,
+                            rays_o_batch,
+                            device,
+                            stage,
+                            gt_depth=gt_depth_batch,
+                        )
+                # -----------------end--added-------------------
 
-                depth, uncertainty, color = ret 
+                depth, uncertainty, color = ret
                 depth_list.append(depth.double())
                 uncertainty_list.append(uncertainty.double())
-                if stage == "visualize": 
+                if stage == "visualize":
                     color_list.append(color)
-                    #semantic_list.append(torch.argmax(semantic, dim=1)) #Done: add semantic list; TODO: check if argmax is along correct dimension
+                    # semantic_list.append(torch.argmax(semantic, dim=1)) #Done: add semantic list; TODO: check if argmax is along correct dimension
                     semantic_list.append(semantic)
                 elif stage == "visualize_semantic":
-                    #color_list.append(torch.argmax(color, dim=1))
+                    # color_list.append(torch.argmax(color, dim=1))
                     semantic_list.append(semantic)
-                else: #stage == 'color'
+                else:  # stage == 'color'
                     color_list.append(color)
-                
 
             depth = torch.cat(depth_list, dim=0)
             uncertainty = torch.cat(uncertainty_list, dim=0)
             color = torch.cat(color_list, dim=0)
-            if stage == "visualize":#Done torch.cat semantic list and reshape
+            if stage == "visualize":  # Done torch.cat semantic list and reshape
                 semantic = torch.cat(semantic_list, dim=0)
-                semantic = semantic.reshape(H,W, -1) #remove -1 if using argmax
+                semantic = semantic.reshape(H, W, -1)  # remove -1 if using argmax
                 color = color.reshape(H, W, 3)
             elif stage == "visualize_semantic":
-                color = color.reshape(H,W, -1) #remove -1 if using argmax
+                color = color.reshape(H, W, -1)  # remove -1 if using argmax
             else:
                 color = color.reshape(H, W, 3)
 
             depth = depth.reshape(H, W)
             uncertainty = uncertainty.reshape(H, W)
-            
+
             if stage == "visualize":
                 return depth, uncertainty, color, semantic
             elif stage == "visualize_semantic":
-                return depth, uncertainty, None, color #THis is not color but semantic in stage visualize_semantic
+                return (
+                    depth,
+                    uncertainty,
+                    None,
+                    color,
+                )  # THis is not color but semantic in stage visualize_semantic
             else:
                 return depth, uncertainty, color
 
     # this is only for imap*
-    def regulation(self, c, decoders, rays_d, rays_o, gt_depth, device, stage='color'):
+    def regulation(self, c, decoders, rays_d, rays_o, gt_depth, device, stage="color"):
         """
         Regulation that discourage any geometry from the camera center to 0.85*depth.
         For imap, the geometry will not be as good if this loss is not added.
@@ -330,22 +432,23 @@ class Renderer(object):
         """
         gt_depth = gt_depth.reshape(-1, 1)
         gt_depth = gt_depth.repeat(1, self.N_samples)
-        t_vals = torch.linspace(0., 1., steps=self.N_samples).to(device)
+        t_vals = torch.linspace(0.0, 1.0, steps=self.N_samples).to(device)
         near = 0.0
-        far = gt_depth*0.85
-        z_vals = near * (1.-t_vals) + far * (t_vals)
+        far = gt_depth * 0.85
+        z_vals = near * (1.0 - t_vals) + far * (t_vals)
         perturb = 1.0
-        if perturb > 0.:
+        if perturb > 0.0:
             # get intervals between samples
-            mids = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
+            mids = 0.5 * (z_vals[..., 1:] + z_vals[..., :-1])
             upper = torch.cat([mids, z_vals[..., -1:]], -1)
             lower = torch.cat([z_vals[..., :1], mids], -1)
             # stratified samples in those intervals
             t_rand = torch.rand(z_vals.shape).to(device)
             z_vals = lower + (upper - lower) * t_rand
 
-        pts = rays_o[..., None, :] + rays_d[..., None, :] * \
-            z_vals[..., :, None]  # (N_rays, N_samples, 3)
+        pts = (
+            rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
+        )  # (N_rays, N_samples, 3)
         pointsf = pts.reshape(-1, 3)
         raw = self.eval_points(pointsf, decoders, c, stage, device)
         sigma = raw[:, -1]

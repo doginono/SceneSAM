@@ -22,6 +22,9 @@ from src.utils import backproject, create_instance_seg, id_generation, vis
 class Segmenter(object):
 
     def __init__(self, slam, cfg, args, zero_pos, store_directory):
+        self.smallestMaskSize = 1000
+        if "smallestMaskSize" in cfg["Segmenter"]:
+            self.smallestMaskSize = cfg["Segmenter"]["smallestMaskSize"]
         self.store_directory = store_directory
         self.zero_pos = zero_pos
         os.makedirs(f"{store_directory}", exist_ok=True)
@@ -40,7 +43,7 @@ class Segmenter(object):
 
         self.every_frame = cfg["mapping"]["every_frame"]
         # self.slam = slam
-        self.estimate_c2w_list = slam.estimate_c2w_list
+        # self.estimate_c2w_list = slam.estimate_c2w_list
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
         self.estimate_c2w_list = slam.estimate_c2w_list
@@ -68,19 +71,21 @@ class Segmenter(object):
             cfg["cam"]["cx"],
             cfg["cam"]["cy"],
         )
+        self.cfg = cfg
+        self.update_cam()
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         if args is None or args.input_folder is None:
             self.input_folder = cfg["data"]["input_folder"]
         else:
             self.input_folder = args.input_folder
-        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
+        # self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*.jpg"))
         # self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
         self.frame_reader = get_dataset(
             cfg,
             args,
             cfg["scale"],
             device=cfg["mapping"]["device"],
-            tracker=True,
+            tracker=False,
             slam=slam,
         )
         self.n_img = self.frame_reader.n_img
@@ -111,6 +116,31 @@ class Segmenter(object):
         self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
         self.depthCondition = cfg["Segmenter"]["depthCondition"]
+
+    def update_cam(self):
+        """
+        Update the camera intrinsics according to pre-processing config,
+        such as resize or edge crop.
+        """
+        # resize the input images to crop_size (variable name used in lietorch)
+        if "crop_size" in self.cfg["cam"]:
+            crop_size = self.cfg["cam"]["crop_size"]
+            sx = crop_size[1] / self.W
+            sy = crop_size[0] / self.H
+            self.fx = sx * self.fx
+            self.fy = sy * self.fy
+            self.cx = sx * self.cx
+            self.cy = sy * self.cy
+            self.W = crop_size[1]
+            self.H = crop_size[0]
+
+        # croping will change H, W, cx, cy, so need to change here
+        if self.cfg["cam"]["crop_edge"] > 0:
+            self.H -= self.cfg["cam"]["crop_edge"] * 2
+            self.W -= self.cfg["cam"]["crop_edge"] * 2
+            self.cx -= self.cfg["cam"]["crop_edge"]
+            self.cy -= self.cfg["cam"]["crop_edge"]
+
     def segment_reverse(self, idx):
         assert False
         img = cv2.imread(self.color_paths[idx])
@@ -147,7 +177,7 @@ class Segmenter(object):
                 current_frame=img,
                 samples=self.samples,
                 kernel_size=30,  # from 40*40 to 1000
-                smallesMaskSize=1000,
+                smallesMaskSize=self.smallestMaskSize,
                 deleted=self.deleted,
                 num_of_clusters=self.num_clusters,
                 border=self.border,
@@ -183,7 +213,7 @@ class Segmenter(object):
             max_id=self.max_id,
             current_frame=img,
             samples=self.samples,
-            smallesMaskSize=self.first_min_area,
+            smallesMaskSize=self.smallestMaskSize,
             border=self.border,
             depthCondition=self.depthCondition,
             samplePixelFarther=self.samplePixelFarther,
@@ -320,14 +350,14 @@ class Segmenter(object):
         return deleted
 
     def process_frames(self, semantic_frames):
-        """process the semantic ids such that we have the minimum max(id), number"""
+        """process the semantic ids such that we have the minimum max_id number, eg, ids are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,..,max_id"""
         ids = np.unique(semantic_frames)
         result = semantic_frames.clone()
         for i in range(len(ids)):
             result[semantic_frames == ids[i]] = i
         result[semantic_frames == -100] = -100
         semantic_frames[:, :, :] = result
-        return result, len(ids) - 1
+        return len(ids) - 1
 
     def run(self, max=-1):
         if self.use_stored:
@@ -394,7 +424,7 @@ class Segmenter(object):
                 self.semantic_frames[self.semantic_frames == old_instance] = (
                     self.deleted[old_instance]
                 )
-            _, self.max_id = self.process_frames(self.semantic_frames)
+            self.max_id = self.process_frames(self.semantic_frames)
         # if self.verbose:
         # for i in range(len(self.semantic_frames)):Fself.estim
         make_gif_from_array(
@@ -475,6 +505,12 @@ class Segmenter(object):
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
         )
         print("finished segmenting first frame")
+        if self.store_vis:
+            visualizerForId = vis.visualizerForIds()
+            visualizerForId.visualize(
+                self.semantic_frames[0],
+                path=f"{self.store_directory}/seg_{0}.png",
+            )
         if self.is_full_slam:
             path = os.path.join(self.store_directory, f"seg_{0}.npy")
             # np.save(path, self.semantic_frames[0].numpy())
@@ -485,9 +521,6 @@ class Segmenter(object):
         if max == -1:
             index_frames = np.arange(
                 self.every_frame_seg, self.n_img, self.every_frame_seg
-            )
-            index_frames_predict = np.setdiff1d(
-                np.arange(self.every_frame, self.n_img, self.every_frame), index_frames
             )
         else:
             index_frames = np.arange(self.every_frame_seg, max, self.every_frame_seg)
@@ -518,21 +551,37 @@ class Segmenter(object):
                 time.sleep(0.1)
             _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
+            if self.store_vis:
+                visualizerForId.visualize(
+                    self.semantic_frames[-1],
+                    path=f"{self.store_directory}/seg_{self.n_img - 1}.png",
+                )
 
         
         del self.predictor
         torch.cuda.empty_cache()
 
         if not self.is_full_slam:
-            self.semantic_frames, max_id = self.process_frames(self.semantic_frames)
-
-        # store the segmentations, such that the dataset class (frame_reader) can read them -> outdated
-        # maybe the stored segmentations can be used for loading segmentations
-        for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
-            path = os.path.join(self.store_directory, f"seg_{index}.npy")
-            np.save(path, self.semantic_frames[index // self.every_frame_seg].numpy())
+            self.max_id = self.process_frames(self.semantic_frames)
 
         if self.store_vis:
+            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
+            if self.n_img - 1 % self.every_frame_seg != 0:
+                index_frames = np.concatenate((index_frames, [self.n_img - 1]))
+            make_gif_from_array(
+                self.semantic_frames[index_frames // self.every_frame_seg],
+                os.path.join(self.store_directory, "segmentation.gif"),
+            )
+        # store the segmentations, such that the dataset class (frame_reader) could load them
+        # maybe the stored segmentations can be used for loading segmentations
+        if False:
+            for index in tqdm([0] + list(index_frames), desc="Storing segmentations"):
+                path = os.path.join(self.store_directory, f"seg_{index}.npy")
+                np.save(
+                    path, self.semantic_frames[index // self.every_frame_seg].numpy()
+                )
+
+        if False:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.png")
                 self.visualizer.visualize(

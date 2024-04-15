@@ -18,10 +18,10 @@ Segmenter:
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
-  store_vis: False
+  store_vis: True
   store_vis_freq: 50 # not implemented yet
   num_clusters: 5
-  border: 15
+  border: 0
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
@@ -37,14 +37,14 @@ mapping:
   no_vis_on_first_frame: True
   every_frame: 5
   points_per_instance: 4
-  vis_freq: 100
-  vis_inside_freq: 71
+  vis_freq: 20
+  vis_inside_freq: 61
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 200
+  mesh_freq: 50
   ckpt_freq: 200
-  keyframe_every: 100
+  keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
   iters_first: 1000 #finetune
@@ -77,7 +77,7 @@ cam:
   fy: 600.0
   cx: 599.5
   cy: 339.5
+  #crop_size: [340, 600]
   png_depth_scale: 6553.5 #for depth image in png format
-  crop_edge: 0
-
+  #crop_edge: 8
 #parames2finetune: ['mapping', ]
