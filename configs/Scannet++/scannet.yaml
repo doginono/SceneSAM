@@ -13,7 +13,7 @@ tracking:
   const_speed_assumption: True
   lr: 0.0005
   gt_camera: False
-  pixels: 5000
+  pixels: 500
   iters: 50
 Segmenter:
   full_slam: True
@@ -54,8 +54,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 30 #finetune
-  iters: 30 #finetune
+  iters_first: 100 #finetune
+  iters: 10 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -78,16 +78,16 @@ mapping:
       semantic_lr: 0.4 #original: 0.005
 
 cam:
-  H: 720 #480
-  W: 960 #680
-  fx: 714.53965 #480
-  fy: 714.53965 #480
-  cx: 477 # 318
-  cy: 361 #  240
+  H: 480 #480 # 720
+  W: 640 #680 920
+  fx: 476.333 #480
+  fy: 476.333 #480
+  cx: 318 # 318
+  cy: 240 #  240
   png_depth_scale: 6553.5 #for depth image in png format
   #crop_edge: 20
   # changed
-  poseScale: 0.5 # pose scale for the camera translation changed 0.5 because of depth scaling
+  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
   #crop_edge: 0
   #distortion: [0.062969, -0.0762557 ,-4.23266e-05, 0.000114417]
 
