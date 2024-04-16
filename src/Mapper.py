@@ -1146,7 +1146,7 @@ class Mapper(object):
                         idx not in self.keyframe_list
                     ):
                         self.keyframe_list.append(idx.clone())
-                        if self.is_full_slam:
+                        if self.is_full_slam and not self.coarse_mapper:
                             ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
                             self.keyframe_dict.append(
                             {
