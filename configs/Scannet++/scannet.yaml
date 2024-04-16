@@ -1,5 +1,5 @@
 dataset: 'scannet++'
-coarse: False
+coarse: True
 low_gpu_mem: True
 meshing:
   eval_rec: True
