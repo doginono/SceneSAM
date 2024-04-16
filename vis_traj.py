@@ -69,10 +69,10 @@ def render_gif(slam, poses, path=None):
         path = path + "/"
     visualizerForId = vis.visualizerForIds()
     depths, colors, semantics = [], [], []
-    for i, c2w in tqdm(enumerate(poses[::20])):
+    for i, c2w in tqdm(enumerate(poses)):
         c2w[:3, 1] *= -1
         c2w[:3, 2] *= -1
-        depth, _, color, semantic = slam.renderer.render_img(
+        depth, _, color, semantic = slam.vis_renderer.render_img(
             slam.shared_c,
             slam.shared_decoders,
             c2w.to("cuda"),

@@ -10,6 +10,12 @@ data:
   logs: 'logs/room0_panoptic'
   output: 'output/Own/room0_panoptic'
 output_dimension_semantic: 400
+Segmenter:
+  samplePixelFarther: 4
+  normalizePointNumber: 10
+  depthCondition: 0.05 #0.005 #0.0
+  border: 30
+  smallestMaskSize: 3000 # 10000
 cam:
   png_depth_scale: 1000
   H: 480
@@ -18,5 +24,7 @@ cam:
   fy: 320.0
   cx: 319.5
   cy: 239.5
+#load_cpt: '/home/rozenberszki/project/wsnsl/output/Own/room0_panoptic/ckpts/ef2_no_segmenter.tar'
+full_slam: True
 
 
