@@ -11,8 +11,8 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.005
-  pixels: 200
-  iters: 30
+  pixels: 500
+  iters: 50
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
@@ -35,7 +35,7 @@ mapping:
   first_min_area: 1000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 5
+  every_frame: 2
   points_per_instance: 4
   vis_freq: 50
   vis_inside_freq: 61
@@ -47,7 +47,7 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 500 #finetune
+  iters_first: 1000 #finetune
   iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
