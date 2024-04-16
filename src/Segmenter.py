@@ -32,8 +32,11 @@ class Segmenter(object):
         self.is_full_slam = cfg["Segmenter"]["full_slam"]
         self.store_vis = cfg["Segmenter"]["store_vis"]
         self.use_stored = cfg["Segmenter"]["use_stored"]
+        self.samplePixelFarther=cfg["Segmenter"]["samplePixelFarther"]
+        self.normalizePointNumber=cfg["Segmenter"]["normalizePointNumber"]
         self.first_min_area = cfg["mapping"]["first_min_area"]
-
+        #TODO
+        # self.
         """path_to_traj = cfg["data"]["input_folder"] + "/traj.txt"
         self.T_wc = np.loadtxt(path_to_traj).reshape(-1, 4, 4)
         self.T_wc[:, 1:3] *= -1"""
@@ -50,6 +53,9 @@ class Segmenter(object):
             print("tumrgbd")
         elif cfg["dataset"] == "replica":
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
+        elif cfg["dataset"] == "scannet++":
+            s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
+
         self.shift = s  # s"""
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
@@ -95,12 +101,12 @@ class Segmenter(object):
         self.frame_numbers = []
         self.samples = None
         self.deleted = {}
-        self.border = cfg["Segmenter"]["border"]
-        """(
-            cfg["cam"]["crop_edge"]
-            if "crop_edge" in cfg["cam"]
-            else cfg["Segmenter"]["border"]
-        )"""
+    # TODO CHANGE THIS just for now rotated
+        self.border = (
+            cfg["Segmenter"]["border"]
+            if cfg["Segmenter"]["border"]
+            else "crop_edge" in cfg["cam"]
+        )
         self.num_clusters = cfg["Segmenter"]["num_clusters"]
         self.overlap = cfg["Segmenter"]["overlap"]
         self.relevant = cfg["Segmenter"]["relevant"]
@@ -109,6 +115,7 @@ class Segmenter(object):
         self.verbose = cfg["Segmenter"]["verbose"]
         self.merging_parameter = cfg["Segmenter"]["merging_parameter"]
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
+        self.depthCondition = cfg["Segmenter"]["depthCondition"]
 
     def update_cam(self):
         """
@@ -192,9 +199,14 @@ class Segmenter(object):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)"""
         img, depth = self.frame_reader.get_colorAndDepth(idx)
         img = (img.cpu().numpy() * 255).astype(np.uint8)
+        '''print(len(self.estimate_c2w_list))
+        print(self.border)
+        print(self.estimate_c2w_list[0])
+        print(self.estimate_c2w_list[1])'''
+
         masksCreated, s, max_id = id_generation.createFrontMappingAutosort(
             idx,
-            self.estimate_c2w_list.cpu() * self.shift,
+            self.estimate_c2w_list.cpu()* self.shift,
             self.K,
             depth.cpu(),
             self.predictor,
@@ -203,13 +215,19 @@ class Segmenter(object):
             samples=self.samples,
             smallesMaskSize=self.smallestMaskSize,
             border=self.border,
+            depthCondition=self.depthCondition,
+            samplePixelFarther=self.samplePixelFarther,
+            normalizePointNumber=self.normalizePointNumber,
+           # verbose=True  
         )
 
         self.samples = s
         self.max_id = max_id
 
         frame = torch.from_numpy(masksCreated)
-        self.semantic_frames[idx // self.every_frame_seg] = frame
+        adjusted_index = min(idx // self.every_frame_seg, len(self.semantic_frames) - 1)
+
+        self.semantic_frames[adjusted_index] = frame
         return frame
 
     def predict_idx(self, idx):
@@ -284,27 +302,42 @@ class Segmenter(object):
         torch.cuda.empty_cache()
 
         ids = backproject.generateIds_Auto(
-            masks, depth.cpu(), min_area=self.first_min_area
+            masks, depth.cpu(), min_area=self.first_min_area, samplePixelFarther=self.samplePixelFarther,
         )
+        if self.border != 0:
+            ids[0 : 2 * self.border ] = -100
+            ids[-2 * self.border  :] = -100
+            ids[:, 0 : 2 * self.border ] = -100
+            ids[:, -2 * self.border  :] = -100
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
-        ids[depth.cpu() == 0] = -100
+        #ids[depth.cpu() == 0] = -100
         self.semantic_frames[0] = torch.from_numpy(ids)
         self.frame_numbers.append(0)
-        self.max_id = ids.max() + 1
-
-        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
-            ids, self.max_id, points_per_instance=100
+        self.max_id = ids.max()
+        visualizerForId = vis.visualizerForIds()  
+        visualizerForId.visualizer(
+            self.semantic_frames[0],
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/0seg_{0}.png",
         )
+        samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
+            ids=ids,
+            normalizePointNumber=self.normalizePointNumber, 
+        )
+        # changed
+        #self.zero_pos[:3,3]*=0.5
+        #self.zero_pos*=self.shift
         realWorldSamples = backproject.realWorldProject(
             samplesFromCurrent[:2, :],
-            self.zero_pos * self.shift,
+            self.estimate_c2w_list.cpu()[0]* self.shift,
             self.K,
             depth.cpu(),
         )
+        print("samplesFromCurrent: ", np.unique(samplesFromCurrent[2:, :]))
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
         )
+        
         return realWorldSamples
 
     def process_keys(self, deleted):
@@ -438,7 +471,7 @@ class Segmenter(object):
         if self.store_vis:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.png")
-                self.visualizer.visualize(
+                self.visualizer.visualizer(
                     self.semantic_frames[index // self.every_frame_seg].numpy(),
                     path=path,
                 )
@@ -447,6 +480,7 @@ class Segmenter(object):
         return self.semantic_frames, self.max_id
 
     def runAuto(self, max=-1):
+        
         if self.use_stored:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             for index in tqdm(index_frames, desc="Loading stored segmentations"):
@@ -462,8 +496,14 @@ class Segmenter(object):
             self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
+        visualizerForId = vis.visualizerForIds()
+        #self.estimate_c2w_list[:,:3,3]*=0
         print("segment first frame")
         s = self.segment_first_ForAuto()
+        visualizerForId.visualizer(
+            self.semantic_frames[0],
+            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
+        )
         print("finished segmenting first frame")
         if self.store_vis:
             visualizerForId = vis.visualizerForIds()
@@ -484,19 +524,23 @@ class Segmenter(object):
             )
         else:
             index_frames = np.arange(self.every_frame_seg, max, self.every_frame_seg)
+            index_frames_predict = np.setdiff1d(
+                np.arange(self.every_frame, max, self.every_frame), index_frames
+            )
         for idx in tqdm(index_frames, desc="Segmenting frames"):
             while self.idx[0] < idx:
                 # print("segmenter stuck")
                 time.sleep(0.1)
             print("start segmenting frame: ", idx)
-            start = time.time()
+            Starttime=time.time()
             self.segment_idx_forAuto(idx)
-            print(f"finished segmenting frame after {time.time()-start} seconds")
-            if self.store_vis:
-                visualizerForId.visualize(
-                    self.semantic_frames[idx // self.every_frame_seg],
-                    path=f"{self.store_directory}/seg_{idx}.png",
-                )
+            stopTime=time.time()
+            print("time taken for segmenting frame: ", stopTime-Starttime)
+            print("finished segmenting frame: ", idx)
+            visualizerForId.visualize(
+                self.semantic_frames[idx // self.every_frame_seg],
+                path=f"{self.store_directory}/seg_{idx}.png",
+            )
             if self.is_full_slam:
                 self.idx_segmenter[0] = idx
             # self.plot()
@@ -513,6 +557,7 @@ class Segmenter(object):
                     path=f"{self.store_directory}/seg_{self.n_img - 1}.png",
                 )
 
+        
         del self.predictor
         torch.cuda.empty_cache()
 
@@ -544,7 +589,10 @@ class Segmenter(object):
                     path=path,
                 )
         # EDIT THIS
-
+        '''make_gif_from_array(
+            self.semantic_frames[index_frames // self.every_frame_seg],
+            os.path.join(self.store_directory, "segmentation.gif"),
+        )'''
         return self.semantic_frames, self.max_id + 1
 
     def plot(self):

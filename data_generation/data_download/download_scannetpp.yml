@@ -27,26 +27,26 @@
 token: OVEd4rIa6CFy3PYtKuSNNsPEhs374Yhhr7VROzhKuCJzQAS26Z6VS7MCQq1XGpAg
 ###### download the data here ######
 # specify an absolute path
-data_root: /home/rozenberszki/project/wsnsl/Datasets/Scannet++
+data_root: /home/rozenberszki/D_Project/wsnsl/Datasets
 
 # root url of the data
 root_url: https://kaldir.vc.in.tum.de/scannetpp/download?token=TOKEN&file=FILEPATH
 
 # download the metadata only, change this to true
-metadata_only: false
+metadata_only: False
 
 # show output for each file being download and unzipped
 verbose: true
 
 ###### specify the scenes to download ######
 # select the splits to download
-# download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
+download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
 
 # uncomment this and comment above to download data only for specific scenes
 # enter the scene IDs separated by comma
 # scene lists can be downloaded by setting metadata_only to true
 # an example scene ID is provided below
-download_scenes: [56a0ec536c]
+#download_scenes: [56a0ec536c]
 
 ###### specify the assets to download ######
 # by default, these assets are downloaded for each scene:

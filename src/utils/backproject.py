@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+import cv2
 
 def T_inv(T):
     R = T[:3, :3]
@@ -181,23 +181,27 @@ def sample_from_instances(ids, numberOfMasks, points_per_instance=1):
 
 # id list better
 
-
+# NEW Variable normalizePointNumber need to define it according to the dimension of the image
 def sample_from_instances_with_ids_area(
-    ids, numberOfMasks, points_per_instance=1, min_points=500
+    ids, normalizePointNumber=50
 ):
     tensors = []
 
     temp = np.unique(ids)[1:]
     for i, element in enumerate(list(temp.astype(int))):
         if element >= 0:
+            '''mask= ids==element
+            kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+            mask= cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
+            labels = np.where(mask)'''
             labels = np.where(ids == element)
             indices = list(zip(labels[0], labels[1]))
-            points_per_instance = np.sum(ids == element)
+            points_per_instance = len(indices)
             # points_per_instance=int(2*np.log2(points_per_instance))
             """points_per_instance = np.max(
                 (points_per_instance // (5 * 5), min_points)
             )"""
-            points_per_instance = points_per_instance // (5 * 5)
+            points_per_instance = points_per_instance // (normalizePointNumber * normalizePointNumber) # new parameter define
             if (
                 len(indices) > points_per_instance
                 and len(indices) > 1
@@ -214,9 +218,11 @@ def sample_from_instances_with_ids_area(
                 element_tensor = element_tensor.unsqueeze(0)
 
                 tensors.append(torch.cat((sampled_tensor, element_tensor), axis=0))
-
-    torch_sampled_indices = torch.cat(tensors, axis=1)
-    return torch_sampled_indices.to(torch.int32)
+    if len(tensors) == 0:
+        return torch.zeros((2, 0, 0)).to(torch.int32)
+    else:
+        torch_sampled_indices = torch.cat(tensors, axis=1)
+        return torch_sampled_indices.to(torch.int32)
 
 
 def sample_from_instances_with_ids(ids, numberOfMasks, points_per_instance=1):
@@ -289,7 +295,7 @@ def generateIds(masks, min_area=1000):
     return ids
 
 
-def generateIds_Auto(masks, depth, min_area=1000):
+def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
     sortedMasks = sorted(masks, key=(lambda x: x["area"]), reverse=True)
     if min_area > 0:
         sortedMasks = [mask for mask in sortedMasks if mask["area"] > min_area]
@@ -300,15 +306,34 @@ def generateIds_Auto(masks, depth, min_area=1000):
         ),
         -100,
     )
+    copyOfIds = np.full(
+        (
+            sortedMasks[0]["segmentation"].shape[0],
+            sortedMasks[0]["segmentation"].shape[1],
+        ),
+        -100,
+    )
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
-    ids[depth == 0] = -100
+    print(np.unique(ids))
     unique_ids, counts = np.unique(ids, return_counts=True)
+    
+    for i in unique_ids:
+        mask = ids == i
+        #print(np.sum(mask))
+        kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+        mask = cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
+        #print(np.sum(mask))
+        label= np.where(mask)
+        copyOfIds[label] = i
+        
+
+    unique_ids, counts = np.unique(copyOfIds, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
-            ids[ids == unique_ids[i]] = -100
-    return ids
+            copyOfIds[copyOfIds == unique_ids[i]] = -100
+    return copyOfIds
 
 
 def generateIdsNew(masks):

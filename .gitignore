@@ -161,4 +161,6 @@ model/
 DataSetEval/*
 outputSegmentation/*
 test/
+trajc2w+zCamdirectionupsampled/*
 ```
+Dataset/*

@@ -77,7 +77,7 @@ def main():
         store_directory=os.path.join(cfg["data"]["output"], "segmentation"),
     )
     # TODO
-    semanticFrames, _ = segmenter.run()
+    semanticFrames, _ = segmenter.runAuto()
     make_gif_from_array(
         semanticFrames,
         store=os.path.join(cfg["data"]["output"], "segmentation", "gif.gif"),

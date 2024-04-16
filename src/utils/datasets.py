@@ -52,7 +52,7 @@ def readEXR_onlydepth(filename):
 
 def get_dataset(cfg, args, scale, device="cuda:0", tracker=False, slam=None):
     return dataset_dict[cfg["dataset"]](
-        cfg, args, scale, device=device, tracker=tracker, slam=slam
+        cfg, args, scale, device=device, slam=slam
     )
 
 
@@ -105,6 +105,7 @@ class BaseDataset(Dataset):
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
+        self.poseScale = cfg["cam"]["poseScale"]
         # ------------------end-added-----------------------------------------------
 
     def __len__(self):
@@ -114,6 +115,7 @@ class BaseDataset(Dataset):
         self.semantic_frames = slam.semantic_frames
 
     def get_zero_pose(self):
+
         return self.poses[0]  # * self.shift
 
     def get_segmentation(self, index):
@@ -121,9 +123,10 @@ class BaseDataset(Dataset):
         """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
         semantic_data = np.load(semantic_path)"""
         # Create one-hot encoding using numpy.eye
+        adjusted_index = min(index // self.every_frame_seg, len(self.semantic_frames) - 1)
         if index % self.every_frame_seg == 0:
             semantic_data = (
-                self.semantic_frames[index // self.every_frame_seg].clone().int()
+                self.semantic_frames[adjusted_index].clone().int()
             )
         else:
             semantic_data = self.semantic_frames[-1].clone().int()
@@ -139,11 +142,12 @@ class BaseDataset(Dataset):
             semantic_data = semantic_data[edge:-edge, edge:-edge]"""  # just wrong, already included in the semantic data
         return semantic_data.to(self.device)
 
-    def get_colorAndDepth(self, index, edge=True):
+    def get_colorAndDepth(self, index, edge=True,):
         if edge:
             edge = self.crop_edge
         else:
             edge = 0
+        
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
         color_data = cv2.imread(color_path)
@@ -160,7 +164,7 @@ class BaseDataset(Dataset):
         color_data = color_data / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
-        color_data = cv2.resize(color_data, (W, H))
+        #color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
@@ -183,6 +187,7 @@ class BaseDataset(Dataset):
             plt.title("Depth data after resize")
             plt.show()"""
             color_data = color_data.permute(1, 2, 0).contiguous()
+        #print(f"depth shape: {depth_data.shape}, color shape: {color_data.shape}")
 
         if edge > 0:
             # crop image edge, there are invalid value on the edge of the color image
@@ -229,7 +234,8 @@ class BaseDataset(Dataset):
             depth_data = depth_data[edge:-edge, edge:-edge]"""
         color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
-        pose[:3, 3] *= self.scale
+        # Changed apr 8
+        pose[:3, 3] *= self.poseScale # self.scale
         semantic_data = self.get_segmentation(index)
         # pose = pose * self.shift.float()
         return (
@@ -336,6 +342,7 @@ class Replica(BaseDataset):
             self.crop_size is not None
         ):  # TODO check if we ever use this, if yes add to semantic (maybe use assert(...))
             # follow the pre-processing step in lietorch, actually is resize
+            # assert False, "crop_size is not None -> need to crop semantic data"
             color_data = color_data.permute(2, 0, 1)
             color_data = F.interpolate(
                 color_data[None], self.crop_size, mode="bilinear", align_corners=True
@@ -372,6 +379,7 @@ class Replica(BaseDataset):
             c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1
+            c2w[:3, 3] *= self.poseScale
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
@@ -444,14 +452,14 @@ class ScanNet(BaseDataset):
         super(ScanNet, self).__init__(cfg, args, scale, device)
         self.input_folder = os.path.join(self.input_folder, "frames")
         self.color_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "color", "*.jpg")),
+            glob.glob(os.path.join(self.input_folder, "rgb", "*.jpg")),
             key=lambda x: int(os.path.basename(x)[:-4]),
         )
         self.depth_paths = sorted(
-            glob.glob(os.path.join(self.input_folder, "depth", "*.png")),
+            glob.glob(os.path.join(self.input_folder, "processedData/depth", "*.png")),
             key=lambda x: int(os.path.basename(x)[:-4]),
         )
-        self.load_poses(os.path.join(self.input_folder, "pose"))
+        self.load_poses(os.path.join(self.input_folder, "processedData"))
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
@@ -473,6 +481,48 @@ class ScanNet(BaseDataset):
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
+
+class ScanNetPlusPlus(BaseDataset):
+    def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
+        super(ScanNetPlusPlus, self).__init__(cfg, args, scale, slam, tracker, device)
+        #print("nice")
+        self.color_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
+        )[:2000]#[:500:10]
+        self.depth_paths = sorted(
+            glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
+        )[:2000]#[:500:10]
+        self.load_poses(self.input_folder)
+        self.n_img = len(self.color_paths)
+
+    def load_poses(self, path):
+        self.poses = []
+        T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
+        for i in range(2000):#50
+            c2w = T_wc[i]
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            #c2w[:3,3]=c2w[:3,3] already in the get item
+            c2w = torch.from_numpy(c2w).float()
+            #c2w[:3,3]*=0.5
+            self.poses.append(c2w)
+        
+        '''pose_paths = sorted(
+            glob.glob(os.path.join(path, "*.txt")),
+            key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        for pose_path in pose_paths:
+            with open(pose_path, "r") as f:
+                lines = f.readlines()
+            ls = []
+            for line in lines:
+                l = list(map(float, line.split(" ")))
+                ls.append(l)
+            c2w = np.array(ls).reshape(4, 4)
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)'''
 
 class CoFusion(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0"):
@@ -593,5 +643,6 @@ dataset_dict = {
     "cofusion": CoFusion,
     "azure": Azure,
     "tumrgbd": TUM_RGBD,
+    "scannet++": ScanNetPlusPlus,
     "panoptic": Panoptic,
 }

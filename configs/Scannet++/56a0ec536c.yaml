@@ -1,0 +1,21 @@
+inherit_from: configs/Scannet++/scannet.yaml
+mapping:
+  bound: [[-5,5],[-5,5],[-5,5]]
+  #bound: [[-4,4],[-4,4],[-4,4]]
+  marching_cubes_bound: [[-5,5],[-5,5],[-5,5]]
+  first_min_area: 10000
+data:
+  input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset
+  output: output/Scannet++/56a0ec536c
+  logs: logs/Scannet++/56a0ec536c
+Segmenter:
+  samplePixelFarther: 4
+  normalizePointNumber: 10
+  depthCondition: 0.20 #0.005 #0.0
+  border: 30
+  every_frame: 10
+  smallestMaskSize: 3000 # 10000
+output_dimension_semantic: 500
+scale: 1
+#yload_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00049.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01000.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01999.tar
+#make images smaller 

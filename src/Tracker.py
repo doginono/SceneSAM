@@ -211,7 +211,7 @@ class Tracker(object):
                 # initiate mapping every self.every_frame frames
                 if idx > 0 and (idx % self.every_frame == 1 or self.every_frame == 1):
                     while self.mapping_idx[0] != idx - 1:
-                        # print("tracker stuck")
+                        #print("tracker stuck")
                         time.sleep(0.1)
                     pre_c2w = self.estimate_c2w_list[idx - 1].to(device)
             elif self.sync_method == "loose":
@@ -294,6 +294,7 @@ class Tracker(object):
                         self.tracking_pixels,
                         optimizer_camera,
                     )
+                    #print(gt_color.shape)
 
                     if cam_iter == 0:
                         initial_loss = loss

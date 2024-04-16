@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 import matplotlib.colors as mcolors
 import copy
-
+import os
 
 def show_anns(anns):
     if len(anns) == 0:
@@ -112,7 +112,13 @@ class visualizerForIds:
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:
-            plt.scatter(prompts[0, :], prompts[1, :], s=100, c="red", marker="o")
-        plt.savefig(path)
+            #plt.scatter(prompts[0,0], prompts[1,0], s=100, c="red", marker="o")
+            #plt.scatter(prompts[0,1], prompts[1,1], s=100, c="yellow", marker="o")
+            #plt.scatter(prompts[0,2], prompts[1,2], s=100, c="blue", marker="o")
+            #plt.scatter(prompts[0,3], prompts[1,3], s=100, c="green", marker="o")
+            
+            plt.scatter(prompts[0,:], prompts[1,:], s=10, c="red", marker="o")
+        if path is not None:
+            plt.savefig(path)
 
-        plt.show()
+        #plt.show()
