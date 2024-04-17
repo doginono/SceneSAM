@@ -68,6 +68,7 @@ def readImage(filepath):
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
+# Think of the depthCondition is error rate increasing flexibility with increasing depth because the measurements are less accurate
 def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.1):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
@@ -78,18 +79,44 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCond
         | (backprojectedSamples[1, :] > H - 1 - border)
         | (backprojectedSamples[0, :] > W - 1 - border)
     )
-    filteredIndices = np.where(condition)
     filteredBackProj = backprojectedSamples[:, ~condition]
 
-    depthg = np.array(Depthg[filteredBackProj[1, :], filteredBackProj[0, :]])
-    zg = np.delete(zg, filteredIndices)
-    depthCheck = depthg - zg
-    # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
-    indices = np.where(abs(depthCheck) < depthCondition)
-    filteredBackProj = np.squeeze(filteredBackProj[:, indices])
-    # filter out samples hitting pixels with error in depths
-    # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
-    return filteredBackProj
+    UniquefilteredBackProj = np.empty((3, 0), dtype=int)  # assuming backprojectedSamples is 3xN
+
+    for i in np.unique(filteredBackProj[2, :]):
+        indices = np.where(filteredBackProj[2, :] == i)[0]
+        
+        if indices.size == 0:
+            continue
+
+        x_coords = filteredBackProj[0, indices]
+        y_coords = filteredBackProj[1, indices]
+
+        depthg = Depthg[y_coords, x_coords]
+        zg_filtered = zg[indices]
+        depthCheck = depthg - zg_filtered
+
+        if depthCheck.numel() == 0:
+            continue
+        
+        depthConditionUnique = torch.mean(2**torch.abs(depthg.float())) * depthCondition
+        print(f"depthCondition for ID {i}: {depthConditionUnique}")
+
+        condition_mask = torch.abs(depthCheck) < depthConditionUnique
+        if not torch.any(condition_mask) or indices.size <= 1 or filteredBackProj.size == 0 or filteredBackProj.ndim == 1:
+            continue
+        print(indices.shape)
+        good_depth_indices = indices[condition_mask]
+
+        # Ensure we are not trying to concatenate empty data
+
+
+        to_append = filteredBackProj[:, good_depth_indices]
+        if to_append.ndim <= 1:
+            continue  # Add a dimension if needed
+
+        UniquefilteredBackProj = np.hstack((UniquefilteredBackProj, to_append))
+    return UniquefilteredBackProj
 
 
 def update_current_frame(curr_mask, id2id):
