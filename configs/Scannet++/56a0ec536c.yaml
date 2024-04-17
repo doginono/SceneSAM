@@ -13,7 +13,7 @@ Segmenter:
   normalizePointNumber: 10
   depthCondition: 0.20 #0.005 #0.0
   border: 30
-  every_frame: 10
+  every_frame: 1
   smallestMaskSize: 3000 # 10000
 output_dimension_semantic: 500
 scale: 1
