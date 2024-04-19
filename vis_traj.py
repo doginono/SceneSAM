@@ -53,7 +53,8 @@ def main():
     )
     if args.output:
         path = args.output
-    os.makedirs(path, exist_ok=True)
+    else:
+        path = None
     slam = NICE_SLAM(cfg, args)
     slam.set_log_dict(args.checkpoint)
     poses = np.loadtxt(args.trajectory)
@@ -64,21 +65,37 @@ def main():
 
 def render_gif(slam, poses, path=None):
     if path is None:
-        path = "run_traj/"
+        path = "run_traj_reversed/"
     else:
         path = path + "/"
+    os.makedirs(path, exist_ok=True)
+    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/room0_panoptic/test_results_org_pan"
+
+    gt_depths = sorted(glob.glob(basepath + "/depth*"))
+    gt_colors = sorted(glob.glob(basepath + "/frame*"))
     visualizerForId = vis.visualizerForIds()
     depths, colors, semantics = [], [], []
     for i, c2w in tqdm(enumerate(poses)):
         c2w[:3, 1] *= -1
         c2w[:3, 2] *= -1
+        # idx, gt_color, gt_depth, gt_pose, gt_semantic = slam.frame_reader[i]
+        depth_data = cv2.imread(gt_depths[i], cv2.IMREAD_UNCHANGED)
+        depth_data = depth_data.astype(np.float32) / slam.frame_reader.png_depth_scale
+        depth_data = torch.from_numpy(depth_data)
+        depth_data = depth_data.to("cuda")
+        color_path = gt_colors[i]
+        color_data = cv2.imread(color_path)
+        image = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        H, W = depth_data.shape
+        color_data = cv2.resize(image, (W, H))
+        color_data = torch.from_numpy(color_data).to("cuda")
         depth, _, color, semantic = slam.vis_renderer.render_img(
             slam.shared_c,
             slam.shared_decoders,
             c2w.to("cuda"),
             "cuda",
             stage="visualize",
-            gt_depth=None,
+            gt_depth=depth_data,
         )
         depth_np = depth.detach().cpu().numpy()
         color_np = color.detach().cpu().numpy()
@@ -88,11 +105,14 @@ def render_gif(slam, poses, path=None):
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
-        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+        fig, ax = plt.subplots(1, 5, figsize=(15, 5))
         ax[0].imshow(color_np)
-        ax[1].imshow(depth_np / np.max(depth_np))
-        ax[2], im = visualizerForId.visualize(semantic_argmax, ax=ax[2])
+        ax[1].imshow(color_data.cpu().numpy())
+        ax[2].imshow(depth_np / np.max(depth_np))
+        ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
+        ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4])
         plt.savefig(f"{path}frame_{i*4}.png")
+        plt.close(fig)
 
     depths = np.stack(depths)
     depths /= np.max(depths)

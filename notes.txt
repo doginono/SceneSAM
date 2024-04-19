@@ -1,3 +1,11 @@
+19. April
+    -> why visual artefacts in new trajectory?
+    -> render metrics from panoptic lifting for our replica implementation
+    -> segmenter.run and not runAuto for replica
+    -> panoptic Scannet sceen in our model
+    -> maybe (run panoptic for more than the given sceens)
+    -> check if panoptic lifting provides meshes of their computation
+
 8 April
     -run panoptic lifting
     -run novel trajectory from NERF model
@@ -19,3 +27,5 @@ possible efficiency improvements:
 
 full slam:
     implement merging on Automatic Maskgenerator and fix the previous keyframes
+
+

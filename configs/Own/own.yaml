@@ -11,8 +11,8 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.005
-  pixels: 500
-  iters: 50
+  pixels: 200
+  iters: 10
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
@@ -34,7 +34,7 @@ rendering:
 mapping:
   first_min_area: 1000
   use_vis: True
-  no_vis_on_first_frame: True
+  no_vis_on_first_frame: False
   every_frame: 2
   points_per_instance: 4
   vis_freq: 50
