@@ -12,7 +12,7 @@ tracking:
   const_speed_assumption: True
   lr: 0.005
   pixels: 200
-  iters: 10
+  iters: 50
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later

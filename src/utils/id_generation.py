@@ -497,7 +497,7 @@ def createReverseMappingCombined_area_sort(
 
     for instance in unique_ids:
         # sample same id points from from frontProjectedSamples
-        filtre = frontProjectedSamples[2, :, :] == instance
+        filtre = frontProjectedSamples[2, :] == instance
         instanceId = frontProjectedSamples[:, filtre]
         if instanceId.size is not 0 and instanceId[2, 0] >= 0:
             theRelevant = np.array(

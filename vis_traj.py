@@ -65,10 +65,13 @@ def main():
 
 def render_gif(slam, poses, path=None):
     if path is None:
-        path = "run_traj_reversed/"
+        store_path = "run_traj_reversed/"
     else:
-        path = path + "/"
-    os.makedirs(path, exist_ok=True)
+        store_path = path + "/"
+    seg_path = store_path + "/pred_semantics"
+    os.makedirs(seg_path, exist_ok=True)
+    os.makedirs(store_path+'/all', exist_ok=True)
+    
     basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/room0_panoptic/test_results_org_pan"
 
     gt_depths = sorted(glob.glob(basepath + "/depth*"))
@@ -111,8 +114,9 @@ def render_gif(slam, poses, path=None):
         ax[2].imshow(depth_np / np.max(depth_np))
         ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
         ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4])
-        plt.savefig(f"{path}frame_{i*4}.png")
+        plt.savefig(f"{store_path+'/all/'}frame_{i*4}.png")
         plt.close(fig)
+        visualizerForId.visualize(semantic_argmax, path=f"{seg_path}/frame_{i*4}.png")
 
     depths = np.stack(depths)
     depths /= np.max(depths)
