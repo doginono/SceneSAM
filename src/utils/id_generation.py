@@ -68,7 +68,9 @@ def readImage(filepath):
 
 # check one class mapping
 # behind or not checkdef create_complete_mapping_of_current_frame(
-def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.1):
+def checkIfInsideImage(
+    backprojectedSamples, zg, Depthg, border, H, W, depthCondition=0.1
+):
     backprojectedSamples = backprojectedSamples.astype(int)
     # efficient
     # filter out samples outside of image bounds
@@ -332,16 +334,16 @@ def createFrontMappingAutosort(
     verbose=False,
 ):
     verbose = True
-    '''print(K)
+    """print(K)
     K/=3
-    print(T[curr_frame_number])'''
-    
+    print(T[curr_frame_number])"""
+
     T_current = T[curr_frame_number]
     depthf = depths
     #
-    print("TRACKED",T_current)
+    print("TRACKED", T_current)
     # T_current[:3,3] *=0.5
-    #print(T_current)
+    # print(T_current)
 
     frontProjectedSamples, projDepth = backproject.camProject(
         samples, T_current, K
@@ -367,7 +369,7 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     # ids[depth_mask] = -100
-    if verbose:
+    if verbose and False:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/{str(curr_frame_number).zfill(6)}_before.png",
@@ -381,53 +383,61 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
-    '''if verbose:
+    """if verbose:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
-        )'''
+        )"""
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
-        currentMask= ids == currentMaskId
+        currentMask = ids == currentMaskId
         dictOfIds = {-100: -100}
         for instance in np.unique(frontProjectedSamples[2, :]):
             if instance >= 0:
-                samplesInside= frontProjectedSamples[:, frontProjectedSamples[2, :] == instance]
-                
-                insideTheMask= currentMask[samplesInside[1, :] , samplesInside[0, :]]
+                samplesInside = frontProjectedSamples[
+                    :, frontProjectedSamples[2, :] == instance
+                ]
+
+                insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
-                
-        maxForMask= max(dictOfIds, key=dictOfIds.get)
+
+        maxForMask = max(dictOfIds, key=dictOfIds.get)
         ###########################################
-        insideTheMask= currentMask[frontProjectedSamples[1, :] , frontProjectedSamples[0, :]]
+        insideTheMask = currentMask[
+            frontProjectedSamples[1, :], frontProjectedSamples[0, :]
+        ]
         # hardcoded need to change
-        if maxForMask != -100 and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask) and dictOfIds[maxForMask] > 5:
-            copyOfIds[ids==currentMaskId ] = maxForMask
+        if (
+            maxForMask != -100
+            and dictOfIds[maxForMask] > 0.4 * np.sum(insideTheMask)
+            and dictOfIds[maxForMask] > 5
+        ):
+            copyOfIds[ids == currentMaskId] = maxForMask
         elif maxForMask != -100:
-            copyOfIds[ ids==currentMaskId ] = max_id
+            copyOfIds[ids == currentMaskId] = max_id
             max_id += 1
-    
-    ids=copyOfIds
-    
+
+    ids = copyOfIds
+
     if border != 0:
         ids[0 : 2 * border] = -100
         ids[-2 * border :] = -100
         ids[:, 0 : 2 * border] = -100
         ids[:, -2 * border :] = -100
-    
+
     # numberOfMasks = len(np.unique(ids))
 
-    '''if verbose:
-        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])'''
+    """if verbose:
+        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])"""
     try:
-    # Your concatenation operation
+        # Your concatenation operation
         # NEW
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, normalizePointNumber=normalizePointNumber
         )
         # 3d
-        
+
         realWorldProjectCurr = backproject.realWorldProject(
             samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
         )
@@ -440,11 +450,20 @@ def createFrontMappingAutosort(
         # print(samples)
         print("unique ids", np.unique(ids))
     except Exception as e:
-        print(f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}")
-    
+        print(
+            f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
+        )
+
     if verbose:
-        #for i in range(22,42):
-        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/",str(curr_frame_number).zfill(6))+"_later", prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0]
+        # for i in range(22,42):
+        visualizer.visualizer(
+            anns=ids,
+            path=os.path.join(
+                "/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/",
+                str(curr_frame_number).zfill(6),
+            )
+            + "_later",
+            prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0],
         )
     return ids, samples, max_id
 

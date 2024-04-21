@@ -1,0 +1,27 @@
+inherit_from: configs/ScanNet/scannet.yaml
+mapping:
+  bound: [[-5, 12],[-5.2, 12.7],[-0.3, 1.4]]
+  marching_cubes_bound: [[-5, 12],[-5.2, 12.7],[-0.3, 1.4]]
+data:
+  input_folder: Datasets/scannet/scans/scene0423_02
+  output: output/scannet/scans/scene0423_02
+  logs: logs/scannet/scans/scene0423_02
+output_dimension_semantic: 400
+Segmenter:
+  samplePixelFarther: 4
+  normalizePointNumber: 10
+  depthCondition: 0.05 #0.005 #0.0
+  border: 30
+  smallestMaskSize: 3000 # 10000
+tracking:
+  gt_camera: True
+cam:
+  png_depth_scale: 1000
+  crop_size: [484, 648]
+  H: 968
+  W: 1296
+  fx: 1170.187988
+  fy: 1170.187988
+  cx: 647.75
+  cy: 483.75
+full_slam: True

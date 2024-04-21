@@ -20,6 +20,7 @@ tracking:
   gt_camera: False
 cam:
   png_depth_scale: 1000
+  crop_size:
   H: 480
   W: 640
   fx: 320.0

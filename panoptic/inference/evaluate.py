@@ -22,7 +22,7 @@ if __name__ == "__main__":
     image_dim = (640, 480)
 
     iou = calculate_iou_folders(
-        Path("/home/rozenberszki/project/wsnsl/run_traj/pred_semantics"),
+        Path("/home/rozenberszki/project/wsnsl/run_traj2/pred_semantics"),
         Path(
             "/home/rozenberszki/project/panoptic-lifting/data/replica/room_0/rs_semantics"
         ),
@@ -30,5 +30,11 @@ if __name__ == "__main__":
     )
     print(iou)
 
-    # pq, rq, sq = calculate_panoptic_quality_folders(Path(args.exp_path, "pred_semantics"), Path(args.exp_path, "pred_surrogateid"), Path(args.root_path) / "rs_semantics", Path(args.root_path) / "rs_instance", image_dim)
-    # print(f'[dataset] iou, pq, sq, rq: {iou:.3f}, {pq:.3f}, {sq:.3f}, {rq:.3f}')
+    pq, rq, sq = calculate_panoptic_quality_folders(
+        Path(args.exp_path, "pred_semantics"),
+        Path(args.exp_path, "pred_surrogateid"),
+        Path(args.root_path) / "rs_semantics",
+        Path(args.root_path) / "rs_instance",
+        image_dim,
+    )
+    print(f"[dataset] iou, pq, sq, rq: {iou:.3f}, {pq:.3f}, {sq:.3f}, {rq:.3f}")

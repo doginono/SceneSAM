@@ -895,7 +895,7 @@ def calculate_iou_folders_image_wise(path_pred, path_target, image_size, pred_of
 
 
 def calculate_iou_folders(path_pred, path_target, image_size, pred_offset=0):
-    num_semantic_classes = 300  # 1 + len(Path("resources/scannet_reduced_to_coco.csv").read_text().strip().splitlines())
+    num_semantic_classes = 100  # 1 + len(Path("resources/scannet_reduced_to_coco.csv").read_text().strip().splitlines())
     val_set = json.loads(
         Path(
             "/home/rozenberszki/project/panoptic-lifting/data/replica/room_0/splits.json"
