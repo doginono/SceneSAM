@@ -454,7 +454,7 @@ def createFrontMappingAutosort(
             f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
         )
 
-    if verbose:
+    if verbose and False:
         # for i in range(22,42):
         visualizer.visualizer(
             anns=ids,

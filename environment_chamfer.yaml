@@ -1,0 +1,15 @@
+name: chamfer
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - torch==2.1.1
+  - torchvision==0.16.1 
+  - torchaudio==2.1.1
+  - pip:
+    - oauthlib
+    - requests-oauthlib==2.0.0
+    - Click==7.0
+    - psutil>=5.0.0
+    - PyYAML
+    - six>=1.13.0

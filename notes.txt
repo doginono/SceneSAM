@@ -1,3 +1,12 @@
+ 22. April 
+    python -W ignore run.py configs/Own/office4.yaml: 5278 seconds
+    python -W ignore run.py configs/Own/office0.yaml: 5922 seconds
+    python -W ignore run.py configs/Own/office1.yaml: 5803 seconds
+    python -W ignore run.py configs/Own/office2.yaml: 5199 seconds
+    python -W ignore run.py configs/Own/office3.yaml: 5387 seconds
+    python -W ignore run.py configs/Own/room1.yaml: 4970 seconds
+    python -W ignore run.py configs/Own/room2.yaml: 6470 seconds 
+
 19. April
     -- why visual artefacts in new trajectory?
     -> render metrics from panoptic lifting for our replica implementation
