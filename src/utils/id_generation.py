@@ -91,21 +91,22 @@ def checkIfInsideImage(backprojectedSamples, zg, Depthg, border, H, W, depthCond
 
         x_coords = filteredBackProj[0, indices]
         y_coords = filteredBackProj[1, indices]
-
+        # depth g are the image depths
         depthg = Depthg[y_coords, x_coords]
+        # here it is the depths of the cam projected
         zg_filtered = zg[indices]
         depthCheck = depthg - zg_filtered
-
         if depthCheck.numel() == 0:
             continue
-        
-        depthConditionUnique = torch.mean(2**torch.abs(depthg.float())) * depthCondition
-        print(f"depthCondition for ID {i}: {depthConditionUnique}")
+        #print("depthg",depthg)
+        #print("zg_filtered",zg_filtered)
+        # depth condition increases linearly with the depth else normal
+        depthConditionUnique = torch.mean(5**torch.abs(depthg.float())) * depthCondition
+        #print(f"depthCondition for ID {i}: {depthConditionUnique}")
 
-        condition_mask = torch.abs(depthCheck) < depthConditionUnique
+        condition_mask = (torch.abs(depthCheck) < depthConditionUnique) 
         if not torch.any(condition_mask) or indices.size <= 1 or filteredBackProj.size == 0 or filteredBackProj.ndim == 1:
             continue
-        print(indices.shape)
         good_depth_indices = indices[condition_mask]
 
         # Ensure we are not trying to concatenate empty data
@@ -394,11 +395,11 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     # ids[depth_mask] = -100
-    if verbose:
+    '''if verbose:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/{str(curr_frame_number).zfill(6)}_before.png",
-        )
+        )'''
     current_unique_ids = np.unique(ids)
 
     """ 
@@ -453,12 +454,13 @@ def createFrontMappingAutosort(
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, normalizePointNumber=normalizePointNumber
         )
+        samplesFromCurrent= samplesFromCurrent[:, samplesFromCurrent[2, :] != 0]
         # 3d
         
         realWorldProjectCurr = backproject.realWorldProject(
             samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
         )
-        # add the ids
+        # add the i200ds
         realWorldProjectCurr = np.concatenate(
             (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
         )

@@ -55,7 +55,7 @@ class Segmenter(object):
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         elif cfg["dataset"] == "scannet++":
             s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
-
+            #s=1
         self.shift = s  # s"""
         self.id_counter = slam.id_counter
         self.idx_mapper = slam.mapping_idx
@@ -117,6 +117,37 @@ class Segmenter(object):
         self.hit_percent = cfg["Segmenter"]["hit_percent"]
         self.depthCondition = cfg["Segmenter"]["depthCondition"]
 
+ 
+    def plot(self,idx):
+        data = self.samples.copy()
+        data = data[:, data[1] > -2]
+        x = data[0]
+        y = data[1]*-1
+        z = data[2]*-1
+        labels = data[3]
+
+        # Create a scatter plot
+        fig = plt.figure()
+        fig.set_size_inches(10.5, 10.5)
+        ax = fig.add_subplot(111, projection="3d")
+        ax = fig.add_subplot(111, projection="3d")
+
+        # Plot each point with a color corresponding to its label
+        unique_labels = np.unique(labels)
+        for label in unique_labels:
+            indices = np.where(labels == label)
+            ax.scatter(x[indices], y[indices], z[indices], s=3)
+
+        # Set axis labels [-5,5],[-5,5],[-5,5]
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+
+        # Add a legend
+        ax.legend()
+        plt.savefig("/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
+        plt.close()  # Close the plot to free up memory
+        # Show the plot
     def update_cam(self):
         """
         Update the camera intrinsics according to pre-processing config,
@@ -534,6 +565,9 @@ class Segmenter(object):
             print("start segmenting frame: ", idx)
             Starttime=time.time()
             self.segment_idx_forAuto(idx)
+            print(idx, "segmented")
+            print(self.estimate_c2w_list.cpu()[idx])
+            self.plot(idx)
             stopTime=time.time()
             print("time taken for segmenting frame: ", stopTime-Starttime)
             print("finished segmenting frame: ", idx)
@@ -572,6 +606,7 @@ class Segmenter(object):
                 self.semantic_frames[index_frames // self.every_frame_seg],
                 os.path.join(self.store_directory, "segmentation.gif"),
             )
+            print(os.path.join(self.store_directory, "segmentation.gif"),)
         # store the segmentations, such that the dataset class (frame_reader) could load them
         # maybe the stored segmentations can be used for loading segmentations
         if False:
@@ -594,41 +629,3 @@ class Segmenter(object):
             os.path.join(self.store_directory, "segmentation.gif"),
         )'''
         return self.semantic_frames, self.max_id + 1
-
-    def plot(self):
-        data = self.samples.copy()
-        data = data[:, data[1] > -2]
-        data = self.samples.copy()
-        data = data[:, data[1] > -2]
-        x = data[0]
-        y = data[1]
-        z = data[2] * -1
-        z = data[2] * -1
-        labels = data[3]
-
-        # Create a scatter plot
-        fig = plt.figure()
-        fig.set_size_inches(18.5, 10.5)
-        ax = fig.add_subplot(111, projection="3d")
-        ax = fig.add_subplot(111, projection="3d")
-
-        # Plot each point with a color corresponding to its label
-        unique_labels = np.unique(labels)
-        for label in unique_labels:
-            indices = np.where(labels == label)
-            ax.scatter(x[indices], y[indices], z[indices], s=3)
-
-        # Set axis labels
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.set_ylim((-2, 2))
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.set_ylim((-2, 2))
-        # Add a legend
-        ax.legend()
-
-        # Show the plot
-        plt.show()

@@ -9,11 +9,11 @@ data:
   output: output/Scannet++/56a0ec536c
   logs: logs/Scannet++/56a0ec536c
 Segmenter:
-  samplePixelFarther: 4
-  normalizePointNumber: 10
-  depthCondition: 0.20 #0.005 #0.0
+  samplePixelFarther: 5
+  normalizePointNumber: 5
+  depthCondition: 0.1 #0.005 #0.0 # 0.3
   border: 30
-  every_frame: 1
+  every_frame: 10
   smallestMaskSize: 3000 # 10000
 output_dimension_semantic: 500
 scale: 1
