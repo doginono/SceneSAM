@@ -46,30 +46,30 @@ def main():
     nice_parser.add_argument("--imap", dest="nice", action="store_false")
     parser.set_defaults(nice=True)
     args = parser.parse_args()
-
+    print(args)
     cfg = config.load_config(  # J:changed it to use our config file including semantics
         args.config, "configs/nice_slam_sem.yaml" if args.nice else "configs/imap.yaml"
     )
 
     if os.path.exists("grid_search"):
-        print("Stopped run: 'grid_search' directory already exists.")
-        return
+        print("'grid_search' directory already exists.")
+    else:
+        os.makedirs("grid_search/")
 
-    os.makedirs("grid_search/")
     with open("New_Gridsearch.txt", "a") as file:
         file.write(
             "=============================================================================\n New Grid Search\n=============================================================================\n"
         )
     # crop_scales = [0.7, 0.5, 0.4, 0.3]  # [0.3, 0.4, 0.5, 0.6]
-    every_frames = [10]
-    tracking_it = [ 50, 100]
-    pixels = [1000]
+    every_frames = [2]
+    tracking_it = [ 50]
+    pixels = [5000]
     #mapping iters
-    train_iters = [50]
+    train_iters = [40]
     samplePixelFarther=[i*3 for i in range(4)]
-    depthCondition=[0.01, 0.1,0.3, 0.5]
-    border=[10,30,50]
-    normalizePointNumber=[10,30,50]
+    depthCondition=[0.3, 0.1]
+    border=[30]
+    normalizePointNumber=[5,10]
 
 
     ''' 
@@ -81,21 +81,28 @@ def main():
         smallestMaskSize: 3000 
     '''
     timings = []
-    for it, pixel, every_frame, train_iter in tqdm(
-        zip(tracking_it, pixels, every_frames, train_iters)
+    for it, pixel, every_frame, train_iter, samplePixelFar,condition,bord,normalizePointNum in tqdm(
+        zip(tracking_it, pixels, every_frames, train_iters, samplePixelFarther, depthCondition, border, normalizePointNumber),
     ):
-        d = {}
-        d["track_iter"] = it
-        d["pixels"] = pixel
-        d["every_frame"] = every_frame
-        d["train_iter"] = train_iter
-
-        path = f"grid_search/logs/run_crop_{it}_{pixel}_{every_frame}_{train_iter}"
+        d = {
+            "track_iter": it,
+            "pixels": pixel,
+            "every_frame": every_frame,
+            "train_iter": train_iter,
+            "samplePixelFarther": samplePixelFar,
+            "depthCondition": condition,
+            "border": bord,
+            "normalizePointNumber": normalizePointNum
+        }
+        #filename = os.path.basename(args.input_folder)
+        #print(filename)
+        path = f"grid_search/{args.config.split('/')[-1][:-5]}/logs/run_crop_{it}_{pixel}_{every_frame}_{train_iter}_{samplePixelFar}_{condition}_{bord}_{normalizePointNum}/segmentation"
         cfg["data"]["logs"] = path
-        out_path = f"grid_search/output/crop_{it}_{pixel}_{every_frame}_{train_iter}"
+        out_path = f"grid_search/{args.config.split('/')[-1][:-5]}/output/crop_{it}_{pixel}_{every_frame}_{train_iter}_{samplePixelFar}_{condition}_{bord}_{normalizePointNum}/segmentation"
         cfg["data"]["output"] = out_path
-        store_seg_path = f"grid_search/output/crop_{it}_{pixel}_{every_frame}_{train_iter}/segmentation"
+        store_seg_path = f"grid_search/{args.config.split('/')[-1][:-5]}/output/crop_{it}_{pixel}_{every_frame}_{train_iter}_{samplePixelFar}_{condition}_{bord}_{normalizePointNum}/segmentation"
         cfg["Segmenter"]["store_seg_path"] = store_seg_path
+        
         os.makedirs(store_seg_path, exist_ok=True)
         os.makedirs(out_path, exist_ok=True)
         os.makedirs(path, exist_ok=True)
@@ -104,6 +111,11 @@ def main():
         cfg["mapping"]["iters"] = train_iter
         cfg["tracking"]["iters"] = it
         cfg["tracking"]["pixels"] = pixel
+        cfg["Segmenter"]["samplePixelFarther"] = samplePixelFar
+        cfg["Segmenter"]["depthCondition"] = condition
+        cfg["Segmenter"]["border"] = bord
+        cfg["Segmenter"]["normalizePointNumber"] = normalizePointNum
+
         """H, W = cfg["cam"]["H"], cfg["cam"]["W"]
         d["crop_scale"] = crop_scale
         cfg["tracking"]["ignore_edge_W"] = int(100 * crop_scale)

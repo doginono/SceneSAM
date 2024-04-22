@@ -6,9 +6,9 @@ mapping:
   first_min_area: 3000
 data:
 # TODO 
-  input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset/56a0ec536c
-  output: output/Scannet++/56a0ec536c
-  logs: logs/Scannet++/56a0ec536c
+  input_folder: Dataset/98b4ec142f
+  output: output/Scannet++/98b4ec142f
+  logs: logs/Scannet++/98b4ec142f
 Segmenter:
   samplePixelFarther: 8
   normalizePointNumber: 5

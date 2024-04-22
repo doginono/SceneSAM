@@ -28,7 +28,6 @@ token: OVEd4rIa6CFy3PYtKuSNNsPEhs374Yhhr7VROzhKuCJzQAS26Z6VS7MCQq1XGpAg
 ###### download the data here ######
 # specify an absolute path
 data_root: /home/rozenberszki/D_Project/wsnsl/Datasets
-
 # root url of the data
 root_url: https://kaldir.vc.in.tum.de/scannetpp/download?token=TOKEN&file=FILEPATH
 
@@ -36,7 +35,7 @@ root_url: https://kaldir.vc.in.tum.de/scannetpp/download?token=TOKEN&file=FILEPA
 metadata_only: False
 
 # show output for each file being download and unzipped
-verbose: true
+verbose: True
 
 ###### specify the scenes to download ######
 # select the splits to download
@@ -46,7 +45,8 @@ download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
 # enter the scene IDs separated by comma
 # scene lists can be downloaded by setting metadata_only to true
 # an example scene ID is provided below
-#download_scenes: [56a0ec536c]
+# 56a0ec536c
+download_scenes: [56a0ec536c]
 
 ###### specify the assets to download ######
 # by default, these assets are downloaded for each scene:
@@ -54,13 +54,13 @@ download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
 # see `scene_assets` and the dataset documentation page for more info on each asset
 default_assets: [
                 # dslr lists, images
-                dslr_train_test_lists_path, dslr_resized_dir, dslr_resized_mask_dir, 
+                #dslr_train_test_lists_path, dslr_resized_dir, dslr_resized_mask_dir, 
                 # camera poses
                 dslr_colmap_dir, dslr_nerfstudio_transform_path,
                 # mesh
                 scan_mesh_path, scan_mesh_mask_path,
                 # annotation
-                scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path,
+                #scan_mesh_segs_path, scan_anno_json_path, scan_sem_mesh_path,
                 # iphone video and depth
                 iphone_video_path, iphone_video_mask_path, iphone_depth_path,
                 # camera poses
