@@ -12,7 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.0005
-  gt_camera: False
+  gt_camera: True
   pixels: 1000
   iters: 30
 Segmenter:
@@ -42,20 +42,20 @@ mapping:
   first_min_area: 10000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 2
+  every_frame: 2 # 2
   points_per_instance: 4
   vis_freq: 1000
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 100
+  mesh_freq: 600
   ckpt_freq: 200
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 1000 #finetune
-  iters: 60 #finetune
+  iters_first: 10 #finetune
+  iters: 6 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
