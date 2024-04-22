@@ -23,6 +23,7 @@ from src import config
 import seaborn as sns
 from tqdm import tqdm
 from src.utils import vis
+from PIL import Image
 
 
 def main():
@@ -53,32 +54,76 @@ def main():
     )
     if args.output:
         path = args.output
-    os.makedirs(path, exist_ok=True)
+    else:
+        path = None
     slam = NICE_SLAM(cfg, args)
     slam.set_log_dict(args.checkpoint)
     poses = np.loadtxt(args.trajectory)
     poses = poses.reshape(-1, 4, 4)
     poses = torch.from_numpy(poses).float()
-    render_gif(slam, poses, path)
+    render_gif(slam, poses, cfg, path)
 
 
-def render_gif(slam, poses, path=None):
+def render_gif(slam, poses, cfg, path=None):
     if path is None:
-        path = "run_traj/"
+        store_path = "run_traj_reversed/"
     else:
-        path = path + "/"
+        store_path = path + "/"
+    seg_path = store_path + "/pred_semantics"
+    os.makedirs(seg_path, exist_ok=True)
+    os.makedirs(store_path + "/all", exist_ok=True)
+
+    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/office4/results_test"
+
+    gt_depths = sorted(glob.glob(basepath + "/depth*"))
+    gt_colors = sorted(glob.glob(basepath + "/frame*"))
     visualizerForId = vis.visualizerForIds()
+    crop_size = cfg["cam"]["crop_size"]
     depths, colors, semantics = [], [], []
-    for i, c2w in tqdm(enumerate(poses[::20])):
+    for i, c2w in tqdm(enumerate(poses)):
         c2w[:3, 1] *= -1
         c2w[:3, 2] *= -1
-        depth, _, color, semantic = slam.renderer.render_img(
+        # idx, gt_color, gt_depth, gt_pose, gt_semantic = slam.frame_reader[i]
+        depth_data = cv2.imread(gt_depths[i], cv2.IMREAD_UNCHANGED)
+        depth_data = depth_data.astype(np.float32) / slam.frame_reader.png_depth_scale
+        depth_data = torch.from_numpy(depth_data)
+        color_path = gt_colors[i]
+        color_data = cv2.imread(color_path)
+        color_data = cv2.cvtColor(color_data, cv2.COLOR_BGR2RGB)
+        color_data = color_data / 255.0
+        H, W = depth_data.shape
+        color_data = cv2.resize(color_data, (W, H))
+
+        color_data = torch.from_numpy(color_data)
+        if crop_size is not None:
+            # follow the pre-processing step in lietorch, actually is resize
+            color_data = color_data.permute(2, 0, 1)
+            color_data = F.interpolate(
+                color_data[None], crop_size, mode="bilinear", align_corners=True
+            )[0]
+            """sns.histplot(depth_data.numpy().reshape(-1))
+            plt.title("Depth data before resize")
+            plt.show()[384,512]
+            print(depth_data.shape, " before resize")"""
+
+            depth_data = F.interpolate(
+                depth_data[None, None], crop_size, mode="nearest"
+            )[0, 0]
+            """print(depth_data.shape, " after resize")
+
+            sns.histplot(depth_data.flatten().reshape(-1))
+            plt.title("Depth data after resize")
+            plt.show()"""
+            color_data = color_data.permute(1, 2, 0).contiguous()
+        depth_data = depth_data.to("cuda")
+        color_data = color_data.to("cuda")
+        depth, _, color, semantic = slam.vis_renderer.render_img(
             slam.shared_c,
             slam.shared_decoders,
             c2w.to("cuda"),
             "cuda",
             stage="visualize",
-            gt_depth=None,
+            gt_depth=depth_data,
         )
         depth_np = depth.detach().cpu().numpy()
         color_np = color.detach().cpu().numpy()
@@ -88,11 +133,18 @@ def render_gif(slam, poses, path=None):
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
-        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+        fig, ax = plt.subplots(1, 5, figsize=(15, 5))
         ax[0].imshow(color_np)
-        ax[1].imshow(depth_np / np.max(depth_np))
-        ax[2], im = visualizerForId.visualize(semantic_argmax, ax=ax[2])
-        plt.savefig(f"{path}frame_{i*4}.png")
+        ax[1].imshow(color_data.cpu().numpy())
+        ax[2].imshow(depth_np / np.max(depth_np))
+        ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
+        ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4])
+        plt.savefig(f"{store_path+'/all/'}0_{(i*4):04d}.png")
+        plt.close(fig)
+        print(semantic_argmax)
+        Image.fromarray(semantic_argmax.astype(np.uint8)).save(
+            f"{seg_path}/0_{(i*4):04d}.png"
+        )
 
     depths = np.stack(depths)
     depths /= np.max(depths)

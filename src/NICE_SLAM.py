@@ -470,7 +470,7 @@ class NICE_SLAM:
         Segmenting Thread. (updates semantic level)
         """
         print("Segmenting Thread Started ", rank)
-        # RunAutomaticsegmentation
+        # RunAutomaticsegmentation self.segmenter.runAuto()
         self.segmenter.runAuto()
 
     def run(self):

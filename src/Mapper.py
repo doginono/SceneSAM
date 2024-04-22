@@ -1061,6 +1061,18 @@ class Mapper(object):
                 idx = self.idx_coarse_mapper[0].clone()
             else:
                 idx = self.idx_mapper[0].clone()"""
+            if not self.coarse_mapper: #delete
+                if idx == 0:
+                    self.logger.log(
+                        idx,
+                        self.keyframe_dict,
+                        self.keyframe_list,
+                        selected_keyframes=(
+                            self.selected_keyframes
+                            if self.save_selected_keyframes_info
+                            else None
+                        ),
+                    )
 
             if self.verbose:
                 print(Fore.GREEN)
