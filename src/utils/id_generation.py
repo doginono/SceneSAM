@@ -368,7 +368,7 @@ def createFrontMappingAutosort(
     T_current = T[curr_frame_number]
     depthf = depths
     #
-    print("TRACKED", T_current)
+    #print("TRACKED", T_current)
     # T_current[:3,3] *=0.5
     # print(T_current)
 
@@ -394,7 +394,7 @@ def createFrontMappingAutosort(
     mask = automaticMask.generate(current_frame)
     print("mask generation time: ", time.time() - start)
     # TODO suna bakilcak
-    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
+    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize,samplePixelFarther=samplePixelFarther)
     # ids[depth_mask] = -100
     '''if verbose:
         visualizer.visualize(
