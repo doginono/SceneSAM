@@ -455,8 +455,8 @@ def createFrontMappingAutosort(
 
     # numberOfMasks = len(np.unique(ids))
 
-    """if verbose:
-        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])"""
+    if verbose:
+        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])
     try:
         # Your concatenation operation
         # NEW

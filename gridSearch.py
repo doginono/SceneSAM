@@ -62,10 +62,10 @@ def main():
         )
     # crop_scales = [0.7, 0.5, 0.4, 0.3]  # [0.3, 0.4, 0.5, 0.6]
     every_frames = [2]
-    tracking_it = [ 50]
+    tracking_it = [50]
     pixels = [5000]
     #mapping iters
-    train_iters = [40]
+    train_iters = [50]
     samplePixelFarther=[i*3 for i in range(4)]
     depthCondition=[0.3, 0.1]
     border=[30]
