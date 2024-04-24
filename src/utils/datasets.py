@@ -13,6 +13,7 @@ import threading
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch.multiprocessing as mp
+import json
 
 
 def readEXR_onlydepth(filename):
@@ -166,7 +167,7 @@ class BaseDataset(Dataset):
         color_data = color_data / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
-        # color_data = cv2.resize(color_data, (W, H))
+        color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
@@ -237,7 +238,7 @@ class BaseDataset(Dataset):
         color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
         # Changed apr 8
-        pose[:3, 3] *= self.poseScale  # self.scale
+        pose[:3, 3] *= 1 # self.poseScale  # self.scale
         semantic_data = self.get_segmentation(index)
         # pose = pose * self.shift.float()
         return (
@@ -450,8 +451,8 @@ class Azure(BaseDataset):
 
 
 class ScanNet(BaseDataset):
-    def __init__(self, cfg, args, scale, device="cuda:0"):
-        super(ScanNet, self).__init__(cfg, args, scale, device)
+    def __init__(self, cfg, args, scale, device="cuda:0", slam = None):
+        super(ScanNet, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
         self.input_folder = os.path.join(self.input_folder, "frames")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "rgb", "*.jpg")),
@@ -469,6 +470,38 @@ class ScanNet(BaseDataset):
         pose_paths = sorted(
             glob.glob(os.path.join(path, "*.txt")),
             key=lambda x: int(os.path.basename(x)[:-4]),
+        )
+        for pose_path in pose_paths:
+            with open(pose_path, "r") as f:
+                lines = f.readlines()
+            ls = []
+            for line in lines:
+                l = list(map(float, line.split(" ")))
+                ls.append(l)
+            c2w = np.array(ls).reshape(4, 4)
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)
+
+class ScanNet_Panoptic(BaseDataset):
+    def __init__(self, cfg, args, scale, device="cuda:0", slam = None):
+        super(ScanNet_Panoptic, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
+        self.input_folder = os.path.join(self.input_folder)
+        self.split = json.load(open(os.path.join(self.input_folder,"splits.json")))['train']
+        self.color_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in self.split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+        self.depth_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'depth', "*.png")) if os.path.basename(path).split('.')[0] in self.split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+        self.load_poses(os.path.join(self.input_folder, "pose"))
+        self.n_img = len(self.color_paths)
+
+    def load_poses(self, path):
+        self.poses = []
+        pose_paths = sorted([traj for traj in  glob.glob(os.path.join(path, "*.txt")) if os.path.basename(traj).split('.')[0] in self.split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
         )
         for pose_path in pose_paths:
             with open(pose_path, "r") as f:
@@ -652,4 +685,5 @@ dataset_dict = {
     "tumrgbd": TUM_RGBD,
     "scannet++": ScanNetPlusPlus,
     "panoptic": Panoptic,
+    "scannet_panoptic": ScanNet_Panoptic
 }
