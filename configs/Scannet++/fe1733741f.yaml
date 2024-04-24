@@ -1,24 +1,20 @@
+Segmenter:
+  border: 30
+  depthCondition: 0.1
+  every_frame: 10
+  normalizePointNumber: 5
+  samplePixelFarther: 8
+  smallestMaskSize: 3000
+data:
+  input_folder: Dataset/fe1733741f
+  logs: logs/Scannet++/fe1733741f
+  output: output/Scannet++/fe1733741f
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  bound: [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215, 5.323754296533068], [-2.8142115403743437, 9.441466688237004]]
-
-  #bound: [[-4,4],[-4,4],[-4,4]]
-  marching_cubes_bound: [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215, 5.323754296533068], [-2.8142115403743437, 9.441466688237004]]
-
+  bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215, 5.323754296533068],
+    [-2.8142115403743437, 9.441466688237004]] 
   first_min_area: 3000
-data:
-# TODO 
-  input_folder: Dataset/fe1733741f
-  output: output/Scannet++/fe1733741f
-  logs: logs/Scannet++/fe1733741f
-Segmenter:
-  samplePixelFarther: 8
-  normalizePointNumber: 5
-  depthCondition: 0.1 #0.005 #0.0 # 0.3
-  border: 30
-  every_frame: 10
-  smallestMaskSize: 3000 # 10000
+  marching_cubes_bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215,
+    5.323754296533068], [-2.8142115403743437, 9.441466688237004]] 
 output_dimension_semantic: 500
 scale: 1
-#yload_cpt: /home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00049.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01000.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/00499.tar #/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/ckpts/01999.tar
-#make images smaller 

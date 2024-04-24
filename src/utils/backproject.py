@@ -333,6 +333,7 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
             copyOfIds[copyOfIds == unique_ids[i]] = -100
+
     return copyOfIds
 
 

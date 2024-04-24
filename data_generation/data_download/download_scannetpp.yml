@@ -46,7 +46,7 @@ download_splits: [nvs_sem_train, nvs_sem_val, nvs_test, sem_test]
 # scene lists can be downloaded by setting metadata_only to true
 # an example scene ID is provided below
 # 56a0ec536c
-download_scenes: [56a0ec536c]
+download_scenes: [f8f12e4e6b, e9ac2fc517,0b031f3119, 40b56bf310,e3ecd49e2b, 9f139a318d, 419cbe7c11]
 
 ###### specify the assets to download ######
 # by default, these assets are downloaded for each scene:

@@ -3,7 +3,7 @@ coarse: True
 low_gpu_mem: True
 meshing:
   eval_rec: True
-  resolution: 256 # change to 512 for higher resolution geometry
+  resolution: 512 # change to 512 for higher resolution geometry
 tracking:
   vis_freq: 10
   vis_inside_freq: 25
@@ -12,7 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.0005
-  gt_camera: True
+  gt_camera: False
   pixels: 1000
   iters: 30
 Segmenter:
@@ -54,8 +54,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 100 #finetune
-  iters: 6 #finetune
+  iters_first: 1000 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
@@ -87,7 +87,7 @@ cam:
   png_depth_scale: 1000 #for depth image in png format
   #crop_edge: 20
   # changed
-  #crop_size_: [640,512]
+  #crop_size_: [640,480]
   poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
   #crop_edge: 0
   #distortion: [0.062969, -0.0762557 ,-4.23266e-05, 0.000114417]
