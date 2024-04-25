@@ -20,15 +20,15 @@ def find_bounds(x, y, z):
     y_min, y_max = min(y), max(y)
     z_min, z_max = min(z), max(z)
 
-    return (
-        (x_min, x_max),
-        (y_min, y_max),
-        (z_min, z_max),
-    )
+    return [
+        [x_min, x_max],
+        [y_min, y_max],
+        [z_min, z_max],
+    ]
 
 
 def main():
-    filename = "/home/rozenberszki/project/replica_dataset/room_0/habitat/mesh_semantic.ply"  # Path to your PLY file
+    filename = "/home/rozenberszki/scene0423_02/scene0423_02_vh_clean_2.ply"  # Path to your PLY file
     x, y, z = read_ply(filename)
     bounds = find_bounds(x, y, z)
 

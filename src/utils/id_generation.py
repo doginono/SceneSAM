@@ -333,7 +333,7 @@ def createFrontMappingAutosort(
     normalizePointNumber=25,
     verbose=False,
 ):
-    verbose = True
+    verbose = False
     """print(K)
     K/=3
     print(T[curr_frame_number])"""
@@ -369,10 +369,10 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
     # ids[depth_mask] = -100
-    if verbose and False:
+    if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/{str(curr_frame_number).zfill(6)}_before.png",
+            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
@@ -394,6 +394,7 @@ def createFrontMappingAutosort(
         currentMask = ids == currentMaskId
         dictOfIds = {-100: -100}
         for instance in np.unique(frontProjectedSamples[2, :]):
+            i = 0
             if instance >= 0:
                 samplesInside = frontProjectedSamples[
                     :, frontProjectedSamples[2, :] == instance
@@ -401,6 +402,16 @@ def createFrontMappingAutosort(
 
                 insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
+                if verbose and i == 0:
+                    # for i in range(22,42):
+                    visualizer.visualizer(
+                        anns=ids,
+                        path=
+                            f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_{currentMaskId}_{instance}.png",
+
+                        prompts=samplesInside,
+                    )
+                    i += 1
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
         ###########################################
@@ -454,15 +465,13 @@ def createFrontMappingAutosort(
             f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
         )
 
-    if verbose and False:
+    if verbose:
         # for i in range(22,42):
         visualizer.visualizer(
             anns=ids,
-            path=os.path.join(
-                "/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/",
-                str(curr_frame_number).zfill(6),
-            )
-            + "_later",
+            path=
+                "/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_after.png",
+
             prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0],
         )
     return ids, samples, max_id

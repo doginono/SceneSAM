@@ -3,7 +3,7 @@ coarse: True
 low_gpu_mem: True
 meshing:
   eval_rec: True
-  resolution: 512 # change to 512 for higher resolution geometry
+  resolution: 256 # change to 512 for higher resolution geometry
 tracking:
   vis_freq: 10
   vis_inside_freq: 25

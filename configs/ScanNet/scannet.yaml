@@ -33,6 +33,9 @@ Segmenter:
   every_frame: 10
   verbose: True
   hit_percent: 0.4
+meshing:
+  eval_rec: True
+  resolution: 256
 mapping:
   first_min_area: 200
   use_vis: True
