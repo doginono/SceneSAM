@@ -15,9 +15,9 @@ Segmenter:
   normalizePointNumber: 10
   depthCondition: 0.05 #0.005 #0.0
   border: 30
-  smallestMaskSize: 3000 # 10000
+  smallestMaskSize: 1000 # 10000
 tracking:
-  gt_camera: False
+  gt_camera: True
 cam:
   png_depth_scale: 1000
   crop_size:

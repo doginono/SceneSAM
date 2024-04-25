@@ -367,7 +367,7 @@ def createFrontMappingAutosort(
     mask = automaticMask.generate(current_frame)
     print("mask generation time: ", time.time() - start)
     # TODO suna bakilcak
-    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize)
+    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize, samplePixelFarther=samplePixelFarther)
     # ids[depth_mask] = -100
     if verbose:
         visualizer.visualize(
@@ -402,7 +402,7 @@ def createFrontMappingAutosort(
 
                 insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
-                if verbose and i == 0:
+                if verbose and False:
                     # for i in range(22,42):
                     visualizer.visualizer(
                         anns=ids,
@@ -411,7 +411,7 @@ def createFrontMappingAutosort(
 
                         prompts=samplesInside,
                     )
-                    i += 1
+                    
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
         ###########################################
@@ -465,15 +465,17 @@ def createFrontMappingAutosort(
             f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
         )
 
-    if verbose:
+    if verbose or True:
         # for i in range(22,42):
-        visualizer.visualizer(
-            anns=ids,
-            path=
-                "/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_after.png",
+        visualizer = visualizerForIds()
+        for id in np.unique(frontProjectedSamples[2, :]):
+            visualizer.visualizer(
+                anns=ids,
+                path=
+                    f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_{id:05d}.png",
 
-            prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0],
-        )
+                prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
+            )
     return ids, samples, max_id
 
 

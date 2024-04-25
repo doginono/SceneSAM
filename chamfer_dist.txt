@@ -9,6 +9,9 @@ office_4: 0.015382116934925347
 room_1: 0.009850958062894474
 room_2: 0.029629326545429976
 
-chamfer for panoptic room0 is 1.0115e-30
-chamfer for panoptic scannet scene 3.2259e-31
+chamfer for panoptic room0 is 1.0115e-30  <- might be wrong
+chamfer for panoptic scannet scene 3.2259e-31 <- might be wrong ,Scannet: scene 0423_02
+
+
+chamfer our scannet scene 0.2207 , Scannet: scene 0423_02
 ====================================================================================================

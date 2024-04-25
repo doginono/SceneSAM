@@ -1,0 +1,29 @@
+dataset: 'scannet_panoptic'
+inherit_from: configs/ScanNet/scannet.yaml
+mapping:
+  bound: [[-3.3539890072379914, 6.945662490334749], [-0.22525509012807343, 11.952820091915097], [-2.9722684932105667, 2.2705306587884606]]
+
+  marching_cubes_bound: [[-3.3539890072379914, 6.945662490334749], [-0.22525509012807343, 11.952820091915097], [-2.9722684932105667, 2.2705306587884606]]
+data:
+  input_folder: Datasets/Scannet/scene0144_01
+  output: output_imap/scannet/scene0144_01
+  logs: logs/scannet/scene0144_01
+output_dimension_semantic: 400
+Segmenter:
+  samplePixelFarther: 4
+  normalizePointNumber: 5
+  depthCondition: 0.1 #0.005 #0.0 
+  border: 30
+  smallestMaskSize: 5000 # 10000
+  every_frame: 10
+tracking:
+  gt_camera: False
+cam:
+  png_depth_scale: 1000
+  H: 480
+  W: 640
+  fx: 577.870605
+  fy: 577.870605
+  cx: 319.5
+  cy: 239.5
+full_slam: True

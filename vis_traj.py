@@ -24,6 +24,7 @@ import seaborn as sns
 from tqdm import tqdm
 from src.utils import vis
 from PIL import Image
+import json
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
     )
     parser.add_argument("config", type=str, help="Path to config file.")
     parser.add_argument("checkpoint", type=str, help="Path to the checkpoint file.")
-    parser.add_argument("trajectory", type=str, help="Path to the trajectory file.")
+    #parser.add_argument("trajectory", type=str, help="Path to the trajectory file.")
     parser.add_argument(
         "--output",
         type=str,
@@ -58,11 +59,25 @@ def main():
         path = None
     slam = NICE_SLAM(cfg, args)
     slam.set_log_dict(args.checkpoint)
-    poses = np.loadtxt(args.trajectory)
+    """poses = np.loadtxt(args.trajectory)
     poses = poses.reshape(-1, 4, 4)
-    poses = torch.from_numpy(poses).float()
+    poses = torch.from_numpy(poses).float()"""
+    poses = None
     render_gif(slam, poses, cfg, path)
 
+def load_scannet(basepath, split):
+    gt_colors = sorted([path for path in glob.glob(os.path.join(basepath,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+    gt_depths = sorted([path for path in glob.glob(os.path.join(basepath,'depth', "*.png")) if os.path.basename(path).split('.')[0] in split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+    pose_paths = sorted([traj for traj in  glob.glob(os.path.join(basepath,'pose', "*.txt")) if os.path.basename(traj).split('.')[0] in split],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )
+    poses = [np.loadtxt(p) for p in pose_paths]
+    poses = torch.from_numpy(np.stack(poses)).float()
+    return gt_colors, gt_depths, poses
 
 def render_gif(slam, poses, cfg, path=None):
     if path is None:
@@ -72,13 +87,16 @@ def render_gif(slam, poses, cfg, path=None):
     seg_path = store_path + "/pred_semantics"
     os.makedirs(seg_path, exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
+    
+    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
+    split = json.load(open(os.path.join(basepath,"splits.json")))['test']
 
-    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/office4/results_test"
-
-    gt_depths = sorted(glob.glob(basepath + "/depth*"))
-    gt_colors = sorted(glob.glob(basepath + "/frame*"))
+    #gt_depths = sorted(glob.glob(basepath + "/depth*"))
+    #gt_colors = sorted(glob.glob(basepath + "/frame*"))
+    gt_colors, gt_depths, poses = load_scannet(basepath, split)
     visualizerForId = vis.visualizerForIds()
-    crop_size = cfg["cam"]["crop_size"]
+    crop_size = cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else None
+    edge = cfg["cam"]["crop_edge"] if "crop_edge" in cfg["cam"] else 0
     depths, colors, semantics = [], [], []
     for i, c2w in tqdm(enumerate(poses)):
         c2w[:3, 1] *= -1
@@ -115,6 +133,10 @@ def render_gif(slam, poses, cfg, path=None):
             plt.title("Depth data after resize")
             plt.show()"""
             color_data = color_data.permute(1, 2, 0).contiguous()
+        if edge > 0:
+            # crop image edge, there are invalid value on the edge of the color image
+            color_data = color_data[edge:-edge, edge:-edge]
+            depth_data = depth_data[edge:-edge, edge:-edge]
         depth_data = depth_data.to("cuda")
         color_data = color_data.to("cuda")
         depth, _, color, semantic = slam.vis_renderer.render_img(
@@ -138,12 +160,13 @@ def render_gif(slam, poses, cfg, path=None):
         ax[1].imshow(color_data.cpu().numpy())
         ax[2].imshow(depth_np / np.max(depth_np))
         ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
-        ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4])
-        plt.savefig(f"{store_path+'/all/'}0_{(i*4):04d}.png")
+        ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4], sep_boarder=True, samplePixelFarther=7)
+        plt.tight_layout()
+        plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png")
         plt.close(fig)
         print(semantic_argmax)
         Image.fromarray(semantic_argmax.astype(np.uint8)).save(
-            f"{seg_path}/0_{(i*4):04d}.png"
+            f"{seg_path}/0_{(i):04d}.png"
         )
 
     depths = np.stack(depths)
