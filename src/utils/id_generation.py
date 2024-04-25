@@ -96,6 +96,13 @@ def checkIfInsideImage(
         depthg = Depthg[y_coords, x_coords]
         # here it is the depths of the cam projected
         zg_filtered = zg[indices]
+        #print("zg_filtered, projected",zg_filtered.shape)
+        #print("depthg, my image depths",depthg.shape)
+        zg_filtered[zg_filtered<0]=-10000
+
+        if i==0:
+            print("zg_filtered",zg_filtered[zg_filtered<0])
+            print("zg_filtered",zg_filtered[zg_filtered<0])
         depthCheck = depthg - zg_filtered
         if depthCheck.numel() == 0:
             continue
@@ -106,8 +113,13 @@ def checkIfInsideImage(
         depthConditionUnique = torch.max(torch.abs(depthg.float())/3,torch.ones_like(depthg))* depthCondition #0.4
         #print(f"depthCondition for ID {i}: {depthConditionUnique}")
         #print(depthConditionUnique.shape)
-        
+        '''print("depthCurrent" ,depthg[:len(depthg)//100])
+        print("depthProjected" ,zg[:len(zg)//100])
+        print("depthCheck",depthConditionUnique[:len(depthConditionUnique)//100])'''
+
         condition_mask = (torch.abs(depthCheck) < depthConditionUnique) 
+        
+        #print("condition_mask",condition_mask[:len(condition_mask)//100])
         if not torch.any(condition_mask) or indices.size <= 1 or filteredBackProj.size == 0 or filteredBackProj.ndim == 1:
             continue
         good_depth_indices = indices[condition_mask]
@@ -350,7 +362,7 @@ def createFrontMappingAutosort(
     curr_frame_number,
     T,
     K,
-    depths,
+    depth,
     automaticMask,
     max_id=None,
     current_frame=None,
@@ -368,7 +380,8 @@ def createFrontMappingAutosort(
     print(T[curr_frame_number])"""
 
     T_current = T[curr_frame_number]
-    depthf = depths
+    depthf = depth
+    #print(depthf.max(), depthf.min())
     #
     #print("TRACKED", T_current)
     # T_current[:3,3] *=0.5
@@ -394,14 +407,14 @@ def createFrontMappingAutosort(
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
     start = time.time()
     mask = automaticMask.generate(current_frame)
-    print("mask generation time: ", time.time() - start)
+    #print("mask generation time: ", time.time() - start)
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize,samplePixelFarther=samplePixelFarther)
     # ids[depth_mask] = -100
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/{str(curr_frame_number).zfill(6)}_before.png",
+            path=f"/home/rozenberszki/D_Project/wsnsl/Dataset/fe1733741f/test/InsideTHeId{str(curr_frame_number).zfill(6)}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
@@ -412,11 +425,13 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
-    """if verbose:
+    """
+    if verbose:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
-        )"""
+        )
+    """
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
@@ -460,10 +475,12 @@ def createFrontMappingAutosort(
     try:
         # Your concatenation operation
         # NEW
+        # if depth==0 do not sample
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, normalizePointNumber=normalizePointNumber
         )
-        samplesFromCurrent= samplesFromCurrent[:, samplesFromCurrent[2, :] != 0]
+        # it 
+        # samplesFromCurrent= samplesFromCurrent[:, samplesFromCurrent[2, :]]
         # 3d
 
         realWorldProjectCurr = backproject.realWorldProject(
@@ -487,7 +504,7 @@ def createFrontMappingAutosort(
         visualizer.visualizer(
             anns=ids,
             path=os.path.join(
-                "/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/",
+                "/home/rozenberszki/D_Project/wsnsl/Dataset/fe1733741f/test/InsideTHeId",
                 str(curr_frame_number).zfill(6),
             )
             + "_later",

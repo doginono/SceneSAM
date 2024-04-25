@@ -318,7 +318,7 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
         ids[m] = i
     print(np.unique(ids))
     unique_ids, counts = np.unique(ids, return_counts=True)
-    
+    # TODO! depth = 0 then filter
     for i in unique_ids:
         mask = ids == i
         #print(np.sum(mask))
@@ -328,7 +328,8 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
         label= np.where(mask)
         copyOfIds[label] = i
         
-
+    copyOfIds[depth==0] = -100
+    
     unique_ids, counts = np.unique(copyOfIds, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
