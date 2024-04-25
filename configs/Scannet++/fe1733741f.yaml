@@ -3,13 +3,13 @@ inherit_from: configs/Scannet++/scannet.yaml
 Segmenter:
   border: 0
   depthCondition: 0.1
-  every_frame: 1
+  every_frame: 6
   normalizePointNumber: 3
   samplePixelFarther: 10
   smallestMaskSize: 1000
 
 tracking:
-  gt_camera: True
+  gt_camera: False
   pixels: 1000
   iters: 30
 
@@ -20,13 +20,13 @@ mapping:
   marching_cubes_bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215,
     5.323754296533068], [-2.8142115403743437, 9.441466688237004]] 
   first_min_area: 1000
-  every_frame: 10 # 2
+  every_frame: 2 # 2
   points_per_instance: 4
   mesh_freq: 200
-  keyframe_every: 10
+  keyframe_every: 50
   pixels: 5000
-  iters_first: 10 #finetune
-  iters: 6 #finetune
+  iters_first: 700 #finetune
+  iters: 30 #finetune
   
 output_dimension_semantic: 500
 scale: 1
@@ -48,6 +48,6 @@ cam:
   #crop_edge: 20
   # changed
   #crop_size_: [640,480]
-  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
+#  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
   #crop_edge: 0
   #distortion: [0.0671891, -0.0809171, -0.000587829, 0.00030238]

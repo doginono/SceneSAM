@@ -98,7 +98,7 @@ def checkIfInsideImage(
         zg_filtered = zg[indices]
         #print("zg_filtered, projected",zg_filtered.shape)
         #print("depthg, my image depths",depthg.shape)
-        zg_filtered[zg_filtered<0]=-10000
+        zg_filtered[zg_filtered<0]=-100000000000
 
         if i==0:
             print("zg_filtered",zg_filtered[zg_filtered<0])
@@ -106,6 +106,9 @@ def checkIfInsideImage(
         depthCheck = depthg - zg_filtered
         if depthCheck.numel() == 0:
             continue
+        zg_filtered[zg_filtered< np.array(depthg.min())]= -100000000000
+        zg_filtered[zg_filtered>np.array(depthg.max())]= -100000000000
+        depthCheck[ zg_filtered==-100000000 ] = -100000000000
         #print("depthg",depthg)
         #print("zg_filtered",zg_filtered)
         # depth condition increases linearly with the depth else normal

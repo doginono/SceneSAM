@@ -3,7 +3,7 @@ coarse: True
 low_gpu_mem: True
 meshing:
   eval_rec: True
-  resolution: 512 # change to 512 for higher resolution geometry
+  resolution: 128 # change to 512 for higher resolution geometry
 tracking:
   vis_freq: 10
   vis_inside_freq: 25
@@ -49,7 +49,7 @@ mapping:
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 200
+  mesh_freq: 20
   ckpt_freq: 200
   keyframe_every: 50
   mapping_window_size: 5
@@ -88,7 +88,7 @@ cam:
   #crop_edge: 20
   # changed
   #crop_size_: [640,480]
-  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
+#  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
   #crop_edge: 0
   #distortion: [0.062969, -0.0762557 ,-4.23266e-05, 0.000114417]
 
