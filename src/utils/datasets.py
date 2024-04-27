@@ -59,6 +59,7 @@ class BaseDataset(Dataset):
     def __init__(self, cfg, args, scale, slam, tracker, device="cuda:0"):
         super(BaseDataset, self).__init__()
 
+        self.max_frames = cfg['mapping']['max_frames'] if 'max_frames' in cfg['mapping'] else 100000
         s = torch.ones((4, 4)).int()
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
@@ -502,11 +503,12 @@ class ScanNet_Panoptic(BaseDataset):
         self.split = json.load(open(os.path.join(self.input_folder,"splits.json")))['train']
         self.color_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in self.split],
             key=lambda x: int(os.path.basename(x).split('.')[0]),
-        )
+        )[:self.max_frames]
         self.depth_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'depth', "*.png")) if os.path.basename(path).split('.')[0] in self.split],
             key=lambda x: int(os.path.basename(x).split('.')[0]),
-        )
+        )[:self.max_frames]
         self.load_poses(os.path.join(self.input_folder, "pose"))
+        self.poses = self.poses[:self.max_frames]
         assert len(self.color_paths) == len(self.depth_paths) and len(self.color_paths) == len(self.poses), 'something went wrong when data loading'
         self.n_img = len(self.color_paths)
 

@@ -9,7 +9,7 @@ tracking:
   lr: 0.0005      
   pixels: 1000
   iters: 50
-  gt_camera: True
+  gt_camera: False
 
 rendering:
   semantic_occupancy_multiplier: 10
@@ -53,8 +53,8 @@ mapping:
   keyframe_every: 6
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 100 #finetune
-  iters: 10 #finetune
+  iters_first: 1000 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune
