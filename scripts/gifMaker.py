@@ -67,4 +67,4 @@ def make_gif_from_array(semantic_frames, store, max_frame=-1, duration=100):
 
 
 if __name__ == "__main__":
-    make_gif("/home/koerner/Project/nice-slam/Datasets/Replica/room0/segmentation")
+    make_gif("/home/rozenberszki/D_Project/wsnsl/Dataset/56a0ec536c/segmentation")

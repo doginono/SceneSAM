@@ -3,13 +3,13 @@ inherit_from: configs/Scannet++/scannet.yaml
 Segmenter:
   border: 20
   depthCondition: 0.15
-  every_frame: 2
+  every_frame: 10
   normalizePointNumber: 8
-  samplePixelFarther: 4
+  samplePixelFarther: 8
   smallestMaskSize: 2000
 
 tracking:
-  gt_camera: False
+  gt_camera: True
   pixels: 1000
   iters: 30
 
@@ -20,12 +20,12 @@ mapping:
   marching_cubes_bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215,
     5.323754296533068], [-2.8142115403743437, 9.441466688237004]] 
   first_min_area: 2000
-  every_frame: 2 # 2
+  every_frame: 1000 # 2
   points_per_instance: 4
   mesh_freq: 200
   keyframe_every: 50
   pixels: 5000
-  iters_first: 1000 #finetune
+  iters_first: 10 #finetune
   iters: 60 #finetune
   
 output_dimension_semantic: 500
