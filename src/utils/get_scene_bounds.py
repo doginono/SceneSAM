@@ -71,7 +71,7 @@ def main():
     depths_directory = args.depth_directory
     poses = np.loadtxt(args.trajectory).reshape(-1, 4, 4)
     depths = sorted(
-        glob.glob(depths_directory + "*"),
+        glob.glob(depths_directory + "*.png"),
         key=lambda x: int(x.split("/")[-1].split(".")[0]),
     )
     K = np.loadtxt(

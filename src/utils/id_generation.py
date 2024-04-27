@@ -86,13 +86,14 @@ def checkIfInsideImage(
     depthg = np.array(Depthg[filteredBackProj[1, :], filteredBackProj[0, :]])
     zg = np.delete(zg, filteredIndices)
     depthCheck = depthg - zg
+    #scale the depth condition with the depth if it is far away increase it linearly based on the depth
+    depthCondition = depthg * depthCondition
     # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
     indices = np.where(abs(depthCheck) < depthCondition)
     filteredBackProj = np.squeeze(filteredBackProj[:, indices])
     # filter out samples hitting pixels with error in depths
     # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
     return filteredBackProj
-
 
 def update_current_frame(curr_mask, id2id):
     """update curr_mask according to sampleFromCurrentMask
@@ -321,7 +322,7 @@ def createFrontMappingAutosort(
     curr_frame_number,
     T,
     K,
-    depths,
+    depth,
     automaticMask,
     max_id=None,
     current_frame=None,
@@ -339,9 +340,10 @@ def createFrontMappingAutosort(
     print(T[curr_frame_number])"""
 
     T_current = T[curr_frame_number]
-    depthf = depths
+    depthf = depth
+    #print(depthf.max(), depthf.min())
     #
-    print("TRACKED", T_current)
+    #print("TRACKED", T_current)
     # T_current[:3,3] *=0.5
     # print(T_current)
 
@@ -365,9 +367,9 @@ def createFrontMappingAutosort(
         frontProjectedSamples = frontProjectedSamples.reshape(3, -1)
     start = time.time()
     mask = automaticMask.generate(current_frame)
-    print("mask generation time: ", time.time() - start)
+    #print("mask generation time: ", time.time() - start)
     # TODO suna bakilcak
-    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize, samplePixelFarther=samplePixelFarther)
+    ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize,samplePixelFarther=samplePixelFarther)
     # ids[depth_mask] = -100
     if verbose:
         visualizer.visualize(
@@ -383,11 +385,13 @@ def createFrontMappingAutosort(
     # some are pruned do not take the max_id into account
     """
     copyOfIds = np.full(ids.shape, -100)
-    """if verbose:
+    """
+    if verbose:
         visualizer.visualize(
             ids,
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
-        )"""
+        )
+    """
     for currentMaskId in current_unique_ids:
         if currentMaskId < 0:
             continue
@@ -439,20 +443,21 @@ def createFrontMappingAutosort(
 
     # numberOfMasks = len(np.unique(ids))
 
-    """if verbose:
-        visualizer.visualizer(anns=ids, path = os.path.join("/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet","later"+str(curr_frame_number).zfill(6)), prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0])"""
     try:
         # Your concatenation operation
         # NEW
+        # if depth==0 do not sample
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids, normalizePointNumber=normalizePointNumber
         )
+        # it 
+        # samplesFromCurrent= samplesFromCurrent[:, samplesFromCurrent[2, :]]
         # 3d
 
         realWorldProjectCurr = backproject.realWorldProject(
             samplesFromCurrent[:2, :], T[curr_frame_number], K, depthf
         )
-        # add the ids
+        # add the i200ds
         realWorldProjectCurr = np.concatenate(
             (realWorldProjectCurr, samplesFromCurrent[2:, :]), axis=0
         )

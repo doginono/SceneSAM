@@ -329,11 +329,13 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
         label= np.where(mask)
         copyOfIds[label] = i
         
-
+    copyOfIds[depth==0] = -100
+    
     unique_ids, counts = np.unique(copyOfIds, return_counts=True)
     for i in range(len(unique_ids)):
         if counts[i] < min_area:
             copyOfIds[copyOfIds == unique_ids[i]] = -100
+
     return copyOfIds
 
 

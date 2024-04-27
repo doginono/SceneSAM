@@ -104,7 +104,7 @@ class BaseDataset(Dataset):
         self.points_per_instance = cfg["mapping"]["points_per_instance"]
         self.K = as_intrinsics_matrix([self.fx, self.fy, self.cx, self.cy])
         self.id_counter = slam.id_counter
-        # self.poseScale = cfg["cam"]["poseScale"]
+        self.poseScale = cfg["cam"]["poseScale"] if 'poseScale' in cfg["cam"] else 1
         # ------------------end-added-----------------------------------------------
 
     def __len__(self):
@@ -156,6 +156,17 @@ class BaseDataset(Dataset):
         color_data = cv2.imread(color_path)
         if ".png" in depth_path:
             depth_data = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+
+            # Convert the depth data to float32 for processing
+            depth_data = depth_data.astype('float32')
+
+            # Apply bilateral filter
+            depth_data = cv2.bilateralFilter(depth_data, 10, 75, 75)
+
+            # If necessary, convert back to original format (here shown for completeness)
+            # Example: convert back to 16U if needed for further processing
+            depth_data = depth_data.astype('uint16')
+
         elif ".exr" in depth_path:
             depth_data = readEXR_onlydepth(depth_path)
         if self.distortion is not None:
@@ -524,14 +535,23 @@ class ScanNetPlusPlus(BaseDataset):
         # print("nice")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[
-            :2000
-        ]  # [:500:10]
+        )[:2000]  # [:500:10]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[
-            :2000
-        ]  # [:500:10]
+        )[:2000]#[:500:10]
+        
+        #print(self.color_paths[101])
+        '''self.color_paths.pop(101)
+        self.depth_paths.pop(101)
+        self.color_paths.pop(101)
+        self.depth_paths.pop(101)
+        self.color_paths.pop(47)
+        self.depth_paths.pop(47)
+        self.color_paths.pop(47)
+        self.depth_paths.pop(47)'''
+        #print(self.color_paths[:10])
+        #print(self.depth_paths[:10])
+
         self.load_poses(self.input_folder)
         self.n_img = len(self.color_paths)
 
