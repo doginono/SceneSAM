@@ -80,63 +80,18 @@ def checkIfInsideImage(
         | (backprojectedSamples[1, :] > H - 1 - border)
         | (backprojectedSamples[0, :] > W - 1 - border)
     )
+    filteredIndices = np.where(condition)
     filteredBackProj = backprojectedSamples[:, ~condition]
 
-    UniquefilteredBackProj = np.empty((3, 0), dtype=int)  # assuming backprojectedSamples is 3xN
-
-    for i in np.unique(filteredBackProj[2, :]):
-        indices = np.where(filteredBackProj[2, :] == i)[0]
-        
-        if indices.size == 0:
-            continue
-
-        x_coords = filteredBackProj[0, indices]
-        y_coords = filteredBackProj[1, indices]
-        # depth g are the image depths
-        depthg = Depthg[y_coords, x_coords]
-        # here it is the depths of the cam projected
-        zg_filtered = zg[indices]
-        #print("zg_filtered, projected",zg_filtered.shape)
-        #print("depthg, my image depths",depthg.shape)
-        zg_filtered[zg_filtered<0]=-100000000000
-
-        if i==0:
-            print("zg_filtered",zg_filtered[zg_filtered<0])
-            print("zg_filtered",zg_filtered[zg_filtered<0])
-        depthCheck = depthg - zg_filtered
-        if depthCheck.numel() == 0:
-            continue
-        zg_filtered[zg_filtered< np.array(depthg.min())]= -100000000000
-        zg_filtered[zg_filtered>np.array(depthg.max())]= -100000000000
-        depthCheck[ zg_filtered==-100000000 ] = -100000000000
-        #print("depthg",depthg)
-        #print("zg_filtered",zg_filtered)
-        # depth condition increases linearly with the depth else normal
-        #depthg what I saw
-        depthConditionUnique = torch.max(torch.abs(depthg.float())/3,torch.ones_like(depthg))* depthCondition #0.4
-        #print(f"depthCondition for ID {i}: {depthConditionUnique}")
-        #print(depthConditionUnique.shape)
-        '''print("depthCurrent" ,depthg[:len(depthg)//100])
-        print("depthProjected" ,zg[:len(zg)//100])
-        print("depthCheck",depthConditionUnique[:len(depthConditionUnique)//100])'''
-
-        condition_mask = (torch.abs(depthCheck) < depthConditionUnique) 
-        
-        #print("condition_mask",condition_mask[:len(condition_mask)//100])
-        if not torch.any(condition_mask) or indices.size <= 1 or filteredBackProj.size == 0 or filteredBackProj.ndim == 1:
-            continue
-        good_depth_indices = indices[condition_mask]
-
-        # Ensure we are not trying to concatenate empty data
-
-
-        to_append = filteredBackProj[:, good_depth_indices]
-        if to_append.ndim <= 1:
-            continue  # Add a dimension if needed
-
-        UniquefilteredBackProj = np.hstack((UniquefilteredBackProj, to_append))
-    return UniquefilteredBackProj
-
+    depthg = np.array(Depthg[filteredBackProj[1, :], filteredBackProj[0, :]])
+    zg = np.delete(zg, filteredIndices)
+    depthCheck = depthg - zg
+    # print(f'depthCkeck, smaller 0.005: {np.count_nonzero(abs(depthCheck) < 0.005)}, depthCheck, smaller 0.01: {np.count_nonzero(abs(depthCheck) < 0.01)}, smaller 0.1: {np.count_nonzero(abs(depthCheck) < 0.1)}')
+    indices = np.where(abs(depthCheck) < depthCondition)
+    filteredBackProj = np.squeeze(filteredBackProj[:, indices])
+    # filter out samples hitting pixels with error in depths
+    # filteredBackProj = filteredBackProj[:, ~bad_depth_mask]
+    return filteredBackProj
 
 def update_current_frame(curr_mask, id2id):
     """update curr_mask according to sampleFromCurrentMask
