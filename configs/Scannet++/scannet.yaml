@@ -12,7 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.0005
-  gt_camera: True
+  gt_camera: False
   pixels: 1000
   iters: 30
 Segmenter:
@@ -27,7 +27,7 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 10
+  every_frame: 2
   verbose: True
   hit_percent: 0.4
   samplePixelFarther: 20 # Erosion, distance to the next mask
@@ -54,8 +54,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 5000
-  iters_first: 15 #finetune
-  iters: 6 #finetune
+  iters_first: 1500 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
