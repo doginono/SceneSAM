@@ -179,7 +179,7 @@ class BaseDataset(Dataset):
         color_data = color_data / 255.0
         depth_data = depth_data.astype(np.float32) / self.png_depth_scale
         H, W = depth_data.shape
-        color_data = cv2.resize(color_data, (W, H))
+        # color_data = cv2.resize(color_data, (W, H))
         color_data = torch.from_numpy(color_data)
         depth_data = torch.from_numpy(depth_data) * self.scale
         if self.crop_size is not None:
@@ -250,7 +250,7 @@ class BaseDataset(Dataset):
         color_data, depth_data = self.get_colorAndDepth(index)
         pose = self.poses[index]
         # Changed apr 8
-        pose[:3, 3] *= 1 # self.poseScale  # self.scale
+        pose[:3, 3] *= self.poseScale  # self.scale
         semantic_data = self.get_segmentation(index)
         # pose = pose * self.shift.float()
         return (
