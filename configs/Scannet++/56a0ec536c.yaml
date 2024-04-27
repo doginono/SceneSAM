@@ -1,5 +1,5 @@
 Segmenter:
-  border: 30
+  border: 20
   depthCondition: 0.15
   every_frame: 5
   normalizePointNumber: 8

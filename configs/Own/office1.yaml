@@ -9,7 +9,7 @@ data:
 output_dimension_semantic: 400
 #Segmenter:
 #  use_stored: True
-#  border: 30
+#  border: 20
 #  overlap: 0.9
 #  relevant: 0.7
 #  merging_parameter: 10

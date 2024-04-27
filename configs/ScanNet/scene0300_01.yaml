@@ -3,7 +3,8 @@ inherit_from: configs/ScanNet/scannet.yaml
 mapping:
   bound: [[-4.59896427, 13.58024123],[-5.71416288,  7.88278209],[-1.8909007,   3.3331548 ]]
   marching_cubes_bound: [[-4.59896427, 13.58024123],[-5.71416288,  7.88278209],[-1.8909007,   3.3331548 ]]
-
+  every_frame: 2
+  keyframe_every: 10
 data:
   input_folder: Datasets/Scannet/scene0300_01
   output:  output/scannet/scene0300_01
@@ -11,11 +12,11 @@ data:
 output_dimension_semantic: 400
 Segmenter:
   samplePixelFarther: 4
-  normalizePointNumber: 5
-  depthCondition: 0.1 #0.005 #0.0 
-  border: 30
+  normalizePointNumber: 8
+  depthCondition: 0.05 #0.005 #0.0 
+  border: 20
   smallestMaskSize: 5000 # 10000
-  every_frame: 10
+  every_frame: 4
  
 cam:
   png_depth_scale: 1000

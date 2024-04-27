@@ -16,7 +16,7 @@ Segmenter:
   samplePixelFarther: 4
   normalizePointNumber: 10
   depthCondition: 0.1 #0.005 #0.0 
-  border: 30
+  border: 20
   smallestMaskSize: 5000 # 10000
   every_frame: 10
 tracking:

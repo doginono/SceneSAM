@@ -15,7 +15,7 @@ tracking:
   iters: 50
 Segmenter:
   samplePixelFarther: 4
-  normalizePointNumber: 5
+  normalizePointNumber: 8
   depthCondition: 0.05 #0.005 #0.0
   border: 10
   smallestMaskSize: 1000 # 10000
