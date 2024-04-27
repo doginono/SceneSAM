@@ -61,6 +61,7 @@ Segmenter:
 rendering:
   semantic_occupancy_multiplier: 10
 mapping:
+  max_frame: 2000
   use_mesh: True
   points_per_instance: 4
   vis_offset: 0

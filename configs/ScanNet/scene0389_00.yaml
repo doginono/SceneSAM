@@ -6,7 +6,7 @@ mapping:
   marching_cubes_bound: [[-6.836289015465985, 7.003710885630739], [-0.6215852690223032, 5.78719544335179], [-0.30248221841479017, 8.865823374180238]]
 data:
   input_folder: Datasets/Scannet/scene0389_00
-  output: output_imap/scannet/scene0389_00
+  output:  output/scannet/scene0389_00
   logs: logs/scannet/scene0389_00
 output_dimension_semantic: 400
 Segmenter:

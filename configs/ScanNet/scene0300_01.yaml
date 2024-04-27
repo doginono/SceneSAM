@@ -6,7 +6,7 @@ mapping:
 
 data:
   input_folder: Datasets/Scannet/scene0300_01
-  output: output_imap/scannet/scene0300_01
+  output:  output/scannet/scene0300_01
   logs: logs/scannet/scene0300_01
 output_dimension_semantic: 400
 Segmenter:

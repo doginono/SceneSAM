@@ -470,7 +470,7 @@ def createFrontMappingAutosort(
             f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
         )
 
-    if verbose or True:
+    if verbose:
         # for i in range(22,42):
         visualizer = visualizerForIds()
         for id in np.unique(frontProjectedSamples[2, :]):
