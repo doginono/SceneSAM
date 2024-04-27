@@ -84,10 +84,20 @@ class visualizerForIds:
     def get_colors(self, ids):
         return self.cmap(ids)
 
-    def visualize(self, anns, path=None, ax=None, title="", prompts=None):
+    def visualize(self, anns, path=None, ax=None, title="", prompts=None, sep_boarder=False, samplePixelFarther =  4):
 
         ids = copy.deepcopy(anns)
-        ids[ids < 0] = 0
+        ids[ids == 0] = len(self.colors) - 1
+        if sep_boarder:
+            kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+            copy_ids = np.full(ids.shape, -100)
+            for i in np.unique(ids):
+                mask = ids == i
+                mask = cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
+                #print(np.sum(mask))
+                label= np.where(mask)
+                copy_ids[label] = i
+            ids = copy_ids
         if path is not None:
             plt.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
             if prompts is not None:

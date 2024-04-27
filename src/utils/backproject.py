@@ -318,11 +318,12 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
         ids[m] = i
     print(np.unique(ids))
     unique_ids, counts = np.unique(ids, return_counts=True)
-    # TODO! depth = 0 then filter
+    
+    kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
     for i in unique_ids:
         mask = ids == i
         #print(np.sum(mask))
-        kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
+        
         mask = cv2.erode(mask.astype(np.uint8), kernel, iterations=1)
         #print(np.sum(mask))
         label= np.where(mask)

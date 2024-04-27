@@ -334,7 +334,7 @@ def createFrontMappingAutosort(
     normalizePointNumber=25,
     verbose=False,
 ):
-    verbose = True
+    verbose = False
     """print(K)
     K/=3
     print(T[curr_frame_number])"""

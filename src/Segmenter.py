@@ -51,9 +51,9 @@ class Segmenter(object):
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
             print("tumrgbd")
-        elif cfg["dataset"] == "replica":
+        elif cfg["dataset"] == "replica":# or cfg['dataset'] == 'scannet_panoptic':
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        elif cfg["dataset"] == "scannet++":
+        elif cfg["dataset"] == "scannet++" or cfg['dataset'] == 'scannet_panoptic':
             s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
             #s=1
         self.shift = s  # s"""
@@ -304,6 +304,7 @@ class Segmenter(object):
         # visualizerForId = vis.visualizerForIds()
         # visualizerForId.visualize(ids, f'{self.store_directory}/first_segmentation.png')
         self.semantic_frames[0] = torch.from_numpy(ids)
+
         self.frame_numbers.append(0)
         self.max_id = ids.max() + 1
 
@@ -331,7 +332,7 @@ class Segmenter(object):
         masks = sam.generate(image)
         del sam
         torch.cuda.empty_cache()
-
+        print('min are first: ', self.first_min_area)
         ids = backproject.generateIds_Auto(
             masks, depth.cpu(), min_area=self.first_min_area, samplePixelFarther=self.samplePixelFarther,
         )
@@ -347,10 +348,11 @@ class Segmenter(object):
         self.frame_numbers.append(0)
         self.max_id = ids.max()
         visualizerForId = vis.visualizerForIds()  
-        visualizerForId.visualizer(
-            self.semantic_frames[0],
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentations/0seg_{0}.png",
-        )
+        visualizerForId .visualizer(
+                anns=ids,
+                path=
+                    f"/home/rozenberszki/project/wsnsl/test/{0:05d}_first.png",
+            )
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids,
             normalizePointNumber=self.normalizePointNumber, 

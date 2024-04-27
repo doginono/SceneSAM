@@ -2,7 +2,7 @@ dataset: 'replica'
 coarse: True
 meshing:
   eval_rec: True
-  resolution: 256 # change to 512 for higher resolution geometry
+  resolution: 512 # change to 512 for higher resolution geometry
 tracking:
   vis_freq: 10
   vis_inside_freq: 25
@@ -15,10 +15,10 @@ tracking:
   iters: 50
 Segmenter:
   samplePixelFarther: 4
-  normalizePointNumber: 10
+  normalizePointNumber: 5
   depthCondition: 0.05 #0.005 #0.0
-  border: 30
-  smallestMaskSize: 3000 # 10000
+  border: 10
+  smallestMaskSize: 1000 # 10000
   full_slam: True
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
@@ -47,13 +47,13 @@ mapping:
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 500
+  mesh_freq: 200
   ckpt_freq: 200
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
   iters_first: 1000 #finetune
-  iters: 100 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune
