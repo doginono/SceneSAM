@@ -32,7 +32,7 @@ Segmenter:
   hit_percent: 0.4
   samplePixelFarther: 20 # Erosion, distance to the next mask
   normalizePointNumber: 10 # pointsperInstance/normalizePointNumber*normalizePointNumber
-  depthCondition: 0.01 # for depthcheck
+  depthCondition: 0.1 # for depthcheck
 
 rendering:
   semantic_occupancy_multiplier: 10
@@ -42,7 +42,7 @@ mapping:
   first_min_area: 2000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 10000 # 2
+  every_frame: 10 # 2
   points_per_instance: 4
   vis_freq: 1000
   vis_inside_freq: 1600

@@ -537,10 +537,10 @@ class ScanNetPlusPlus(BaseDataset):
         # print("nice")
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[:2000]  # [:500:10]
+        )[:self.max_frames]  # [:500:10]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[:2000]#[:500:10]
+        )[:self.max_frames]#[:500:10]
         
         #print(self.color_paths[101])
         '''self.color_paths.pop(101)
@@ -560,7 +560,7 @@ class ScanNetPlusPlus(BaseDataset):
     def load_poses(self, path):
         self.poses = []
         T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
-        for i in range(2000):  # 50
+        for i in range(self.max_frames):  # 50
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1

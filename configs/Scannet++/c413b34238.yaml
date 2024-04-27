@@ -2,19 +2,22 @@ Segmenter:
   border: 30
   depthCondition: 0.1
   every_frame: 10
-  normalizePointNumber: 5
-  samplePixelFarther: 8
+  normalizePointNumber: 8
+  samplePixelFarther: 7
   smallestMaskSize: 2000
 data:
   input_folder: Dataset/c413b34238
   logs: logs/Scannet++/c413b34238
   output: output/Scannet++/c413b34238
 inherit_from: configs/Scannet++/scannet.yaml
+
 mapping:
-  bound: '[[-5.735177441141719, 5.220664138591815], [-3.571437094997511, 4.459125490571395],
-    [-6.577375046587239, 1.7088973281322837]]'
+  max_frames: 2000
+  every_frame: 5 # 2
+  bound: [[-4.735177441141719, 4.220664138591815], [-2.571437094997511, 3.459125490571395],
+    [-5.577375046587239, 0.7088973281322837]]
   first_min_area: 2000
-  marching_cubes_bound: '[[-5.735177441141719, 5.220664138591815], [-3.571437094997511,
-    4.459125490571395], [-6.577375046587239, 1.7088973281322837]]'
+  marching_cubes_bound: [[-4.735177441141719, 4.220664138591815], [-2.571437094997511, 3.459125490571395],
+    [-5.577375046587239, 0.7088973281322837]]
 output_dimension_semantic: 500
 scale: 1
