@@ -1,30 +1,20 @@
 Segmenter:
   border: 30
-  depthCondition: 0.15
-  every_frame: 5
-  normalizePointNumber: 8
+  depthCondition: 0.1
+  every_frame: 10
+  normalizePointNumber: 5
   samplePixelFarther: 8
   smallestMaskSize: 2000
-
-tracking:
-  gt_camera: True
 data:
-  #input_folder: Dataset/56a0ec536c
-  #logs: logs/Scannet++/56a0ec536c
-  #output: output/Scannet++/56a0ec536c
-
   input_folder: Dataset/56a0ec536c
   logs: logs/Scannet++/56a0ec536c
   output: output/Scannet++/56a0ec536c
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  bound:  [[-4.070793785694184, 4.856251816133856], [-2.4926024940348896, 4.1097323130626515],
-    [-5.196354947093756, 4.103471723382164]] 
-  first_min_area: 3000
-  marching_cubes_bound:  [[-4.070793785694184, 4.856251816133856], [-2.4926024940348896,
-    4.1097323130626515], [-5.196354947093756, 4.103471723382164]] 
-
-#load_cpt: 'output/Scannet++/56a0ec536c/ckpts/01999.tar'
-
+  bound: '[[-4.070793785694184, 4.856251816133856], [-2.4926024940348896, 4.1097323130626515],
+    [-5.196354947093756, 4.103471723382164]]'
+  first_min_area: 2000
+  marching_cubes_bound: '[[-4.070793785694184, 4.856251816133856], [-2.4926024940348896,
+    4.1097323130626515], [-5.196354947093756, 4.103471723382164]]'
 output_dimension_semantic: 500
 scale: 1

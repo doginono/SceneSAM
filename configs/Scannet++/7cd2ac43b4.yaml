@@ -1,0 +1,20 @@
+Segmenter:
+  border: 30
+  depthCondition: 0.1
+  every_frame: 10
+  normalizePointNumber: 5
+  samplePixelFarther: 8
+  smallestMaskSize: 2000
+data:
+  input_folder: Dataset/7cd2ac43b4
+  logs: logs/Scannet++/7cd2ac43b4
+  output: output/Scannet++/7cd2ac43b4
+inherit_from: configs/Scannet++/scannet.yaml
+mapping:
+  bound: '[[-0.9634840874796833, 12.112198391510972], [-4.267654594140081, 5.9460602016961195],
+    [10.892769956534218, 24.35582474462462]]'
+  first_min_area: 2000
+  marching_cubes_bound: '[[-0.9634840874796833, 12.112198391510972], [-4.267654594140081,
+    5.9460602016961195], [10.892769956534218, 24.35582474462462]]'
+output_dimension_semantic: 500
+scale: 1

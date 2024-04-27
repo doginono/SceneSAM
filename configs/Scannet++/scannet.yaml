@@ -39,7 +39,7 @@ rendering:
 
 # TODO 
 mapping:
-  first_min_area: 3000
+  first_min_area: 2000
   use_vis: True
   no_vis_on_first_frame: True
   every_frame: 10000 # 2
