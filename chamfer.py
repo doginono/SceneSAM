@@ -12,10 +12,7 @@ def load_point_cloud(file_name):
 def chamfer_distance(p1, p2):
     x = p1.unsqueeze(0)
     y = p2.unsqueeze(0)
-    d1 = kal.metrics.pointcloud.chamfer_distance(x, y)
-    d2 = kal.metrics.pointcloud.chamfer_distance(y, x)
-    chamfer_dist = torch.mean(d1) + torch.mean(d2)
-    return chamfer_dist
+    return kal.metrics.pointcloud.chamfer_distance(x, y)
 
 def main():
     log_file = '/home/rozenberszki/project/wsnsl/chamfer_dist.txt'

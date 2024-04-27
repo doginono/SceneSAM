@@ -16,9 +16,7 @@ Segmenter:
   depthCondition: 0.1 #0.005 #0.0 
   border: 30
   smallestMaskSize: 5000 # 10000
-  every_frame: 10
-tracking:
-  gt_camera: False
+  every_frame: 2
 cam:
   png_depth_scale: 1000
   H: 480

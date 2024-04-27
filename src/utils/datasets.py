@@ -496,7 +496,7 @@ class ScanNet_Panoptic(BaseDataset):
             key=lambda x: int(os.path.basename(x).split('.')[0]),
         )
         self.load_poses(os.path.join(self.input_folder, "pose"))
-        assert len(self.color_paths) == len(self.depth_paths) and len(self.color_paths == self.poses), 'something went wrong when data loading'
+        assert len(self.color_paths) == len(self.depth_paths) and len(self.color_paths) == len(self.poses), 'something went wrong when data loading'
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):

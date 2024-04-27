@@ -9,6 +9,7 @@ tracking:
   lr: 0.0005      
   pixels: 1000
   iters: 50
+  gt_camera: True
 
 rendering:
   semantic_occupancy_multiplier: 10
@@ -30,7 +31,7 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 10
+  every_frame: 2
   verbose: True
   hit_percent: 0.4
 meshing:
@@ -40,20 +41,20 @@ mapping:
   first_min_area: 5000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 2
+  every_frame: 1
   points_per_instance: 4
   vis_freq: 200
   vis_inside_freq: 61
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 100
+  mesh_freq: 10
   ckpt_freq: 200
-  keyframe_every: 50
+  keyframe_every: 6
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 1000 #finetune
-  iters: 70 #finetune
+  iters_first: 100 #finetune
+  iters: 10 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune

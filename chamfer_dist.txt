@@ -1,6 +1,7 @@
 ====================================================================================================Chamfer distance between ground truth and rendered point clouds on
            Replica dataset
 
+#need to half this distances, i accedentically did this double
 office_0: 0.18923928233768939
 office_1: 0.11568187742727261
 office_2: 0.03876981348806838
@@ -9,9 +10,11 @@ office_4: 0.015382116934925347
 room_1: 0.009850958062894474
 room_2: 0.029629326545429976
 
+
+# not double any mmore for the ones below
 chamfer for panoptic room0 is 1.0115e-30  <- might be wrong
-chamfer for panoptic scannet scene 3.2259e-31 <- might be wrong ,Scannet: scene 0423_02
+chamfer for panoptic scannet scene 0.0027 only one direction other direction is ca. 10 
 
 
-chamfer our scannet scene 0.2207 , Scannet: scene 0423_02
+chamfer our scannet scene 0.1104, Scannet: scene 0423_02
 ====================================================================================================
