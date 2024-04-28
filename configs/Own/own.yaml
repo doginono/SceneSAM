@@ -13,20 +13,21 @@ tracking:
   lr: 0.005
   pixels: 200
   iters: 50
+  gt_camera: True
 Segmenter:
   samplePixelFarther: 4
   normalizePointNumber: 8
   depthCondition: 0.05 #0.005 #0.0
   border: 10
   smallestMaskSize: 1000 # 10000
-  full_slam: True
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
   store_vis: True
   store_vis_freq: 100 # not implemented yet
   num_clusters: 5
-  border: 0
+  border: 10
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
@@ -52,8 +53,8 @@ mapping:
   keyframe_every: 50
   mapping_window_size: 5
   pixels: 1000
-  iters_first: 1000 #finetune
-  iters: 60 #finetune
+  iters_first: 100 #finetune
+  iters: 6 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune

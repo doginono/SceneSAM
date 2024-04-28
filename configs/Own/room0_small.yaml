@@ -9,3 +9,4 @@ data:
   logs: 'logs/room0_small'
   output: 'output/Own/room0_small'
 output_dimension_semantic: 400
+load_ckpt: '/home/rozenberszki/project/wsnsl/output/Own/room0_small/ckpts/00059.tar'

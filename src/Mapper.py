@@ -586,8 +586,9 @@ class Mapper(object):
         else:
             inc = 0"""
         if round == 1:
-            start = num_joint_iters
+            start = num_joint_iters +1
             inc = max(int(self.semantic_iter_ratio * num_joint_iters), 1)
+            cur_gt_semantic = self.frame_reader.get_segmentation(idx)
         else:
             start = 0
             if self.is_full_slam and (idx % self.seg_freq == 0 or round == 2):
@@ -626,11 +627,11 @@ class Mapper(object):
                     self.stage = "color"
                 else:
                     mapping_first_frame[0] = 1
-                    while idx > self.idx_segmenter[0]:
+                    while round != 1 and idx > self.idx_segmenter[0]:
                         # print("wait segmenter")
                         # print("mapper stuck")
                         time.sleep(0.1)
-                    if self.stage != "semantic":
+                    if round != 1 and self.stage != "semantic":
                         cur_gt_semantic = self.frame_reader.get_segmentation(idx)
                     self.stage = "semantic"
 
@@ -726,7 +727,8 @@ class Mapper(object):
                             .to(bool)
                             .to(device)
                         ) 
-                        ignore_pixel = keyframe_dict[frame]["ignore_pixel"].to(device)
+                        ignore_pixel = keyframe_dict[frame]["ignore_pixel"]
+                        ignore_pixel = ignore_pixel.to(device) if ignore_pixel is not None else None
                         gt_semantic[ignore_pixel] = 0
                     else:
                         gt_semantic = None
@@ -754,7 +756,7 @@ class Mapper(object):
                         c2w = get_camera_from_tensor(camera_tensor)
                     else:
                         c2w = cur_c2w
-
+                print('pix per image ', pixs_per_image)
                 # -----------------added-------------------
                 (
                     batch_rays_o,
@@ -1158,7 +1160,7 @@ class Mapper(object):
                         idx not in self.keyframe_list
                     ):
                         self.keyframe_list.append(idx.clone())
-                        if self.is_full_slam and not self.coarse_mapper:
+                        if (self.is_full_slam and not self.coarse_mapper) or round == 1:
                             ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
                             self.keyframe_dict.append(
                             {

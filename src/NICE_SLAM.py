@@ -33,9 +33,9 @@ class NICE_SLAM:
         self.output_dimension_semantic = torch.zeros((1)).int()
         self.output_dimension_semantic.share_memory_()
         self.output_dimension_semantic[0] = cfg["output_dimension_semantic"]
-        if "load_cpt" in cfg:
+        if "load_ckpt" in cfg:
             self.load_nice_slam = True
-            self.load_cpt = cfg["load_cpt"]
+            self.load_ckpt = cfg["load_ckpt"]
         else:
             self.load_nice_slam = None
         # for groundtruth tracking
@@ -183,9 +183,10 @@ class NICE_SLAM:
         self.every_frame_seg = cfg["Segmenter"]["every_frame"]
         # TODO mapper has some attributes related to color, which are not clear to me: color_refine, fix_color
         if "store_seg_path" in cfg["Segmenter"]:
-            store_path = cfg["Segmenter"]["store_seg_path"]
+            store_path = cfg["data"]["output"]+'/segmentation'
         else:
             store_path = os.path.join(cfg["data"]["input_folder"], "segmentation")
+        os.makedirs(store_path, exist_ok=True)
         self.segmenter = Segmenter(
             self,
             cfg,
@@ -490,7 +491,7 @@ class NICE_SLAM:
             start = 0
         """
         if self.load_nice_slam is not None:
-            self.set_log_dict(self.load_cpt)
+            self.set_log_dict(self.load_ckpt)
         else:
             if not self.is_full_slam:
                 end = 3
@@ -526,7 +527,7 @@ class NICE_SLAM:
                 self.args,
                 zero_pos=self.frame_reader.get_zero_pose(),
                 store_directory=os.path.join(
-                    self.cfg["data"]["input_folder"], "segmentation"
+                    self.cfg["data"]["output"], "segmentation"
                 ),
             )
             frames, max_id = self.segmenter.runAuto()

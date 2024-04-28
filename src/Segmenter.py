@@ -348,11 +348,11 @@ class Segmenter(object):
         self.frame_numbers.append(0)
         self.max_id = ids.max()
         visualizerForId = vis.visualizerForIds()  
-        visualizerForId .visualizer(
+        """visualizerForId .visualizer(
                 anns=ids,
                 path=
                     f"/home/rozenberszki/project/wsnsl/test/{0:05d}_first.png",
-            )
+            )"""
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids,
             normalizePointNumber=self.normalizePointNumber, 
@@ -545,7 +545,7 @@ class Segmenter(object):
                 path=f"{self.store_directory}/seg_{0}.png",
             )
         if self.is_full_slam:
-            path = os.path.join(self.store_directory, f"seg_{0}.npy")
+            #path = os.path.join(self.store_directory, f"seg_{0}.npy")
             # np.save(path, self.semantic_frames[0].numpy())
             self.idx_segmenter[0] = 0
         self.samples = s
@@ -573,10 +573,11 @@ class Segmenter(object):
             stopTime=time.time()
             print("time taken for segmenting frame: ", stopTime-Starttime)
             print("finished segmenting frame: ", idx)
-            visualizerForId.visualize(
-                self.semantic_frames[idx // self.every_frame_seg],
-                path=f"{self.store_directory}/seg_{idx}.png",
-            )
+            if self.store_vis:
+                visualizerForId.visualize(
+                    self.semantic_frames[idx // self.every_frame_seg],
+                    path=f"{self.store_directory}/seg_{idx}.png",
+                )
             if self.is_full_slam:
                 self.idx_segmenter[0] = idx
             # self.plot()
@@ -608,7 +609,7 @@ class Segmenter(object):
                 self.semantic_frames[index_frames // self.every_frame_seg],
                 os.path.join(self.store_directory, "segmentation.gif"),
             )
-            print(os.path.join(self.store_directory, "segmentation.gif"),)
+            #print(os.path.join(self.store_directory, "segmentation.gif"),)
         # store the segmentations, such that the dataset class (frame_reader) could load them
         # maybe the stored segmentations can be used for loading segmentations
         if False:

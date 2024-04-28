@@ -4,8 +4,8 @@ mapping:
   bound: [[-0.5214331239823449, 4.527215864201953], [-0.5760537104577677, 4.405228336532577], [0.20521706203409074, 1.3631349670874848]]
 
   marching_cubes_bound: [[-0.5214331239823449, 4.527215864201953], [-0.5760537104577677, 4.405228336532577], [0.20521706203409074, 1.3631349670874848]]
-  every_frames: 2
-  keyframe_every: 12
+  every_frames: 1
+  keyframe_every: 6
 data:
   input_folder: Datasets/Scannet/scene0427_00
   output:  output/scannet/scene0427_00
@@ -17,7 +17,7 @@ Segmenter:
   depthCondition: 0.05 #0.005 #0.0 
   border: 20
   smallestMaskSize: 5000 # 10000
-  every_frame: 4
+  every_frame: 2
 cam:
   png_depth_scale: 1000
   H: 480
