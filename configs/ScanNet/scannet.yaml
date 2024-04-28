@@ -1,4 +1,5 @@
 dataset: 'scannet'
+full_slam: True
 tracking:
   vis_freq: 50
   vis_inside_freq: 25
@@ -8,7 +9,7 @@ tracking:
   const_speed_assumption: True
   lr: 0.0005      
   pixels: 1000
-  iters: 200
+  iters: 100
   gt_camera: False
 
 rendering:
@@ -44,22 +45,22 @@ mapping:
   every_frame: 1
   points_per_instance: 4
   vis_freq: 200
-  vis_inside_freq: 61
+  vis_inside_freq: 201
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 20
+  mesh_freq: 50
   ckpt_freq: 200
   keyframe_every: 6
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 1000 #finetune
-  iters: 100 #finetune
-  w_color_loss: 0.2 #maybe finetune
+  iters_first: 1500 #finetune
+  iters: 200 #finetune
+  w_color_loss: 0.4 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune
   fine_iter_ratio: 0.6 #0.6 #finetune
-  semantic_iter_ratio: 0.2 #0.4 #finetune
+  semantic_iter_ratio: 0.1 #0.4 #finetune
 cam: 
   poseScale: 1
   H: 480 

@@ -27,4 +27,3 @@ cam:
   fy: 577.870605
   cx: 319.5
   cy: 239.5
-full_slam: True

@@ -20,7 +20,7 @@ Segmenter:
   depthCondition: 0.05 #0.005 #0.0
   border: 10
   smallestMaskSize: 1000 # 10000
-  full_slam: False
+  full_slam: True
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
