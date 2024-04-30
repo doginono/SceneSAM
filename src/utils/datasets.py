@@ -162,7 +162,7 @@ class BaseDataset(Dataset):
             depth_data = depth_data.astype('float32')
 
             # Apply bilateral filter
-            depth_data = cv2.bilateralFilter(depth_data, 10, 75, 75)
+            #depth_data = cv2.bilateralFilter(depth_data, 10, 75, 75)
 
             # If necessary, convert back to original format (here shown for completeness)
             # Example: convert back to 16U if needed for further processing
@@ -535,12 +535,18 @@ class ScanNetPlusPlus(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(ScanNetPlusPlus, self).__init__(cfg, args, scale, slam, tracker, device)
         # print("nice")
+        if True: #for colmap
+            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten()
+            self.numbering=self.numbering
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )[:self.max_frames]  # [:500:10]
+        )  # [:500:10]
+        self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )[:self.max_frames]#[:500:10]
+        )#[:500:10]
+        self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
+
         
         #print(self.color_paths[101])
         '''self.color_paths.pop(101)
@@ -559,8 +565,8 @@ class ScanNetPlusPlus(BaseDataset):
 
     def load_poses(self, path):
         self.poses = []
-        T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
-        for i in range(self.max_frames):  # 50
+        T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+        for i in range(len(T_wc)):  # 50
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
             c2w[:3, 2] *= -1

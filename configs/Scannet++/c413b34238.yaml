@@ -1,5 +1,5 @@
 Segmenter:
-  border: 30
+  border: 15
   depthCondition: 0.1
   every_frame: 10
   normalizePointNumber: 8
@@ -12,8 +12,8 @@ data:
 inherit_from: configs/Scannet++/scannet.yaml
 
 mapping:
-  max_frames: 2000
-  every_frame: 5 # 2
+  max_frames: 4000
+  every_frame: 2 # 2
   bound: [[-4.735177441141719, 4.220664138591815], [-2.571437094997511, 3.459125490571395],
     [-5.577375046587239, 0.7088973281322837]]
   first_min_area: 2000
