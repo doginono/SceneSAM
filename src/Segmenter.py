@@ -50,7 +50,7 @@ class Segmenter(object):
         s = np.ones((4, 4), int)
         if cfg["dataset"] == "tumrgbd":
             s[[0, 0, 1, 2], [0, 1, 2, 2]] *= -1
-            print("tumrgbd")
+            #print("tumrgbd")
         elif cfg["dataset"] == "replica":# or cfg['dataset'] == 'scannet_panoptic':
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         elif cfg["dataset"] == "scannet++" or cfg['dataset'] == 'scannet_panoptic':
@@ -348,11 +348,11 @@ class Segmenter(object):
         self.frame_numbers.append(0)
         self.max_id = ids.max()
         visualizerForId = vis.visualizerForIds()  
-        visualizerForId .visualizer(
+        """visualizerForId .visualizer(
                 anns=ids,
                 path=
                     f"/home/rozenberszki/project/wsnsl/test/{0:05d}_first.png",
-            )
+            )"""
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids,
             normalizePointNumber=self.normalizePointNumber, 
@@ -366,7 +366,7 @@ class Segmenter(object):
             self.K,
             depth.cpu(),
         )
-        print("samplesFromCurrent: ", np.unique(samplesFromCurrent[2:, :]))
+        #print("samplesFromCurrent: ", np.unique(samplesFromCurrent[2:, :]))
         realWorldSamples = np.concatenate(
             (realWorldSamples, samplesFromCurrent[2:, :]), axis=0
         )
@@ -408,7 +408,7 @@ class Segmenter(object):
             self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
-        print("segment first frame")
+        #print("segment first frame")
         s = self.segment_first()
         if self.is_full_slam:
             path = os.path.join(self.store_directory, f"seg_{0}.npy")
@@ -531,13 +531,13 @@ class Segmenter(object):
 
         visualizerForId = vis.visualizerForIds()
         #self.estimate_c2w_list[:,:3,3]*=0
-        print("segment first frame")
+        #print("segment first frame")
         s = self.segment_first_ForAuto()
         visualizerForId.visualizer(
             self.semantic_frames[0],
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
         )
-        print("finished segmenting first frame")
+        #print("finished segmenting first frame")
         if self.store_vis:
             visualizerForId = vis.visualizerForIds()
             visualizerForId.visualize(
@@ -545,7 +545,7 @@ class Segmenter(object):
                 path=f"{self.store_directory}/seg_{0}.png",
             )
         if self.is_full_slam:
-            path = os.path.join(self.store_directory, f"seg_{0}.npy")
+            #path = os.path.join(self.store_directory, f"seg_{0}.npy")
             # np.save(path, self.semantic_frames[0].numpy())
             self.idx_segmenter[0] = 0
         self.samples = s
@@ -564,26 +564,27 @@ class Segmenter(object):
             while self.idx[0] < idx:
                 # print("segmenter stuck")
                 time.sleep(0.1)
-            print("start segmenting frame: ", idx)
+            #print("start segmenting frame: ", idx)
             Starttime=time.time()
             self.segment_idx_forAuto(idx)
-            print(idx, "segmented")
-            print(self.estimate_c2w_list.cpu()[idx])
+            #print(idx, "segmented")
+            #print(self.estimate_c2w_list.cpu()[idx])
             self.plot(idx)
             stopTime=time.time()
-            print("time taken for segmenting frame: ", stopTime-Starttime)
-            print("finished segmenting frame: ", idx)
-            visualizerForId.visualize(
-                self.semantic_frames[idx // self.every_frame_seg],
-                path=f"{self.store_directory}/seg_{idx}.png",
-            )
+            #print("time taken for segmenting frame: ", stopTime-Starttime)
+            #print("finished segmenting frame: ", idx)
+            if self.store_vis:
+                visualizerForId.visualize(
+                    self.semantic_frames[idx // self.every_frame_seg],
+                    path=f"{self.store_directory}/seg_{idx}.png",
+                )
             if self.is_full_slam:
                 self.idx_segmenter[0] = idx
             # self.plot()
-            # print(f'outside samples: {np.unique(self.samples[-1])}')
+            # #print(f'outside samples: {np.unique(self.samples[-1])}')
         if self.n_img - 1 % self.every_frame_seg != 0:
             while self.idx[0] < self.n_img - 1:
-                # print("segmenter stuck")
+                # #print("segmenter stuck")
                 time.sleep(0.1)
             _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
@@ -604,11 +605,12 @@ class Segmenter(object):
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             if self.n_img - 1 % self.every_frame_seg != 0:
                 index_frames = np.concatenate((index_frames, [self.n_img - 1]))
+            #print(os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"))
             make_gif_from_array(
                 self.semantic_frames[index_frames // self.every_frame_seg],
-                os.path.join(self.store_directory, "segmentation.gif"),
+                os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"),
             )
-            print(os.path.join(self.store_directory, "segmentation.gif"),)
+            ##print(os.path.join(self.store_directory, "segmentation.gif"),)
         # store the segmentations, such that the dataset class (frame_reader) could load them
         # maybe the stored segmentations can be used for loading segmentations
         if False:

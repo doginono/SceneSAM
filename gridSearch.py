@@ -74,9 +74,9 @@ def main():
 
     ''' 
     samplePixelFarther: 8
-        normalizePointNumber: 5
+        normalizePointNumber: 8
         depthCondition: 0.1 #0.005 #0.0 # 0.3
-        border: 30
+        border: 20
         every_frame: 10
         smallestMaskSize: 3000 
     '''

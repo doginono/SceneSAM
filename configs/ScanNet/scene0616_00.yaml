@@ -5,6 +5,8 @@ mapping:
 
   marching_cubes_bound: [[-2.546393952303119, 8.015621269632698], [-0.9864977118275804, 6.239119446285686], [-5.395940075547731, 2.883500665485661]]
 
+  every_frame: 1
+  keyframe_every: 6
 data:
   input_folder: Datasets/Scannet/scene0616_00
   output: output/scannet/scene0616_00
@@ -12,9 +14,9 @@ data:
 output_dimension_semantic: 400
 Segmenter:
   samplePixelFarther: 4
-  normalizePointNumber: 5
+  normalizePointNumber: 8
   depthCondition: 0.1 #0.005 #0.0 
-  border: 30
+  border: 20
   smallestMaskSize: 5000 # 10000
   every_frame: 2
 cam:
@@ -25,4 +27,3 @@ cam:
   fy: 577.870605
   cx: 319.5
   cy: 239.5
-full_slam: True
