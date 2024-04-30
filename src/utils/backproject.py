@@ -316,7 +316,7 @@ def generateIds_Auto(masks, depth, min_area=1000, samplePixelFarther=4):
     for i, ann in enumerate(sortedMasks):
         m = ann["segmentation"]
         ids[m] = i
-    print(np.unique(ids))
+    #print(np.unique(ids))
     unique_ids, counts = np.unique(ids, return_counts=True)
     
     kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
