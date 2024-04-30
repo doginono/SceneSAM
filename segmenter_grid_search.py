@@ -27,6 +27,7 @@ from src.Segmenter import Segmenter
 #scenes: 
 #also for Replica?, maybe with only smallest mask size
 
+max_id_file = 'max_id.txt'
 paths = ['scene0423_02_panoptic', 'scene0300_01', 'scene0616_00', 'scene0354_00', 'scene0389_00', 'scene0494_00', 'scene0645_02', 'scene0693_00']
 basepath = '/home/rozenberszki/project/wsnsl/configs/ScanNet/'
 smallestMaskSizes = [1000, 2000, 5000]
@@ -44,6 +45,8 @@ for sms in smallestMaskSizes:
 print('number of different hyperparameter constellations: ',len(hypers), '\n number of scenes: ', len(paths))
 for p in paths:
     path = basepath + p + '.yaml'
+    with open(max_id_file, 'a') as f:
+        f.write('\n\n' + path + '\n')
     args = argparse.Namespace()
     parser = argparse.ArgumentParser(
     description="Arguments for running the NICE-SLAM/iMAP*."
@@ -91,4 +94,6 @@ for p in paths:
         segmenter = Segmenter(slam, cfg, args, zero_pos, modified_out_path)
         segmenter.estimate_c2w_list = torch.from_numpy(np.concatenate([p[None] for p in segmenter.frame_reader.poses], axis=0)).float()
         #we could also use poses from a checkpoint here.
-        segmenter.runAuto()
+        _, max_id = segmenter.runAuto()
+        with open(max_id_file, 'a') as f:
+            f.write(parameter_string + ': ' +max_id + '\n')
