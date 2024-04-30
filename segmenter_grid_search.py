@@ -27,8 +27,8 @@ from src.Segmenter import Segmenter
 #scenes: 
 #also for Replica?, maybe with only smallest mask size
 
-paths = ['scene0423_02_panoptic', 'scene0300_01', 'scene0616_00', 'scene0354_00', 'scene0389_00', 'scene0494_00', 'scene0645_02', 'scene0693_00']
-basepath = '/home/rozenberszki/project/wsnsl/configs/ScanNet/'
+paths = ['56a0ec536c', '75d29d69b8', 'c413b34238','fe1733741f', 'b20a261fdf', '1841a0b525', '7cd2ac43b4', '07f5b601ee', '8b5caf3398', '8d563fc2cc', '39f36da05b','b20a261fdf']
+basepath = '/home/rozenberszki/D_Project/wsnsl/configs/Scannet++/'
 smallestMaskSizes = [1000, 2000, 5000]
 samplePixelFarthers = [2, 5, 8]
 normalizePointNumbers = [7]
@@ -77,7 +77,7 @@ for p in paths:
         cfg['Segmenter']['normalizePointNumber'] = npn
         cfg['Segmenter']['border'] = b
         cfg['Segmenter']['depthCondition'] = dc
-        cfg['Segmenter']['every_frame'] = 2
+        cfg['Segmenter']['every_frame'] = 1
         cfg['tracking']['gt_camera'] = True
         print('Using GT Camera Pose for tracking.')
         slam = NICE_SLAM(cfg, args)

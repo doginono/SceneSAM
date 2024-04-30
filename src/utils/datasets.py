@@ -540,27 +540,17 @@ class ScanNetPlusPlus(BaseDataset):
             self.numbering=self.numbering
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
-        )  # [:500:10]
+        )
         self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
+        self.color_paths = self.color_paths[:self.max_frames]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
-        )#[:500:10]
+        )
         self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-
-        
-        #print(self.color_paths[101])
-        '''self.color_paths.pop(101)
-        self.depth_paths.pop(101)
-        self.color_paths.pop(101)
-        self.depth_paths.pop(101)
-        self.color_paths.pop(47)
-        self.depth_paths.pop(47)
-        self.color_paths.pop(47)
-        self.depth_paths.pop(47)'''
-        #print(self.color_paths[:10])
-        #print(self.depth_paths[:10])
+        self.depth_paths = self.depth_paths[:self.max_frames]
 
         self.load_poses(self.input_folder)
+        self.poses = self.poses[:self.max_frames]
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):

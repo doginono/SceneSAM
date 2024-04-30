@@ -16,7 +16,7 @@ tracking:
   pixels: 5000
   iters: 50
 Segmenter:
-  full_slam: True
+  full_slam: False
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -39,10 +39,11 @@ rendering:
 
 # TODO 
 mapping:
+  max_frames: 600
   first_min_area: 2000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 2 # 2
+  every_frame: 1 # 2
   points_per_instance: 4
   vis_freq: 1000
   vis_inside_freq: 1600
