@@ -41,7 +41,7 @@ for sms in smallestMaskSizes:
             for b in border:
                 for dc in depthConditions:
                     hypers.append((sms, spf, npn, b, dc))
-
+print('number of different hyperparameter constellations: ',len(hypers), '\n number of scenes: ', len(paths))
 for p in paths:
     path = basepath + p + '.yaml'
     args = argparse.Namespace()

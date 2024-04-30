@@ -464,7 +464,7 @@ def createFrontMappingAutosort(
         samples = np.concatenate((samples, realWorldProjectCurr), axis=1)
         # max_id = np.max(samples[2:, :])
         # print(samples)
-        print("unique ids", np.unique(ids))
+        #print("unique ids", np.unique(ids))
     except Exception as e:
         print(
             f"Failed to concatenate most likely due to only one object in the photo no segmentation: {e}"
@@ -506,7 +506,7 @@ def createReverseMappingCombined_area_sort(
     merging_parameter=10,
     hit_percent=0.1,
 ):
-    # print(f'beginning: {np.unique(samples[-1])}')
+    # #print(f'beginning: {np.unique(samples[-1])}')
     T_current = T[curr_frame_number]
     depthf = depths  # readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
@@ -590,11 +590,11 @@ def createReverseMappingCombined_area_sort(
         theRelevant = d["theRelevant"]
 
         target_ids = masks[theRelevant[:, 1], theRelevant[:, 0]]
-        # print('before filter: ' , target_ids)
+        # #print('before filter: ' , target_ids)
         target_ids = target_ids[target_ids >= 0]
         # target_ids = target_ids[target_ids != instance]
         target_ids, count = np.unique(target_ids, return_counts=True)
-        # print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
+        # #print(f'instance: {instance}, target_ids: {target_ids}, count: {count}')
         # and np.max(count)*0.3*samples[-1]
         first = curr_frame_number == every_frame
         if (
@@ -604,7 +604,7 @@ def createReverseMappingCombined_area_sort(
             and np.sum(count) * hit_percent < np.sum(samples[-1] == instance)
         ):
             target_id = target_ids[np.argmax(count)]
-            # print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
+            # #print(f'check overlap: with framenumber: {curr_frame_number} id {instance} with id {target_id}', overlap(masks == target_id, mask))
             if overlap(masks == target_id, mask) > overlap_threshold:
                 # this is a method to update the heuristic when to merge masks, the idea is,
                 # if mask m1 got projected into mask m2 at least for example 5 times then we update mask m1 to mask m2
@@ -636,7 +636,7 @@ def createReverseMappingCombined_area_sort(
                             # d['instance'] = target_id
                             for key, value in deleted.items():
                                 if value == instance:
-                                    # print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
+                                    # #print(f'cas: changed at {key} from {value} to {target_id} in frame {curr_frame_number}')
                                     deleted[key] = target_id
                             continue  # skip the rest of the loop
                     else:
@@ -684,7 +684,7 @@ def createReverseMappingCombined_area_sort(
         random_index = indices[np.random.choice(len(indices))]
         point_coords = np.array([random_index[1], random_index[0]])
         point_coords = point_coords.reshape(1, -1)
-        # print(point_coords)
+        # #print(point_coords)
         mask, _, _ = predictor.predict(
             point_coords=point_coords,
             point_labels=np.array([1]),
@@ -749,7 +749,7 @@ def createReverseMappingCombined(
     overlap_threshold=0.5,
     relevant_threshhold=0.3,
 ):
-    # print(f'beginning: {np.unique(samples[-1])}')
+    # #print(f'beginning: {np.unique(samples[-1])}')
     T_current = T[curr_frame_number]
     depthf = readDepth(depths[curr_frame_number])
     masks = np.full((current_frame.shape[0], current_frame.shape[1]), -100)
@@ -769,7 +769,7 @@ def createReverseMappingCombined(
     # check if all points lie on the same but different mask
     unique_ids = np.unique(frontProjectedSamples[2:, :].astype(int))
 
-    # print("unique_ids", unique_ids)
+    # #print("unique_ids", unique_ids)
     visualizerForId = visualizerForIds()
     path = "output/Own/room0/masks"
     os.makedirs(
@@ -787,15 +787,15 @@ def createReverseMappingCombined(
     for instance in unique_ids[::order]:
         # sample same id points from from frontProjectedSamples
         filtre = frontProjectedSamples[2, :, :] == instance
-        # print(count,frontProjectedSamples.shape)
+        # #print(count,frontProjectedSamples.shape)
         instanceId = frontProjectedSamples[:, filtre]
         if instanceId.size is not 0 and instanceId[2, 0] >= 0:
-            # print("instanceId",instance)
+            # #print("instanceId",instance)
             # TODO, ask dogu if ok, it hink the instanceIDs have been swapped
             theRelevant = np.array(
                 list(zip(instanceId[0].tolist(), instanceId[1].tolist()))
             )
-            # print(theRelevant, theRelevant.shape)
+            # #print(theRelevant, theRelevant.shape)
             if len(theRelevant) >= num_of_clusters:
                 kmeans = KMeans(n_clusters=num_of_clusters, random_state=0).fit(
                     theRelevant
@@ -804,9 +804,9 @@ def createReverseMappingCombined(
                     np.bincount(kmeans.labels_)
                     >= len(theRelevant) / num_of_clusters // 4
                 )
-                # print('e ', e)
+                # #print('e ', e)
                 if len(e) < num_of_clusters:
-                    print("SKIPPED SKIPPED SKIPPED SKIPPED frame: ", curr_frame_number)
+                    #print("SKIPPED SKIPPED SKIPPED SKIPPED frame: ", curr_frame_number)
                     e = np.concatenate(
                         (e, np.zeros(num_of_clusters - len(e), dtype=bool))
                     )
