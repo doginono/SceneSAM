@@ -501,7 +501,7 @@ class Segmenter(object):
         if self.n_img - 1 % self.every_frame_seg != 0:
             path = os.path.join(self.store_directory, f"seg_{self.n_img - 1}.npy")
             np.save(path, self.semantic_frames[-1].numpy())
-        if self.store_vis:
+        if self.store_vis and False:
             for index in tqdm([0] + list(index_frames), desc="Storing visualizations"):
                 path = os.path.join(self.store_directory, f"seg_{index}.png")
                 self.visualizer.visualizer(
@@ -533,10 +533,10 @@ class Segmenter(object):
         #self.estimate_c2w_list[:,:3,3]*=0
         #print("segment first frame")
         s = self.segment_first_ForAuto()
-        visualizerForId.visualizer(
+        '''visualizerForId.visualizer(
             self.semantic_frames[0],
             path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
-        )
+        )'''
         #print("finished segmenting first frame")
         if self.store_vis:
             visualizerForId = vis.visualizerForIds()
@@ -573,7 +573,7 @@ class Segmenter(object):
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
-            if self.store_vis:
+            if self.store_vis and False:
                 visualizerForId.visualize(
                     self.semantic_frames[idx // self.every_frame_seg],
                     path=f"{self.store_directory}/seg_{idx}.png",

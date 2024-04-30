@@ -119,6 +119,7 @@ class visualizerForIds:
     def visualizer(self, anns, path, title="", prompts=None):
         # Create a 2D numpy array
         # plt.title(title)
+
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:
@@ -129,6 +130,6 @@ class visualizerForIds:
             
             plt.scatter(prompts[0,:], prompts[1,:], s=10, c="red", marker="o")
         if path is not None:
-            plt.savefig(path)
+            plt.savefig(path, legend = False)
 
         #plt.show()
