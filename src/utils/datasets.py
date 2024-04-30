@@ -162,7 +162,7 @@ class BaseDataset(Dataset):
             depth_data = depth_data.astype('float32')
 
             # Apply bilateral filter
-            depth_data = cv2.bilateralFilter(depth_data, 10, 75, 75)
+            #depth_data = cv2.bilateralFilter(depth_data, 10, 75, 75)
 
             # If necessary, convert back to original format (here shown for completeness)
             # Example: convert back to 16U if needed for further processing

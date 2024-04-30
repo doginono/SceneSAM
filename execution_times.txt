@@ -1,0 +1,6 @@
+Execution time for scene0616_00: 13500 seconds
+Execution time for scene0300_01: 13500 seconds
+Execution time for scene0427_00: 7472 seconds
+Execution time for c413b34238: 13500 seconds
+Execution time for 56a0ec536c: 13501 seconds
+Execution time for 5fb5d2dbf2: 3 seconds

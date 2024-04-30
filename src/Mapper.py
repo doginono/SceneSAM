@@ -756,7 +756,8 @@ class Mapper(object):
                         c2w = get_camera_from_tensor(camera_tensor)
                     else:
                         c2w = cur_c2w
-                print('pix per image ', pixs_per_image)
+                # Commented Dogu Screen unreadable
+                # print('pix per image ', pixs_per_image)
                 # -----------------added-------------------
                 (
                     batch_rays_o,

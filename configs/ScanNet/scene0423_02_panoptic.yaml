@@ -9,15 +9,15 @@ mapping:
   every_frame: 5
 data:
   input_folder: Datasets/Scannet/scene0423_02_panoptic
-  output: output/scannet/scans/scene0423_02_panoptic
-  logs: logs/scannet/scans/scene0423_02_panoptic
+  output: output/scannet/scene0423_02_panoptic
+  logs: logs/scannet/scene0423_02_panoptic
 output_dimension_semantic: 400
 Segmenter:
   samplePixelFarther: 4
   normalizePointNumber: 10
   depthCondition: 0.1 #0.005 #0.0 
-  border: 20
-  smallestMaskSize: 5000 # 10000
+  border: 0
+  smallestMaskSize: 100 # 10000
   every_frame: 10
 tracking:
   gt_camera: True
@@ -30,3 +30,4 @@ cam:
   cx: 319.5
   cy: 239.5
 full_slam: True
+load_ckpt: '/home/rozenberszki/project/wsnsl/output/scannet/scans/scene0423_02_panoptic/ckpts/good_with_tracking_no_segmenter_00683.tar'

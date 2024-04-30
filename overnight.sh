@@ -32,18 +32,20 @@ sleep 100
 # Navigate to the project directory
 cd /home/rozenberszki/D_Project/wsnsl/
 
+timeout_duration= 20000
 # Fourth command
-start_time=$(date +%s)
-timeout $timeout_duration python -W ignore run.py configs/Scannet++/56a0ec536c.yaml
-end_time=$(date +%s)
-echo "Execution time for 56a0ec536c: $(($end_time - $start_time)) seconds" >> $log_file
-sleep 100
-
-# Fifth command
 start_time=$(date +%s)
 timeout $timeout_duration python -W ignore run.py configs/Scannet++/c413b34238.yaml
 end_time=$(date +%s)
 echo "Execution time for c413b34238: $(($end_time - $start_time)) seconds" >> $log_file
+sleep 100
+
+
+# Fifth command
+start_time=$(date +%s)
+timeout $timeout_duration python -W ignore run.py configs/Scannet++/56a0ec536c.yaml
+end_time=$(date +%s)
+echo "Execution time for 56a0ec536c: $(($end_time - $start_time)) seconds" >> $log_file
 sleep 100
 
 # Sixth command

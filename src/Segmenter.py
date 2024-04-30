@@ -605,9 +605,10 @@ class Segmenter(object):
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             if self.n_img - 1 % self.every_frame_seg != 0:
                 index_frames = np.concatenate((index_frames, [self.n_img - 1]))
+            print(os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"))
             make_gif_from_array(
                 self.semantic_frames[index_frames // self.every_frame_seg],
-                os.path.join(self.store_directory, "segmentation.gif"),
+                os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"),
             )
             #print(os.path.join(self.store_directory, "segmentation.gif"),)
         # store the segmentations, such that the dataset class (frame_reader) could load them
