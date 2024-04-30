@@ -1,0 +1,4 @@
+
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0423_02_panoptic.yaml
