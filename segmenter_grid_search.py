@@ -71,7 +71,6 @@ for p in paths:
     
     for sms, spf, npn, b, dc in hypers:
         parameter_string = f'sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}'
-        cfg['mapping']['max_frames'] = 20
         cfg['mapping']['first_min_area'] = sms
         cfg['Segmenter']['smallestMaskSize'] = sms
         cfg['Segmenter']['samplePixelFarther'] = spf
