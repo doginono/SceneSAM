@@ -2,3 +2,242 @@
 
 
 /home/rozenberszki/project/wsnsl/configs/ScanNet/scene0423_02_panoptic.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0423_02_panoptic.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 91
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 84
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 106
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 85
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 93
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 90
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 44
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 41
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 41
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 39
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 41
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 40
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 23
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 23
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 23
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 22
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 22
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 22
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0300_01.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 302
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 301
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 270
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 260
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 250
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 241
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 126
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 127
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 128
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 125
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 131
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 128
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 57
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 53
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 58
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 56
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 56
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 54
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0616_00.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 389
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 362
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 301
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 296
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 235
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 237
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 211
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 210
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 180
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 202
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 192
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 200
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 128
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 135
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 117
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 118
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 106
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 109
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0354_00.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 160
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 176
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 146
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 144
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 135
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 130
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 97
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 85
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 76
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 93
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 69
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 68
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 42
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 34
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 34
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 33
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 33
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 31
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0389_00.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 213
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 211
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 191
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 184
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 179
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 174
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 113
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 112
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 96
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 93
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 97
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 91
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 44
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 43
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 46
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 45
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 45
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 45
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0494_00.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 105
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 99
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 112
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 168
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 107
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 103
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 69
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 131
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 67
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 120
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 62
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 59
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 20
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 19
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 23
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 23
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 22
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 21
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0645_02.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05: 216
+sms_1000_spf_2_npn_7_b_10_dc_0.1: 242
+sms_1000_spf_5_npn_7_b_10_dc_0.05: 241
+sms_1000_spf_5_npn_7_b_10_dc_0.1: 233
+sms_1000_spf_8_npn_7_b_10_dc_0.05: 174
+sms_1000_spf_8_npn_7_b_10_dc_0.1: 173
+sms_2000_spf_2_npn_7_b_10_dc_0.05: 114
+sms_2000_spf_2_npn_7_b_10_dc_0.1: 110
+sms_2000_spf_5_npn_7_b_10_dc_0.05: 126
+sms_2000_spf_5_npn_7_b_10_dc_0.1: 121
+sms_2000_spf_8_npn_7_b_10_dc_0.05: 128
+sms_2000_spf_8_npn_7_b_10_dc_0.1: 157
+sms_5000_spf_2_npn_7_b_10_dc_0.05: 68
+sms_5000_spf_2_npn_7_b_10_dc_0.1: 66
+sms_5000_spf_5_npn_7_b_10_dc_0.05: 69
+sms_5000_spf_5_npn_7_b_10_dc_0.1: 67
+sms_5000_spf_8_npn_7_b_10_dc_0.05: 68
+sms_5000_spf_8_npn_7_b_10_dc_0.1: 67
+
+
+Replica:
+
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office0.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office0.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office0.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office0.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office0.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 602, 458.64308619499207
+sms_600_spf_0_npn_7_b_10_dc_0.05, 243, 405.327410697937
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 150, 388.4111204147339
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 98, 383.4297411441803
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 54, 376.78743410110474
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office1.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 241, 393.7430913448334
+sms_600_spf_0_npn_7_b_10_dc_0.05, 162, 389.56699991226196
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 102, 360.5046589374542
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 63, 358.49720287323
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 32, 339.48464035987854
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office2.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 565, 444.87207555770874
+sms_600_spf_0_npn_7_b_10_dc_0.05, 328, 424.64244866371155
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 303, 409.33858251571655
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 134, 382.32700967788696
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 23, 374.5447554588318
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office3.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 707, 511.14153027534485
+sms_600_spf_0_npn_7_b_10_dc_0.05, 314, 427.67457127571106
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 256, 415.5063052177429
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 128, 393.44647431373596
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 27, 385.7206304073334
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/office4.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 765, 451.88058495521545
+sms_600_spf_0_npn_7_b_10_dc_0.05, 347, 400.9040992259979
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 234, 392.27380990982056
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 139, 366.9487888813019
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 30, 302.0962302684784
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/room0_panoptic.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/room0_panoptic.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 410, 77.53551459312439
+sms_600_spf_0_npn_7_b_10_dc_0.05, 209, 69.77533435821533
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 158, 67.95010232925415
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 101, 65.00266695022583
+
+
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/room0.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 583, 316.3912546634674
+sms_600_spf_0_npn_7_b_10_dc_0.05, 241, 250.87943387031555
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 165, 229.48008394241333
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 93, 203.32389283180237
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 33, 188.07582235336304
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/room1.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 371, 234.69616103172302
+sms_600_spf_0_npn_7_b_10_dc_0.05, 198, 207.58148503303528
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 139, 200.40142011642456
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 175, 191.86522841453552
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 41, 183.11898708343506
+
+
+/home/rozenberszki/project/wsnsl/configs/Own/room2.yaml
+sms_200_spf_0_npn_7_b_10_dc_0.05, 439, 241.23206734657288
+sms_600_spf_0_npn_7_b_10_dc_0.05, 211, 203.66870999336243
+sms_1000_spf_0_npn_7_b_10_dc_0.05, 141, 200.36219573020935
+sms_2000_spf_0_npn_7_b_10_dc_0.05, 58, 193.22089219093323
+sms_5000_spf_0_npn_7_b_10_dc_0.05, 29, 182.39424991607666

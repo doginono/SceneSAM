@@ -529,7 +529,7 @@ class Segmenter(object):
             self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
-        visualizerForId = vis.visualizerForIds()
+        #visualizerForId = vis.visualizerForIds()
         #self.estimate_c2w_list[:,:3,3]*=0
         #print("segment first frame")
         s = self.segment_first_ForAuto()
@@ -569,7 +569,7 @@ class Segmenter(object):
             self.segment_idx_forAuto(idx)
             #print(idx, "segmented")
             #print(self.estimate_c2w_list.cpu()[idx])
-            self.plot(idx)
+            #self.plot(idx)
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
@@ -588,7 +588,7 @@ class Segmenter(object):
                 time.sleep(0.1)
             _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
-            if self.store_vis:
+            if self.store_vis and False:
                 visualizerForId.visualize(
                     self.semantic_frames[-1],
                     path=f"{self.store_directory}/seg_{self.n_img - 1}.png",
@@ -598,7 +598,7 @@ class Segmenter(object):
         del self.predictor
         torch.cuda.empty_cache()
 
-        if not self.is_full_slam:
+        if not self.is_full_slam and False:
             self.max_id = self.process_frames(self.semantic_frames)
 
         if self.store_vis:

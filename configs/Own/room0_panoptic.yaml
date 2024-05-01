@@ -9,25 +9,19 @@ data:
   input_folder: 'Datasets/Replica/room0_panoptic'
   logs: 'logs/room0_panoptic'
   output: 'output/Own/room0_panoptic'
-output_dimension_semantic: 400
-Segmenter:
-  samplePixelFarther: 4
-  normalizePointNumber: 10
-  depthCondition: 0.05 #0.005 #0.0
-  border: 20
-  smallestMaskSize: 1000 # 10000
+output_dimension_semantic: 300
 tracking:
-  gt_camera: True
+  lr: 0.0005      
+  pixels: 1000
+  iters: 200
 cam:
   png_depth_scale: 1000
-  crop_size:
   H: 480
   W: 640
   fx: 320.0
   fy: 320.0
   cx: 319.5
   cy: 239.5
+  crop_size: [480, 640]
 #load_cpt: '/home/rozenberszki/project/wsnsl/output/Own/room0_panoptic/ckpts/ef2_no_segmenter.tar'
-full_slam: True
-
 

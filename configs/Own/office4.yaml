@@ -6,4 +6,8 @@ data:
   input_folder: Datasets/Replica/office4
   output: output/Own/office4
   logs: logs/office4
-output_dimension_semantic: 400
+output_dimension_semantic: 300
+Segmenter:
+  smallestMaskSize: 1000
+mapping:
+  first_min_area: 1000
