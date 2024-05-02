@@ -6,3 +6,6 @@ Execution time for 56a0ec536c: 13501 seconds
 Execution time for 5fb5d2dbf2: 3 seconds
 Execution time for scene0300_01: 553 seconds
 Execution time for scene0300_01: 9845 seconds
+Execution time for scene0389_00: 6633 seconds
+Execution time for scene0645_02: 7039 seconds
+Execution time for scene0423_02_panoptic: 7862 seconds
