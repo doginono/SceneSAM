@@ -39,10 +39,10 @@ max_id_file = "max_id.txt"
     "scene0693_00",
 ]'''
 #paths = ['office0', 'office1', 'office2', 'office3', 'office4', 'room0_panoptic', 'room0', 'room1', 'room2']
-paths = [ 'room0', 'room1', 'room2']
-basepath = "/home/rozenberszki/project/wsnsl/configs/Own/"
-smallestMaskSizes = [200, 600, 1000, 2000, 5000]
-samplePixelFarthers = [0]
+paths = ["scene0693_00"]
+basepath = "/home/rozenberszki/project/wsnsl/configs/ScanNet/"
+smallestMaskSizes = [1000, 2000, 5000]
+samplePixelFarthers = [2, 5, 8]
 normalizePointNumbers = [7]
 border = [10]
 depthConditions = [0.05]
@@ -88,6 +88,9 @@ for p in paths:
         args.config, "configs/nice_slam_sem.yaml" if args.nice else "configs/imap.yaml"
     )
     cfg["tracking"]["gt_camera"] = True
+    cfg['Segmenter']['full_slam'] = False
+    cfg["Segmenter"]["store_vis"] = False
+    cfg["Segmenter"]["every_frame"] = 2
     for sms, spf, npn, b, dc in hypers:
         parameter_string = f"sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}"
         cfg["mapping"]["first_min_area"] = sms
@@ -96,7 +99,7 @@ for p in paths:
         cfg["Segmenter"]["normalizePointNumber"] = npn
         cfg["Segmenter"]["border"] = b
         cfg["Segmenter"]["depthCondition"] = dc
-        cfg["Segmenter"]["every_frame"] = 10
+        
 
         print("Using GT Camera Pose for tracking.")
         slam = NICE_SLAM(cfg, args)

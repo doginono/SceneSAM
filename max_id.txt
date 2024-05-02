@@ -241,3 +241,16 @@ sms_600_spf_0_npn_7_b_10_dc_0.05, 211, 203.66870999336243
 sms_1000_spf_0_npn_7_b_10_dc_0.05, 141, 200.36219573020935
 sms_2000_spf_0_npn_7_b_10_dc_0.05, 58, 193.22089219093323
 sms_5000_spf_0_npn_7_b_10_dc_0.05, 29, 182.39424991607666
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0693_00.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0693_00.yaml
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0693_00.yaml
+sms_1000_spf_2_npn_7_b_10_dc_0.05, 209, 76.0675995349884
+
+
+/home/rozenberszki/project/wsnsl/configs/ScanNet/scene0693_00.yaml
