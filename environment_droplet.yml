@@ -109,7 +109,6 @@ dependencies:
       - black==23.3.0
       - bleach==4.1.0
       - cachetools==5.3.3
-      - chamfer-distance==0.1
       - click==8.1.7
       - cloudpickle==2.0.0
       - colorama==0.4.4
