@@ -19,6 +19,7 @@ sam/*
 *.obj
 grid_search*
 *.png
+scannet*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

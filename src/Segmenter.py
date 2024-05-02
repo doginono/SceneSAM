@@ -573,7 +573,7 @@ class Segmenter(object):
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
-            if self.store_vis and False:
+            if self.store_vis:
                 visualizerForId.visualize(
                     self.semantic_frames[idx // self.every_frame_seg],
                     path=f"{self.store_directory}/seg_{idx}.png",
