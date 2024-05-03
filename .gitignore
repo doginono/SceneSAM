@@ -166,3 +166,6 @@ test/
 trajc2w+zCamdirectionupsampled/*
 ```
 Dataset/*
+
+meshes/*
+output*

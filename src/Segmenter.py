@@ -603,9 +603,10 @@ class Segmenter(object):
 
         if self.store_vis or True:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
-            if self.n_img - 1 % self.every_frame_seg != 0:
+            if self.every_frame_seg == 1:
+                index_frames=index_frames[:-1]
+            if (self.n_img - 1) % self.every_frame_seg != 0:
                 index_frames = np.concatenate((index_frames, [self.n_img - 1]))
-            #print(os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"))
             make_gif_from_array(
                 self.semantic_frames[index_frames // self.every_frame_seg],
                 os.path.join(*self.store_directory.split('/'), "segmentation.gif"),
