@@ -8,7 +8,7 @@ mapping:
   first_min_area: 2000
 data:
   input_folder: Datasets/Scannet/scene0645_02
-  output:  output/scannet/scene0645_02
+  output:  output/scannet/scene0645_02_hs_c_dim
   logs: logs/scannet/scene0645_02
 output_dimension_semantic: 250
 Segmenter:
@@ -26,3 +26,6 @@ cam:
   fy: 577.870605
   cx: 319.5
   cy: 239.5
+model:
+  c_dim: 32
+  hidden_size: 64

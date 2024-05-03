@@ -19,6 +19,7 @@ def get_model(cfg,  nice=True):
     fine_grid_len = cfg['grid_len']['fine']
     color_grid_len = cfg['grid_len']['color']
     semantic_grid_len = cfg['grid_len']['semantic']
+    hidden_size_color = cfg['model']['hidden_size']
     output_dimension_semantic = cfg['output_dimension_semantic']
     #TODO add sematic_grid_len
     c_dim = cfg['model']['c_dim']  # feature dimensions
@@ -28,7 +29,7 @@ def get_model(cfg,  nice=True):
             dim=dim, c_dim=c_dim, coarse=cfg['coarse'], coarse_grid_len=coarse_grid_len,
             middle_grid_len=middle_grid_len, fine_grid_len=fine_grid_len,
             color_grid_len=color_grid_len, output_dimension_semantic = output_dimension_semantic,
-            semantic_grid_len= semantic_grid_len, pos_embedding_method=pos_embedding_method)
+            semantic_grid_len= semantic_grid_len,hidden_size_color = hidden_size_color, pos_embedding_method=pos_embedding_method)
     else:
         #J:will never jumpy here in our case
         decoder = models.decoder_dict['imap'](
