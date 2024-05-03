@@ -1,5 +1,4 @@
 dataset: 'scannet'
-full_slam: True
 tracking:
   vis_freq: 50
   vis_inside_freq: 25
@@ -9,8 +8,8 @@ tracking:
   const_speed_assumption: True
   lr: 0.0005      
   pixels: 1000
-  iters: 100
-  gt_camera: True
+  iters: 200
+  gt_camera: False
 
 rendering:
   semantic_occupancy_multiplier: 10
@@ -21,7 +20,7 @@ Segmenter:
   depthCondition: 0.5 #0.005 #0.0
   border: 0
   smallestMaskSize: 5000 # 10000
-  full_slam: False # if True, then segmentation and train on segmentations is used in parallel else it is used in retrospect (we call it post-processing)
+  full_slam: True # if True, then segmentation and train on segmentations is used in parallel else it is used in retrospect (we call it post-processing)
   mask_generator: False # always False -> delete later
   #store: False    #if use_store True then store and store_vis have no effect
   use_stored: False
@@ -45,22 +44,22 @@ mapping:
   every_frame: 1
   points_per_instance: 4
   vis_freq: 200
-  vis_inside_freq: 201
+  vis_inside_freq: 61
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 20
+  mesh_freq: 204
   ckpt_freq: 200
   keyframe_every: 6
   mapping_window_size: 10
   pixels: 5000
-  iters_first: 100 #finetune
-  iters: 20 #finetune
+  iters_first: 1300 #finetune
+  iters: 70 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune
   fine_iter_ratio: 0.6 #0.6 #finetune
-  semantic_iter_ratio: 0.2 #0.4 #finetune
+  semantic_iter_ratio: 0.4 #0.4 #finetune
 cam: 
   poseScale: 1
   H: 480 

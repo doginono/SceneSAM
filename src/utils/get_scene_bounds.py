@@ -59,13 +59,13 @@ def main():
         "--depth_directory",
         type=str,
         help="Path to depth folder.",
-        default="/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0221_01/depth/",
+        default="Datasets/Scannet/scene0221_01/depth/",
     )
     parser.add_argument(
         "--trajectory",
         type=str,
         help="Path to the trajectory file.",
-        default="/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0221_01/traj_w_c.txt",
+        default="Datasets/Scannet/scene0221_01/traj_w_c.txt",
     )
     args = parser.parse_args()
     depths_directory = args.depth_directory
@@ -75,7 +75,7 @@ def main():
         key=lambda x: int(x.split("/")[-1].split(".")[0]),
     )
     K = np.loadtxt(
-        "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0300_01/intrinsic/intrinsic_color.txt"
+        "Datasets/Scannet/scene0300_01/intrinsic/intrinsic_color.txt"
     )
     min, max = get_scene_bounds(depths, poses, K)
     print(np.concatenate([min[:, None], max[:, None]], axis=1))

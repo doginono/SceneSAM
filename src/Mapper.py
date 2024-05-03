@@ -591,6 +591,7 @@ class Mapper(object):
             cur_gt_semantic = self.frame_reader.get_segmentation(idx)
         else:
             start = 0
+            
             if self.is_full_slam and (idx % self.seg_freq == 0 or round == 2):
                 inc = int(self.semantic_iter_ratio * num_joint_iters)
             else:
@@ -683,9 +684,6 @@ class Mapper(object):
                 """_, gt_vis_color, gt_vis_depth, gt_c2w, gt_vis_semantic = (
                     self.frame_reader[idx - self.vis_offset]
                 )"""
-                print(
-                    f"start vis with segmenter index: {self.idx_segmenter[0].item()} and current index: {idx}"
-                )
                 self.visualizer.vis(
                     idx,
                     joint_iter,

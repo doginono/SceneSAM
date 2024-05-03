@@ -8,7 +8,7 @@ mapping:
   first_min_area: 2000
 data:
   input_folder: Datasets/Scannet/scene0645_02
-  output:  output/scannet/scene0645_02
+  output:  output/scannet/scene0645_02_both_grid_sem_hs_c_dim
   logs: logs/scannet/scene0645_02
 output_dimension_semantic: 250
 Segmenter:
@@ -26,3 +26,13 @@ cam:
   fy: 577.870605
   cx: 319.5
   cy: 239.5
+grid_len:
+  coarse: 2 
+  middle: 0.16 
+  fine: 0.08
+  color: 0.08
+  semantic: 0.16
+  bound_divisible: 0.32
+model:
+  c_dim: 32
+  hidden_size: 64

@@ -85,7 +85,6 @@ class visualizerForIds:
         return self.cmap(ids)
 
     def visualize(self, anns, path=None, ax=None, title="", prompts=None, sep_boarder=False, samplePixelFarther =  4):
-
         ids = copy.deepcopy(anns)
         ids[ids == 0] = len(self.colors) - 1
         if sep_boarder:
@@ -119,7 +118,6 @@ class visualizerForIds:
     def visualizer(self, anns, path, title="", prompts=None):
         # Create a 2D numpy array
         # plt.title(title)
-
         plt.figure(figsize=(10, 10))
         plt.imshow(anns, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
         if prompts is not None:

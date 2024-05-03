@@ -185,7 +185,7 @@ class NICE_SLAM:
         if "store_seg_path" in cfg["Segmenter"]:
             store_path = cfg["data"]["output"]+'/segmentation'
         else:
-            store_path = os.path.join(cfg["data"]["input_folder"], "segmentation")
+            store_path = os.path.join(cfg["data"]["output"], "segmentation")
         os.makedirs(store_path, exist_ok=True)
         self.segmenter = Segmenter(
             self,

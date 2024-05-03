@@ -374,7 +374,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/D_Project/wsnsl/Dataset/fe1733741f/test/InsideTHeId{str(curr_frame_number).zfill(6)}_before.png",
+            path=f"test/{curr_frame_number:05d}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
@@ -389,7 +389,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
+            path=f"output/Own/segmentationScannet/{curr_frame_number}_before.png",
         )
     """
     for currentMaskId in current_unique_ids:
@@ -405,6 +405,16 @@ def createFrontMappingAutosort(
 
                 insideTheMask = currentMask[samplesInside[1, :], samplesInside[0, :]]
                 dictOfIds[instance] = np.sum(insideTheMask)
+                if verbose and False:
+                    # for i in range(22,42):
+                    visualizer.visualizer(
+                        anns=ids,
+                        path=
+                            f"test/{curr_frame_number:05d}_{currentMaskId}_{instance}.png",
+
+                        prompts=samplesInside,
+                    )
+                    
 
         maxForMask = max(dictOfIds, key=dictOfIds.get)
         ###########################################
@@ -461,11 +471,14 @@ def createFrontMappingAutosort(
 
     if verbose:
         # for i in range(22,42):
-        visualizer.visualizer(
-            anns=ids,
-            path=os.path.join(
-                "/home/rozenberszki/D_Project/wsnsl/Dataset/fe1733741f/test/InsideTHeId",
-                str(curr_frame_number).zfill(6),
+        visualizer = visualizerForIds()
+        for id in np.unique(frontProjectedSamples[2, :]):
+            visualizer.visualizer(
+                anns=ids,
+                path=
+                    f"test/{curr_frame_number:05d}_{id:05d}.png",
+
+                prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
             )
             + "_later",
             prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0],
@@ -638,7 +651,7 @@ def createReverseMappingCombined_area_sort(
         visualizer.visualize(
             masks,
             prompts=theRelevant,
-            path=f"/home/rozenberszki/project/wsnsl/old/{curr_frame_number}_{instance}.png",
+            path=f"old/{curr_frame_number}_{instance}.png",
         )
 
     unique_ids = np.unique(masks).astype(int)

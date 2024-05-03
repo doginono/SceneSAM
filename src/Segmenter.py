@@ -145,7 +145,7 @@ class Segmenter(object):
 
         # Add a legend
         ax.legend()
-        plt.savefig("/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
+        plt.savefig("output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
         plt.close()  # Close the plot to free up memory
         # Show the plot
     def update_cam(self):
@@ -351,7 +351,7 @@ class Segmenter(object):
         """visualizerForId .visualizer(
                 anns=ids,
                 path=
-                    f"/home/rozenberszki/project/wsnsl/test/{0:05d}_first.png",
+                    f"test/{0:05d}_first.png",
             )"""
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids,
@@ -529,13 +529,13 @@ class Segmenter(object):
             self.idx_segmenter[0] = self.n_img
             return self.semantic_frames, self.semantic_frames.max() + 1
 
-        visualizerForId = vis.visualizerForIds()
+        #visualizerForId = vis.visualizerForIds()
         #self.estimate_c2w_list[:,:3,3]*=0
         #print("segment first frame")
         s = self.segment_first_ForAuto()
         '''visualizerForId.visualizer(
             self.semantic_frames[0],
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
+            path=f"output/Own/segmentationScannet/0seg_{0}.png",
         )'''
         #print("finished segmenting first frame")
         if self.store_vis:
@@ -573,7 +573,7 @@ class Segmenter(object):
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
-            if self.store_vis and False:
+            if self.store_vis:
                 visualizerForId.visualize(
                     self.semantic_frames[idx // self.every_frame_seg],
                     path=f"{self.store_directory}/seg_{idx}.png",
@@ -588,7 +588,7 @@ class Segmenter(object):
                 time.sleep(0.1)
             _ = self.segment_idx_forAuto(self.n_img - 1)
             self.idx_segmenter[0] = self.n_img - 1
-            if self.store_vis:
+            if self.store_vis and False:
                 visualizerForId.visualize(
                     self.semantic_frames[-1],
                     path=f"{self.store_directory}/seg_{self.n_img - 1}.png",
@@ -598,10 +598,10 @@ class Segmenter(object):
         del self.predictor
         torch.cuda.empty_cache()
 
-        if not self.is_full_slam:
+        if not self.is_full_slam and False:
             self.max_id = self.process_frames(self.semantic_frames)
 
-        if self.store_vis:
+        if self.store_vis or True:
             index_frames = np.arange(0, self.n_img, self.every_frame_seg)
             if self.every_frame_seg == 1:
                 index_frames=index_frames[:-1]
@@ -609,7 +609,7 @@ class Segmenter(object):
                 index_frames = np.concatenate((index_frames, [self.n_img - 1]))
             make_gif_from_array(
                 self.semantic_frames[index_frames // self.every_frame_seg],
-                os.path.join(*self.store_directory.split('/')[:-1], "segmentation.gif"),
+                os.path.join(*self.store_directory.split('/'), "segmentation.gif"),
             )
             ##print(os.path.join(self.store_directory, "segmentation.gif"),)
         # store the segmentations, such that the dataset class (frame_reader) could load them

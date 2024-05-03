@@ -33,7 +33,7 @@ smallestMaskSizes = [1000, 2000, 5000]
 samplePixelFarthers = [2, 5, 8]
 normalizePointNumbers = [7]
 border = [10]
-depthConditions = [0.05, 0.1]
+depthConditions = [0.05]
 hypers = []
 for sms in smallestMaskSizes:
     for spf in samplePixelFarthers:
@@ -41,14 +41,19 @@ for sms in smallestMaskSizes:
             for b in border:
                 for dc in depthConditions:
                     hypers.append((sms, spf, npn, b, dc))
-print('number of different hyperparameter constellations: ',len(hypers), '\n number of scenes: ', len(paths))
+print(
+    "number of different hyperparameter constellations: ",
+    len(hypers),
+    "\n number of scenes: ",
+    len(paths),
+)
 for p in paths:
-    path = basepath + p + '.yaml'
-    with open(max_id_file, 'a') as f:
-        f.write('\n\n' + path + '\n')
+    path = basepath + p + ".yaml"
+    with open(max_id_file, "a") as f:
+        f.write("\n\n" + path + "\n")
     args = argparse.Namespace()
     parser = argparse.ArgumentParser(
-    description="Arguments for running the NICE-SLAM/iMAP*."
+        description="Arguments for running the NICE-SLAM/iMAP*."
     )
     parser.add_argument("config", type=str, help="Path to config file.")
     parser.add_argument(
@@ -66,11 +71,14 @@ for p in paths:
     nice_parser.add_argument("--imap", dest="nice", action="store_false")
     parser.set_defaults(nice=True)
     args = parser.parse_args(args=[path])
-    #args = parser.parse_args(args=['/home/rozenberszki/project/wsnsl/configs/Own/room0.yaml'])
+    # args = parser.parse_args(args=['/home/rozenberszki/project/wsnsl/configs/Own/room0.yaml'])
     cfg = config.load_config(  # J:changed it to use our config file including semantics
-            args.config, "configs/nice_slam_sem.yaml" if args.nice else "configs/imap.yaml"
-        )
-    
+        args.config, "configs/nice_slam_sem.yaml" if args.nice else "configs/imap.yaml"
+    )
+    cfg["tracking"]["gt_camera"] = True
+    cfg['Segmenter']['full_slam'] = False
+    cfg["Segmenter"]["store_vis"] = False
+    cfg["Segmenter"]["every_frame"] = 2
     for sms, spf, npn, b, dc in hypers:
         parameter_string = f'sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}'
         cfg['mapping']['first_min_area'] = sms
@@ -83,16 +91,21 @@ for p in paths:
         cfg['tracking']['gt_camera'] = True
         print('Using GT Camera Pose for tracking.')
         slam = NICE_SLAM(cfg, args)
-        frame_reader = get_dataset(cfg, args, cfg["scale"], slam = slam)
+        frame_reader = get_dataset(cfg, args, cfg["scale"], slam=slam)
         frame_reader.__post_init__(slam)
         zero_pos = frame_reader.poses[0]
-
-        out_path = cfg['data']['output']
-        modified_out_path = out_path.replace('output', 'output_segmented')
-        modified_out_path = os.path.join(modified_out_path, parameter_string, 'segmentation')
+        slam.idx = torch.tensor([frame_reader.n_img +10])
+        out_path = cfg["data"]["output"]
+        modified_out_path = out_path.replace("output", "output_segmented")
+        modified_out_path = os.path.join(
+            modified_out_path, parameter_string, "segmentation"
+        )
         segmenter = Segmenter(slam, cfg, args, zero_pos, modified_out_path)
-        segmenter.estimate_c2w_list = torch.from_numpy(np.concatenate([p[None] for p in segmenter.frame_reader.poses], axis=0)).float()
-        #we could also use poses from a checkpoint here.
+        segmenter.estimate_c2w_list = torch.from_numpy(
+            np.concatenate([p[None] for p in segmenter.frame_reader.poses], axis=0)
+        ).float()
+        # we could also use poses from a checkpoint here.
+        start = time.time()
         _, max_id = segmenter.runAuto()
         with open(max_id_file, 'a') as f:
             f.write(parameter_string + ': ' +str(max_id) + '\n')

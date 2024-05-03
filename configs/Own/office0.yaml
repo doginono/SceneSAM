@@ -6,4 +6,4 @@ data:
   input_folder: Datasets/Replica/office0
   output: output/Own/office0
   logs: logs/office0
-output_dimension_semantic: 400
+output_dimension_semantic: 300

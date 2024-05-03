@@ -2,8 +2,12 @@ inherit_from: configs/Own/own.yaml
 mapping:
   bound: [[-3.7,7.8],[-4.8,6.7],[-3.7,4.1]]
   marching_cubes_bound: [[-3.7,7.8],[-4.8,6.7],[-3.7,4.1]]
+  first_min_area: 1000
 data:
   input_folder: Datasets/Replica/office4
   output: output/Own/office4
   logs: logs/office4
-output_dimension_semantic: 400
+output_dimension_semantic: 300
+Segmenter:
+  smallestMaskSize: 1000
+  

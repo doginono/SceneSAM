@@ -1,7 +1,7 @@
 output_imap
 cull_replica_mesh
 *.zip
-output/*
+output*
 .vscode
 3rdparty
 Datasets
@@ -18,6 +18,8 @@ sam/*
 *.gif
 *.obj
 grid_search*
+*.png
+scannet*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

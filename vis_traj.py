@@ -25,6 +25,7 @@ from tqdm import tqdm
 from src.utils import vis
 from PIL import Image
 import json
+from src.utils.datasets import ScanNet_Panoptic
 
 
 def main():
@@ -63,7 +64,8 @@ def main():
     poses = poses.reshape(-1, 4, 4)
     poses = torch.from_numpy(poses).float()"""
     poses = None
-    render_gif(slam, poses, cfg, path)
+    #basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
+    render_gif_dataset(cfg, args, slam, cfg['data']['output'])
 
 def load_scannet(basepath, split):
     gt_colors = sorted([path for path in glob.glob(os.path.join(basepath,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in split],
@@ -79,7 +81,63 @@ def load_scannet(basepath, split):
     poses = torch.from_numpy(np.stack(poses)).float()
     return gt_colors, gt_depths, poses
 
-def render_gif(slam, poses, cfg, path=None):
+def render_gif_dataset(cfg, args, slam, path):
+    visualizerForId = vis.visualizerForIds()
+    frame_reader = ScanNet_Panoptic(cfg, args, 1,slam=slam, split='test')
+    frame_reader.__post_init__(slam)
+    if path is None:
+        store_path = "run_traj_reversed/"
+    else:
+        store_path = path + "/"
+    seg_path = store_path + "/pred_semantics"
+    os.makedirs(seg_path, exist_ok=True)
+    os.makedirs(store_path + "/all", exist_ok=True)
+    depths, colors, semantics = [], [], []
+    for i, color_data, depth_data, c2w, _ in tqdm(frame_reader):
+        depth, _, color, semantic = slam.vis_renderer.render_img(
+                slam.shared_c,
+                slam.shared_decoders,
+                c2w.to("cuda"),
+                "cuda",
+                stage="visualize",
+                gt_depth=depth_data,
+            )
+        depth_np = depth.detach().cpu().numpy()
+        color_np = color.detach().cpu().numpy()
+        color_np = np.clip(color_np, 0, 1)
+        semantic_np = semantic.detach().cpu().numpy()
+        semantic_argmax = np.argmax(semantic_np, axis=2)
+        depths.append(depth_np)
+        colors.append(color_np)
+        semantics.append(semantic_argmax)
+        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+        ax[0].imshow(color_np)
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+        #ax[1].imshow(color_data.cpu().numpy())
+        ax[1].imshow(depth_np / np.max(depth_np))
+        ax[1].set_xticks([])
+        ax[1].set_yticks([])
+        #ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
+        ax[2], _ = visualizerForId.visualize(semantic_argmax, ax=ax[2], sep_boarder=True, samplePixelFarther=7)
+        ax[2].set_xticks([])
+        ax[2].set_yticks([])
+        plt.tight_layout()
+        plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png", bbox_inches='tight',pad_inches=0)
+        plt.close(fig)
+        Image.fromarray(semantic_argmax.astype(np.uint8)).save(
+            f"{seg_path}/0_{(i):04d}.png"
+        )
+
+    depths = np.stack(depths)
+    depths /= np.max(depths)
+
+    color_gif_from_array(colors, f"{seg_path}/test_color.gif")
+    color_gif_from_array(depths, f"{seg_path}/test_depth.gif")
+    make_gif_from_array(semantics, f"{seg_path}/test_semantic.gif")
+
+    pass
+def render_gif(slam, poses, cfg, basepath, path=None):
     if path is None:
         store_path = "run_traj_reversed/"
     else:
@@ -88,7 +146,7 @@ def render_gif(slam, poses, cfg, path=None):
     os.makedirs(seg_path, exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
     
-    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
+   
     split = json.load(open(os.path.join(basepath,"splits.json")))['test']
 
     #gt_depths = sorted(glob.glob(basepath + "/depth*"))
