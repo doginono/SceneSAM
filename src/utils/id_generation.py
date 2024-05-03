@@ -480,9 +480,6 @@ def createFrontMappingAutosort(
 
                 prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
             )
-            + "_later",
-            prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == 0],
-        )
     return ids, samples, max_id
 
 
