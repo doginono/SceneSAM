@@ -11,15 +11,10 @@ data:
   output: output/Scannet++/07f5b601ee
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  max_frames: 200
   bound: [[-0.2511976616576286, 6.005896563627136], [-0.41437938379820016, 5.591336279594627],
     [-0.7037137696780063, 3.100893414053904]]
   first_min_area: 2000
   marching_cubes_bound: [[-0.2511976616576286, 6.005896563627136], [-0.41437938379820016,
     5.591336279594627], [-0.7037137696780063, 3.100893414053904]]
-  mesh_freq: 10
-  ckpt_freq: 50
-  iters_first: 1500 #finetune
-  iters: 60 #finetune
 output_dimension_semantic: 500
 scale: 1
