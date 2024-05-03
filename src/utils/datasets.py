@@ -497,10 +497,10 @@ class ScanNet(BaseDataset):
             self.poses.append(c2w)
 
 class ScanNet_Panoptic(BaseDataset):
-    def __init__(self, cfg, args, scale, device="cuda:0", slam = None):
+    def __init__(self, cfg, args, scale, device="cuda:0", slam = None, split = 'train'):
         super(ScanNet_Panoptic, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
         self.input_folder = os.path.join(self.input_folder)
-        self.split = json.load(open(os.path.join(self.input_folder,"splits.json")))['train']
+        self.split = json.load(open(os.path.join(self.input_folder,"splits.json")))[split]
         self.color_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in self.split],
             key=lambda x: int(os.path.basename(x).split('.')[0]),
         )[:self.max_frames]
