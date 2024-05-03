@@ -3,7 +3,7 @@ Segmenter:
   depthCondition: 0.05
   every_frame: 1
   normalizePointNumber: 7
-  samplePixelFarther: 5
+  samplePixelFarther: 2
   smallestMaskSize: 1000
 data:
   input_folder: Dataset/39f36da05b

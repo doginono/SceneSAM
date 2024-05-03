@@ -1,10 +1,10 @@
 Segmenter:
-  border: 30
+  border: 10
   depthCondition: 0.1
   every_frame: 1
   normalizePointNumber: 7
-  samplePixelFarther: 8
-  smallestMaskSize: 2000
+  samplePixelFarther: 5
+  smallestMaskSize: 1000
 data:
   input_folder: Dataset/8d563fc2cc
   logs: logs/Scannet++/8d563fc2cc

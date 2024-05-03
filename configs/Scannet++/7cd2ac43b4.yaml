@@ -1,9 +1,9 @@
 Segmenter:
-  border: 30
+  border: 20
   depthCondition: 0.1
   every_frame: 1
   normalizePointNumber: 7
-  samplePixelFarther: 8
+  samplePixelFarther: 5
   smallestMaskSize: 2000
 data:
   input_folder: Dataset/7cd2ac43b4
