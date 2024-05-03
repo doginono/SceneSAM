@@ -27,7 +27,7 @@ from src.Segmenter import Segmenter
 #scenes: 
 #also for Replica?, maybe with only smallest mask size
 max_id_file = 'max_id.txt'
-paths = ['56a0ec536c', '75d29d69b8', 'c413b34238','fe1733741f', 'b20a261fdf', '1841a0b525', '7cd2ac43b4', '07f5b601ee', '8b5caf3398', '8d563fc2cc', '39f36da05b','b20a261fdf']
+paths = ['75d29d69b8', 'c413b34238','fe1733741f', 'b20a261fdf', '1841a0b525', '7cd2ac43b4', '07f5b601ee', '8b5caf3398', '8d563fc2cc', '39f36da05b','b20a261fdf']
 basepath = '/home/rozenberszki/D_Project/wsnsl/configs/Scannet++/'
 smallestMaskSizes = [1000, 2000, 5000]
 samplePixelFarthers = [2, 5, 8]
@@ -95,4 +95,4 @@ for p in paths:
         #we could also use poses from a checkpoint here.
         _, max_id = segmenter.runAuto()
         with open(max_id_file, 'a') as f:
-            f.write(parameter_string + ': ' +max_id + '\n')
+            f.write(parameter_string + ': ' +str(max_id) + '\n')
