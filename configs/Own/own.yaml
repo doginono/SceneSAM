@@ -12,7 +12,7 @@ tracking:
   const_speed_assumption: True
   lr: 0.001
   pixels: 200
-  iters: 30
+  iters: 10
   gt_camera: False
 Segmenter:
   samplePixelFarther: 2
