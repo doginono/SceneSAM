@@ -4,7 +4,7 @@
 #SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=davidrozenberszki@gmail.com      # Where to send mail	
 #SBATCH --mem=64G                    # Job memory request
-#SBATCH --constraint=rtx_a6000|rtx_3090|a100
+#SBATCH --constraint=rtx_3090|rtx_a6000|a100
 #SBATCH --gpus=1
 #SBATCH --cpus-per-gpu=6                 # Job CPUs request
 #SBATCH --partition=submit
@@ -35,4 +35,10 @@ echo "running experiment with params ${run_params}"
 start_time=$(date +%s)
 python -W ignore run.py $run_params
 end_time=$(date +%s)
+gpu_type=$(nvidia-smi --query-gpu=name --format=csv,noheader)
+
+echo "Execution time for $run_params: $(($end_time - $start_time)) seconds"
+echo "GPU type: $gpu_type for $run_params"
+
 echo "Execution time for $run_params: $(($end_time - $start_time)) seconds" >> $log_file
+echo "GPU type: $gpu_type for $run_params" >> $log_file
