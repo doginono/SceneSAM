@@ -534,19 +534,25 @@ class ScanNet_Panoptic(BaseDataset):
 class ScanNetPlusPlus(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(ScanNetPlusPlus, self).__init__(cfg, args, scale, slam, tracker, device)
+
+        self.gt_camera=cfg["tracking"]["gt_camera"]
         # print("nice")
-        if True: #for colmap
-            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten()
-            self.numbering=self.numbering
+        
         self.color_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.jpg"))
         )
-        self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
-        self.color_paths = self.color_paths[:self.max_frames]
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
         )
-        self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
+
+        if self.gt_camera:
+            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten()
+            self.numbering=self.numbering
+            self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
+            self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
+
+        self.color_paths = self.color_paths[:self.max_frames]
+        
         self.depth_paths = self.depth_paths[:self.max_frames]
 
         self.load_poses(self.input_folder)
@@ -555,7 +561,10 @@ class ScanNetPlusPlus(BaseDataset):
 
     def load_poses(self, path):
         self.poses = []
-        T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+        if self.gt_camera:
+            T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+        else:
+            T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
         for i in range(len(T_wc)):  # 50
             c2w = T_wc[i]
             c2w[:3, 1] *= -1
