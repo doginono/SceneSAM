@@ -12,7 +12,7 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.0005
-  gt_camera: True
+  gt_camera: False
   pixels: 5000
   iters: 50
 Segmenter:
@@ -27,7 +27,7 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 1
+  every_frame: 5
   verbose: False
   hit_percent: 0.4
   samplePixelFarther: 20 # Erosion, distance to the next mask
@@ -39,19 +39,19 @@ rendering:
 
 # TODO 
 mapping:
-  max_frames: 200
+  max_frames: 2000
   first_min_area: 2000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 1 # 2
+  every_frame: 2 # 2
   points_per_instance: 4
   vis_freq: 1000
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 50
-  ckpt_freq: 50
+  mesh_freq: 200
+  ckpt_freq: 200
   keyframe_every: 5
   mapping_window_size: 10
   pixels: 5000

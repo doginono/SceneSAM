@@ -1,0 +1,19 @@
+Segmenter:
+  border: 30
+  depthCondition: 0.1
+  normalizePointNumber: 7
+  samplePixelFarther: 8
+  smallestMaskSize: 2000
+data:
+  input_folder: Dataset/fe1733741f
+  logs: logs/Scannet++NoTruth/fe1733741f
+  output: output/Scannet++NoTruth/fe1733741f
+inherit_from: configs/Scannet++NoTruth/scannet.yaml
+mapping:
+  bound: [[-3.3024677306986394, 14.103168869199205], [-2.587169438430154, 8.330544047358739],
+    [-2.467719625122962, 5.650194256973299]]
+  first_min_area: 2000
+  marching_cubes_bound: [[-3.3024677306986394, 14.103168869199205], [-2.587169438430154,
+    8.330544047358739], [-2.467719625122962, 5.650194256973299]]
+output_dimension_semantic: 500
+scale: 1
