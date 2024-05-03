@@ -145,7 +145,7 @@ class Segmenter(object):
 
         # Add a legend
         ax.legend()
-        plt.savefig("/home/rozenberszki/D_Project/wsnsl/output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
+        plt.savefig("output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
         plt.close()  # Close the plot to free up memory
         # Show the plot
     def update_cam(self):
@@ -351,7 +351,7 @@ class Segmenter(object):
         """visualizerForId .visualizer(
                 anns=ids,
                 path=
-                    f"/home/rozenberszki/project/wsnsl/test/{0:05d}_first.png",
+                    f"test/{0:05d}_first.png",
             )"""
         samplesFromCurrent = backproject.sample_from_instances_with_ids_area(
             ids=ids,
@@ -535,7 +535,7 @@ class Segmenter(object):
         s = self.segment_first_ForAuto()
         '''visualizerForId.visualizer(
             self.semantic_frames[0],
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/0seg_{0}.png",
+            path=f"output/Own/segmentationScannet/0seg_{0}.png",
         )'''
         #print("finished segmenting first frame")
         if self.store_vis:

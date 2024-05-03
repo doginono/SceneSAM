@@ -3,7 +3,7 @@ mapping:
   bound: [[-7.0,2.8],[-4.6,4.3],[-3.0,2.9]]
   marching_cubes_bound: [[-7.0,2.8],[-4.6,4.3],[-3.0,2.9]]
 data:
-  input_folder: '/home/rozenberszki/project/wsnsl/Datasets/Replica/room1'
+  input_folder: 'Datasets/Replica/room1'
   logs: 'logs/room1'
   output: 'output/Own/room1'
 output_dimension_semantic: 250

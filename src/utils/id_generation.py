@@ -374,7 +374,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_before.png",
+            path=f"test/{curr_frame_number:05d}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
@@ -389,7 +389,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"/home/rozenberszki/D_Project/wsnsl/output/Own/segmentationScannet/{curr_frame_number}_before.png",
+            path=f"output/Own/segmentationScannet/{curr_frame_number}_before.png",
         )
     """
     for currentMaskId in current_unique_ids:
@@ -411,7 +411,7 @@ def createFrontMappingAutosort(
                     visualizer.visualizer(
                         anns=ids,
                         path=
-                            f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_{currentMaskId}_{instance}.png",
+                            f"test/{curr_frame_number:05d}_{currentMaskId}_{instance}.png",
 
                         prompts=samplesInside,
                     )
@@ -477,7 +477,7 @@ def createFrontMappingAutosort(
             visualizer.visualizer(
                 anns=ids,
                 path=
-                    f"/home/rozenberszki/project/wsnsl/test/{curr_frame_number:05d}_{id:05d}.png",
+                    f"test/{curr_frame_number:05d}_{id:05d}.png",
 
                 prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
             )
@@ -649,7 +649,7 @@ def createReverseMappingCombined_area_sort(
         visualizer.visualize(
             masks,
             prompts=theRelevant,
-            path=f"/home/rozenberszki/project/wsnsl/old/{curr_frame_number}_{instance}.png",
+            path=f"old/{curr_frame_number}_{instance}.png",
         )
 
     unique_ids = np.unique(masks).astype(int)
