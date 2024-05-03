@@ -1,0 +1,44 @@
+#!/bin/bash
+
+## SBATCH --job-name=voxel_training_x0   # Job name
+#SBATCH --mail-type=ALL          # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=davidrozenberszki@gmail.com      # Where to send mail	
+#SBATCH --mem=64G                    # Job memory request
+#SBATCH --constraint=rtx_2080
+#SBATCH --gpus=1
+#SBATCH --cpus-per-gpu=6                 # Job CPUs request
+#SBATCH --partition=submit
+#SBATCH --time=96:00:00               # Time limit hrs:min:sec           # Standard output and error log
+
+#Set environment CUDA version
+source /usr/local/Modules/init/bash
+source /usr/local/Modules/init/bash_completion 
+module load cuda/11.3
+nvcc -V
+nvidia-smi
+
+#Set Conda environment
+eval "$(conda shell.bash hook)"
+export PATH=/rhome/${USER}/miniconda3/bin/:$PATH
+export HYDRA_FULL_ERROR=1
+export CUDA_LAUNCH_BLOCKING=1
+source activate scenesam
+
+# Define the log file path using the current directory
+current_dir=$(pwd)
+log_file="$current_dir/execution_times.txt"
+
+# RUN from SWEEP 
+export run_params=$1
+echo "running experiment with params ${run_params}"
+
+start_time=$(date +%s)
+python -W ignore run.py $run_params
+end_time=$(date +%s)
+gpu_type=$(nvidia-smi --query-gpu=name --format=csv,noheader)
+
+echo "Execution time for $run_params: $(($end_time - $start_time)) seconds"
+echo "GPU type: $gpu_type for $run_params"
+
+echo "Execution time for $run_params: $(($end_time - $start_time)) seconds" >> $log_file
+echo "GPU type: $gpu_type for $run_params" >> $log_file
