@@ -5,7 +5,15 @@ Execution time for c413b34238: 13500 seconds
 Execution time for 56a0ec536c: 13501 seconds
 Execution time for 5fb5d2dbf2: 3 seconds
 Execution time for scene0300_01: 553 seconds
+
+gt poses
 Execution time for scene0300_01: 9845 seconds
 Execution time for scene0389_00: 6633 seconds
 Execution time for scene0645_02: 7039 seconds
 Execution time for scene0423_02_panoptic: 7862 seconds
+
+with tracking
+Execution time for scene0389_00: 7881 seconds
+Execution time for scene0645_02: 8581 seconds
+Execution time for scene0423_02_panoptic: 9359 seconds
+Execution time for scene0693_00: 9190 seconds

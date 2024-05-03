@@ -8,8 +8,8 @@ tracking:
   const_speed_assumption: True
   lr: 0.0005      
   pixels: 1000
-  iters: 100
-  gt_camera: True
+  iters: 200
+  gt_camera: False
 
 rendering:
   semantic_occupancy_multiplier: 10

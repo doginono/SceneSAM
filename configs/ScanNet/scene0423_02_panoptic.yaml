@@ -18,8 +18,6 @@ Segmenter:
   border: 10
   smallestMaskSize: 1000 # 10000
   every_frame: 2
-tracking:
-  gt_camera: True
 cam:
   png_depth_scale: 1000
   H: 480
