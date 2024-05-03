@@ -1,20 +1,20 @@
 Segmenter:
-  border: 20
+  border: 10
   depthCondition: 0.1
-  every_frame: 10
-  normalizePointNumber: 8
+  every_frame: 1
+  normalizePointNumber: 7
   samplePixelFarther: 8
-  smallestMaskSize: 3000
+  smallestMaskSize: 2000
 data:
   input_folder: Dataset/b20a261fdf
   logs: logs/Scannet++/b20a261fdf
   output: output/Scannet++/b20a261fdf
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  bound:  [[-2.721766720031403, 12.863155382095279], [-4.187328205529724, 6.7582327172962],
-    [-9.663427104574534, 6.541482654411162]] 
-  first_min_area: 3000
-  marching_cubes_bound:  [[-2.721766720031403, 12.863155382095279], [-4.187328205529724,
-    6.7582327172962], [-9.663427104574534, 6.541482654411162]] 
+  bound: [[-1.7248667639229098, 8.383113244826705], [-3.1570403710739727, 6.723165048529641],
+    [-2.7347176550338643, 4.415264583007938]]
+  first_min_area: 2000
+  marching_cubes_bound: [[-1.7248667639229098, 8.383113244826705], [-3.1570403710739727,
+    6.723165048529641], [-2.7347176550338643, 4.415264583007938]]
 output_dimension_semantic: 500
 scale: 1

@@ -1,5 +1,5 @@
 dataset: 'scannet++'
-coarse: False
+coarse: True
 low_gpu_mem: True
 meshing:
   eval_rec: True
@@ -13,8 +13,8 @@ tracking:
   const_speed_assumption: True
   lr: 0.0005
   gt_camera: True
-  pixels: 1000
-  iters: 30
+  pixels: 5000
+  iters: 50
 Segmenter:
   full_slam: True
   mask_generator: False # always False -> delete later
@@ -27,35 +27,36 @@ Segmenter:
   overlap: 0.4 # makes more stable
   relevant: 0.3
   merging_parameter: 7 # if it really is the same object, then it should not have any problems eating the other mask even if for 10 frames
-  every_frame: 10
-  verbose: True
+  every_frame: 1
+  verbose: False
   hit_percent: 0.4
   samplePixelFarther: 20 # Erosion, distance to the next mask
   normalizePointNumber: 10 # pointsperInstance/normalizePointNumber*normalizePointNumber
-  depthCondition: 0.01 # for depthcheck
+  depthCondition: 0.1 # for depthcheck
 
 rendering:
   semantic_occupancy_multiplier: 10
 
 # TODO 
 mapping:
-  first_min_area: 3000
+  max_frames: 200
+  first_min_area: 2000
   use_vis: True
   no_vis_on_first_frame: True
-  every_frame: 10000 # 2
+  every_frame: 1 # 2
   points_per_instance: 4
   vis_freq: 1000
   vis_inside_freq: 1600
   vis_offset: 0 #we take the current frame - vis_offset for visualization #should not work at the moment
   use_mesh: True #whether to generate mesh during training, the creation of thefinal mesh only depends ecal_rec
   no_mesh_on_first_frame: True
-  mesh_freq: 500
-  ckpt_freq: 500
-  keyframe_every: 50
-  mapping_window_size: 5
+  mesh_freq: 50
+  ckpt_freq: 50
+  keyframe_every: 5
+  mapping_window_size: 10
   pixels: 5000
-  iters_first: 15 #finetune
-  iters: 6 #finetune
+  iters_first: 1500 #finetune
+  iters: 100 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

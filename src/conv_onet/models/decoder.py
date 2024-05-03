@@ -314,7 +314,7 @@ class NICE(nn.Module):
 
     def __init__(self, output_dimension_semantic, dim=3, c_dim=32,
                  coarse_grid_len=2.0,  middle_grid_len=0.16, fine_grid_len=0.16,
-                 color_grid_len=0.16, semantic_grid_len=0.16, hidden_size=32, coarse=False, pos_embedding_method='fourier'):
+                 color_grid_len=0.16, semantic_grid_len=0.16, hidden_size=32, hidden_size_color = 32,coarse=False, pos_embedding_method='fourier'):
         super().__init__()
 
         if coarse:
@@ -328,7 +328,7 @@ class NICE(nn.Module):
                                 skips=[2], n_blocks=5, hidden_size=hidden_size,
                                 grid_len=fine_grid_len, concat_feature=True, pos_embedding_method=pos_embedding_method)
         self.color_decoder = MLP(name='color', dim=dim, c_dim=c_dim, color=True,
-                                 skips=[2], n_blocks=5, hidden_size=hidden_size,
+                                 skips=[2], n_blocks=5, hidden_size=hidden_size_color,
                                  grid_len=color_grid_len, pos_embedding_method=pos_embedding_method)
         #J: changed color to false for semantic_decoder because we dont want to output colors, we want to output one-hot vectors
         #--------------------------------added---------------------------------------------------------------------------------------

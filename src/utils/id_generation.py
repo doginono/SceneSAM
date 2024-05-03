@@ -398,7 +398,6 @@ def createFrontMappingAutosort(
         currentMask = ids == currentMaskId
         dictOfIds = {-100: -100}
         for instance in np.unique(frontProjectedSamples[2, :]):
-            i = 0
             if instance >= 0:
                 samplesInside = frontProjectedSamples[
                     :, frontProjectedSamples[2, :] == instance

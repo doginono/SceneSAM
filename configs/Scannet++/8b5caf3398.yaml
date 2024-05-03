@@ -1,20 +1,20 @@
 Segmenter:
-  border: 20
+  border: 10
   depthCondition: 0.1
-  every_frame: 10
-  normalizePointNumber: 8
+  every_frame: 1
+  normalizePointNumber: 7
   samplePixelFarther: 8
-  smallestMaskSize: 3000
+  smallestMaskSize: 2000
 data:
   input_folder: Dataset/8b5caf3398
   logs: logs/Scannet++/8b5caf3398
   output: output/Scannet++/8b5caf3398
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  bound:  [[-2.919554124365529, 5.977171390725077], [-2.7563677767638715, 3.9751238634494404],
-    [-6.215323185517098, 2.968945879673896]] 
-  first_min_area: 3000
-  marching_cubes_bound:  [[-2.919554124365529, 5.977171390725077], [-2.7563677767638715,
-    3.9751238634494404], [-6.215323185517098, 2.968945879673896]] 
+  bound: [[-0.9286883331262248, 7.25511682959352], [-2.0847577252789176, 6.328670619979754],
+    [-0.6221559592293291, 3.9850013105209037]]
+  first_min_area: 2000
+  marching_cubes_bound: [[-0.9286883331262248, 7.25511682959352], [-2.0847577252789176,
+    6.328670619979754], [-0.6221559592293291, 3.9850013105209037]]
 output_dimension_semantic: 500
 scale: 1

@@ -1,0 +1,35 @@
+dataset: 'scannet_panoptic'
+inherit_from: configs/ScanNet/scannet.yaml
+mapping:
+  bound: [[-0.6199903016433663, 9.958561519141984], [-0.2551522293531119, 12.582695368996394], [-0.4647720241906017, 2.935387017704466]]
+  marching_cubes_bound: [[-0.6199903016433663, 9.958561519141984], [-0.2551522293531119, 12.582695368996394], [-0.4647720241906017, 2.935387017704466]]
+  every_frame: 1
+  keyframe_every: 6
+  first_min_area: 2000
+data:
+  input_folder: Datasets/Scannet/scene0645_02
+  output:  output/scannet/scene0645_02_grid_len
+  logs: logs/scannet/scene0645_02
+output_dimension_semantic: 250
+Segmenter:
+  samplePixelFarther: 5
+  normalizePointNumber: 7
+  depthCondition: 0.05 #0.005 #0.0 
+  border: 10
+  smallestMaskSize: 2000 # 10000
+  every_frame: 2
+cam:
+  png_depth_scale: 1000
+  H: 480
+  W: 640
+  fx: 577.870605
+  fy: 577.870605
+  cx: 319.5
+  cy: 239.5
+grid_len:
+  coarse: 2 
+  middle: 0.16 
+  fine: 0.08
+  color: 0.08
+  semantic: 0.16
+  bound_divisible: 0.32

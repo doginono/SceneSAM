@@ -1,53 +1,20 @@
-inherit_from: configs/Scannet++/scannet.yaml
-
 Segmenter:
-  border: 20
-  depthCondition: 0.15
-  every_frame: 10
-  normalizePointNumber: 8
+  border: 30
+  depthCondition: 0.1
+  every_frame: 1
+  normalizePointNumber: 7
   samplePixelFarther: 8
   smallestMaskSize: 2000
-
-tracking:
-  gt_camera: True
-  pixels: 1000
-  iters: 30
-
-mapping:
-  bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215, 5.323754296533068],
-    [-2.8142115403743437, 9.441466688237004]] 
-  first_min_area: 3000
-  marching_cubes_bound:  [[-11.870805646465676, -0.08686367641626536], [-5.2383272854987215,
-    5.323754296533068], [-2.8142115403743437, 9.441466688237004]] 
-  first_min_area: 2000
-  every_frame: 1000 # 2
-  points_per_instance: 4
-  mesh_freq: 200
-  keyframe_every: 50
-  pixels: 5000
-  iters_first: 10 #finetune
-  iters: 60 #finetune
-  
-output_dimension_semantic: 500
-scale: 1
-
 data:
   input_folder: Dataset/fe1733741f
   logs: logs/Scannet++/fe1733741f
   output: output/Scannet++/fe1733741f
-
-
-cam:
-  H: 480 #480 # 720
-  W: 640 #680 920
-  fx: 478.356 #480
-  fy: 479.9267 #480
-  cx: 318.94633333 # 318
-  cy: 240.167333331 #  240
-  png_depth_scale: 1000 #for depth image in png format
-  #crop_edge: 20
-  # changed
-  #crop_size_: [640,480]
-#  poseScale: 1 # pose scale for the camera translation changed 0.5 because of depth scaling
-  #crop_edge: 0
-  #distortion: [0.0671891, -0.0809171, -0.000587829, 0.00030238]
+inherit_from: configs/Scannet++/scannet.yaml
+mapping:
+  bound: [[-3.3024677306986394, 14.103168869199205], [-2.587169438430154, 8.330544047358739],
+    [-2.467719625122962, 5.650194256973299]]
+  first_min_area: 2000
+  marching_cubes_bound: [[-3.3024677306986394, 14.103168869199205], [-2.587169438430154,
+    8.330544047358739], [-2.467719625122962, 5.650194256973299]]
+output_dimension_semantic: 500
+scale: 1
