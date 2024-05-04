@@ -157,7 +157,11 @@ class NICE_SLAM:
         # H, W = (480, 640)
         H = self.H
         W = self.W
-        if (self.n_img - 1) % self.every_frame_seg == 0:
+        if self.every_frame_seg == 1:
+            self.semantic_frames = torch.from_numpy(
+                np.zeros(((self.n_img) // self.every_frame_seg, H, W))
+            ).int()
+        elif (self.n_img - 1) % self.every_frame_seg == 0:
             self.semantic_frames = torch.from_numpy(
                 np.zeros(((self.n_img - 1) // self.every_frame_seg, H, W))
             ).int()
