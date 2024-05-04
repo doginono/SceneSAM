@@ -1,0 +1,19 @@
+Segmenter:
+  border: 10
+  depthCondition: 0.1
+  every_frame: 2
+  normalizePointNumber: 7
+  samplePixelFarther: 5
+  smallestMaskSize: 2000
+data:
+  input_folder: Datasets/ScanNet_orig/scene0131_01
+  logs: logs/ScanNet_orig/scene0131_01_every
+  output: output/ScanNet_orig/scene0131_01_every
+inherit_from: configs/ScanNet_orig_every/scannet_orig.yaml
+mapping:
+  bound: [[-4.4039396858175825, 13.175580508634791], [-4.221569386690293, 9.983726356441439],
+    [-1.6963174288385012, 2.542558113947437]]
+  first_min_area: 2000
+  marching_cubes_bound: [[-4.4039396858175825, 13.175580508634791], [-4.221569386690293,
+    9.983726356441439], [-1.6963174288385012, 2.542558113947437]]
+output_dimension_semantic: 400
