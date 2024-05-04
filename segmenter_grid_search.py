@@ -23,12 +23,24 @@ from src import config
 import seaborn as sns
 from src.Segmenter import Segmenter
 
-#hyperparameters to check: smallestmasksize (also first smallest mask), samplePixelsFarther, NormalizePointNumber, depthCondition, border?,
-#scenes: 
-#also for Replica?, maybe with only smallest mask size
-max_id_file = 'max_id.txt'
-paths = ['75d29d69b8', 'c413b34238','fe1733741f', 'b20a261fdf', '1841a0b525', '7cd2ac43b4', '07f5b601ee', '8b5caf3398', '8d563fc2cc', '39f36da05b','b20a261fdf']
-basepath = '/home/rozenberszki/D_Project/wsnsl/configs/Scannet++/'
+# hyperparameters to check: smallestmasksize (also first smallest mask), samplePixelsFarther, NormalizePointNumber, depthCondition, border?,
+# scenes:
+# also for Replica?, maybe with only smallest mask size
+
+max_id_file = "max_id.txt"
+'''paths = [
+    "scene0423_02_panoptic",
+    "scene0300_01",
+    "scene0616_00",
+    "scene0354_00",
+    "scene0389_00",
+    "scene0494_00",
+    "scene0645_02",
+    "scene0693_00",
+]'''
+#paths = ['office0', 'office1', 'office2', 'office3', 'office4', 'room0_panoptic', 'room0', 'room1', 'room2']
+paths = ["scene0693_00"]
+basepath = "/home/rozenberszki/project/wsnsl/configs/ScanNet/"
 smallestMaskSizes = [1000, 2000, 5000]
 samplePixelFarthers = [2, 5, 8]
 normalizePointNumbers = [7]
@@ -80,16 +92,16 @@ for p in paths:
     cfg["Segmenter"]["store_vis"] = False
     cfg["Segmenter"]["every_frame"] = 2
     for sms, spf, npn, b, dc in hypers:
-        parameter_string = f'sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}'
-        cfg['mapping']['first_min_area'] = sms
-        cfg['Segmenter']['smallestMaskSize'] = sms
-        cfg['Segmenter']['samplePixelFarther'] = spf
-        cfg['Segmenter']['normalizePointNumber'] = npn
-        cfg['Segmenter']['border'] = b
-        cfg['Segmenter']['depthCondition'] = dc
-        cfg['Segmenter']['every_frame'] = 1
-        cfg['tracking']['gt_camera'] = True
-        print('Using GT Camera Pose for tracking.')
+        parameter_string = f"sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}"
+        cfg["mapping"]["first_min_area"] = sms
+        cfg["Segmenter"]["smallestMaskSize"] = sms
+        cfg["Segmenter"]["samplePixelFarther"] = spf
+        cfg["Segmenter"]["normalizePointNumber"] = npn
+        cfg["Segmenter"]["border"] = b
+        cfg["Segmenter"]["depthCondition"] = dc
+        
+
+        print("Using GT Camera Pose for tracking.")
         slam = NICE_SLAM(cfg, args)
         frame_reader = get_dataset(cfg, args, cfg["scale"], slam=slam)
         frame_reader.__post_init__(slam)
@@ -107,5 +119,6 @@ for p in paths:
         # we could also use poses from a checkpoint here.
         start = time.time()
         _, max_id = segmenter.runAuto()
-        with open(max_id_file, 'a') as f:
-            f.write(parameter_string + ': ' +str(max_id) + '\n')
+        stop = time.time()
+        with open(max_id_file, "a") as f:
+            f.write(parameter_string + ", " + str(max_id) + ", " + str(stop -start) +"\n")

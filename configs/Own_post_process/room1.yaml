@@ -1,0 +1,12 @@
+inherit_from: 'configs/Own/own.yaml'
+mapping:
+  bound: [[-7.0,2.8],[-4.6,4.3],[-3.0,2.9]]
+  marching_cubes_bound: [[-7.0,2.8],[-4.6,4.3],[-3.0,2.9]]
+data:
+  input_folder: 'Datasets/Replica/room1'
+  logs: 'logs/room1_post'
+  output: 'output/Own/room1_post'
+output_dimension_semantic: 250
+#load_cpt: /home/rozenberszki/project/wsnsl/output/Own/room1/ckpts/01999.tar
+Segmenter:
+  full_slam: False
