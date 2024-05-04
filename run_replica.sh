@@ -1,0 +1,8 @@
+sbatch --job-name "full_slam_neursam_office0" --output "logs/full_slam_neursam_office0.log" base_job.job "configs/Own/office0.yaml"
+sbatch --job-name "full_slam_neursam_office1" --output "logs/full_slam_neursam_office1.log" base_job.job "configs/Own/office1.yaml"
+sbatch --job-name "full_slam_neursam_office2" --output "logs/full_slam_neursam_office2.log" base_job.job "configs/Own/office2.yaml"
+sbatch --job-name "full_slam_neursam_office3" --output "logs/full_slam_neursam_office3.log" base_job.job "configs/Own/office3.yaml"
+sbatch --job-name "full_slam_neursam_office4" --output "logs/full_slam_neursam_office4.log" base_job.job "configs/Own/office4.yaml"
+sbatch --job-name "full_slam_neursam_room0" --output "logs/full_slam_neursam_room0.log" base_job.job "configs/Own/room0.yaml"
+sbatch --job-name "full_slam_neursam_room1" --output "logs/full_slam_neursam_room1.log" base_job.job "configs/Own/room1.yaml"
+sbatch --job-name "full_slam_neursam_room2" --output "logs/full_slam_neursam_room2.log" base_job.job "configs/Own/room2.yaml"

@@ -17,3 +17,4 @@ Execution time for scene0389_00: 7881 seconds
 Execution time for scene0645_02: 8581 seconds
 Execution time for scene0423_02_panoptic: 9359 seconds
 Execution time for scene0693_00: 9190 seconds
+Execution time for configs/Own/office0.yaml: 10624 seconds
