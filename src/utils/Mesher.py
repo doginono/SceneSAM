@@ -26,6 +26,7 @@ class Mesher(object):
             ray_batch_size (int): maximum ray size for query in one batch.
                                   Used to alleviate GPU memeory usage. Defaults to 100000.
         """
+        self.confidence_threshold = cfg['meshing']['confidence_threshold']
         self.points_batch_size = points_batch_size
         self.ray_batch_size = ray_batch_size
         self.renderer = slam.vis_renderer
@@ -743,10 +744,13 @@ class Mesher(object):
 
                 num_instances = vertex_id.shape[-1]
                 vertex_id = torch.argmax(vertex_id, dim=1).numpy()  # get instance id
+                #import matplotlib.pyplot as plt
+                #plt.hist(z[np.arange(z.shape[0]), vertex_id].flatten().numpy(), bins=100)
+                #plt.savefig("semantic_hist_trained.png")
+
+                vertex_id[z[np.arange(z.shape[0]), vertex_id].flatten().numpy()<self.confidence_threshold] = 999 # 999 will be color cyan
                 vertex_colors = self.visualizer.get_colors(vertex_id)  # J:added
-                vertex_colors = (
-                    np.clip(vertex_colors, 0, 1) * 255
-                )  # add colormap to map instance id to color
+                vertex_colors *= 255
 
                 vertex_colors = vertex_colors.astype(
                     np.uint8

@@ -1,0 +1,18 @@
+inherit_from: 'configs/Own/own.yaml'
+#tracking:
+#  path: '/home/koerner/Project/nice-slam/Datasets/Replica/room0/traj.txt'
+mapping:
+  bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+  marching_cubes_bound: [[-2.9,8.9],[-3.2,5.5],[-3.5,3.3]]
+  no_mesh_on_first_frame: False
+  mesh_freq: 10
+  iters_first: 100 #finetune
+  iters: 5
+data:
+  input_folder: 'Datasets/Replica/room0'
+  logs: 'logs/room0_debug'
+  output: 'output/Own/room0_debug'
+output_dimension_semantic: 400
+tracking:
+  gt_camera: True
+
