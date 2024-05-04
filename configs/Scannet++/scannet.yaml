@@ -2,6 +2,7 @@ dataset: 'scannet++'
 coarse: True
 low_gpu_mem: True
 meshing:
+  confidence_threshold: 0.4 
   eval_rec: True
   resolution: 256 # change to 512 for higher resolution geometry
 tracking:
