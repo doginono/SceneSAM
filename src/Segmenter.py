@@ -120,8 +120,8 @@ class Segmenter(object):
 
  
     def plot(self,idx):
-        #if idx != 320 and idx != 60 and idx != 500:
-         #   return
+        if idx != 10 and idx != 80:
+            return
         if idx % 10 != 0:
             return
         data = self.samples.copy()
@@ -143,8 +143,8 @@ class Segmenter(object):
 
         # Write PlyElement to PLY file
         print('stored pointcloud')
-        #PlyData([vertices_element, colors_element]).write(f'pointcloud_scannet_{idx}.ply')
-        data = data[:, data[1] > -2]
+        PlyData([vertices_element, colors_element]).write(f'pointcloud_scannet0693_{idx}.ply')
+        #data = data[:, data[1] > -2]
         x = data[0]
         y = data[1]*-1
         z = data[2]*-1
