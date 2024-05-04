@@ -19,6 +19,7 @@ sam/*
 *.obj
 grid_search*
 *.png
+pointcloud*
 #scannet*
 
 # Byte-compiled / optimized / DLL files

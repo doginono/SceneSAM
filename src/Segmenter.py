@@ -14,9 +14,10 @@ import threading
 from tqdm import tqdm
 from src.utils.datasets import get_dataset
 import time
-
+import open3d as o3d
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
+from plyfile import PlyData, PlyElement
 
 
 class Segmenter(object):
@@ -119,7 +120,30 @@ class Segmenter(object):
 
  
     def plot(self,idx):
+        #if idx != 320 and idx != 60 and idx != 500:
+         #   return
+        if idx % 10 != 0:
+            return
         data = self.samples.copy()
+        points = data[:3].T
+        ids = data[3]
+        visualizerForIds = vis.visualizerForIds()
+        colors = visualizerForIds.get_colors(ids)
+        colors *= 255
+        vertices = np.array([(point[0], point[1], point[2]) for point in points],
+                    dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+
+        # Define colors
+        colors_data = np.array([(int(color[0]), int(color[1]), int(color[2])) for color in colors],
+                            dtype=[('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
+
+        # Create PlyElement for vertices and colors
+        vertices_element = PlyElement.describe(vertices, 'vertex')
+        colors_element = PlyElement.describe(colors_data, 'color')
+
+        # Write PlyElement to PLY file
+        print('stored pointcloud')
+        #PlyData([vertices_element, colors_element]).write(f'pointcloud_scannet_{idx}.ply')
         data = data[:, data[1] > -2]
         x = data[0]
         y = data[1]*-1
@@ -145,7 +169,7 @@ class Segmenter(object):
 
         # Add a legend
         ax.legend()
-        plt.savefig("output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
+        plt.savefig(f"{self.store_directory}/3Dplot_"+str(idx)+".png")
         plt.close()  # Close the plot to free up memory
         # Show the plot
     def update_cam(self):
@@ -443,7 +467,7 @@ class Segmenter(object):
             )
             if self.is_full_slam:
                 self.idx_segmenter[0] = idx
-            # self.plot()
+            self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
         if self.n_img - 1 % self.every_frame_seg != 0:
             while self.idx[0] < self.n_img - 1:
@@ -569,7 +593,7 @@ class Segmenter(object):
             self.segment_idx_forAuto(idx)
             #print(idx, "segmented")
             #print(self.estimate_c2w_list.cpu()[idx])
-            #self.plot(idx)
+            self.plot(idx)
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
