@@ -120,7 +120,7 @@ class Segmenter(object):
 
  
     def plot(self,idx):
-        if idx != 10 and idx != 80:
+        if idx != 60 and idx != 500 and idx != 320:
             return
         if idx % 10 != 0:
             return
@@ -128,22 +128,26 @@ class Segmenter(object):
         points = data[:3].T
         ids = data[3]
         visualizerForIds = vis.visualizerForIds()
-        colors = visualizerForIds.get_colors(ids)
-        colors *= 255
+        colors = visualizerForIds.get_colors(ids)[:, :3]
+        print(colors.shape)
+        #colors *= 255
+        #print(np.concatenate((points, colors), axis=1).shape)
+        #pickle.dump(np.concatenate((points, colors), axis=1), open(f"pointcloud_room0_{idx}.pkl", "wb"))
         vertices = np.array([(point[0], point[1], point[2]) for point in points],
                     dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
 
         # Define colors
-        colors_data = np.array([(int(color[0]), int(color[1]), int(color[2])) for color in colors],
+        colors_data = np.array([(int(color[0]*255), int(color[1]*255), int(color[2]*255)) for color in colors],
                             dtype=[('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
 
         # Create PlyElement for vertices and colors
+        #
         vertices_element = PlyElement.describe(vertices, 'vertex')
         colors_element = PlyElement.describe(colors_data, 'color')
 
         # Write PlyElement to PLY file
         print('stored pointcloud')
-        PlyData([vertices_element, colors_element]).write(f'pointcloud_scannet0693_{idx}.ply')
+        PlyData([vertices_element, colors_element]).write(f'pointcloud_room0_{idx}.ply')
         #data = data[:, data[1] > -2]
         x = data[0]
         y = data[1]*-1
