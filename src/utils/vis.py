@@ -86,7 +86,7 @@ class visualizerForIds:
 
     def visualize(self, anns, path=None, ax=None, title="", prompts=None, sep_boarder=False, samplePixelFarther =  4):
         ids = copy.deepcopy(anns)
-        ids[ids == 0] = len(self.colors) - 1
+        ids[ids == 0] = len(self.colors) - 2
         if sep_boarder:
             kernel = np.ones((samplePixelFarther, samplePixelFarther), np.uint8)
             copy_ids = np.full(ids.shape, -100)
@@ -98,12 +98,14 @@ class visualizerForIds:
                 copy_ids[label] = i
             ids = copy_ids
         if path is not None:
+            plt.figure(figsize=(10, 10))
             plt.imshow(ids, cmap=self.cmap, vmin=0, vmax=len(self.colors) - 1)
             if prompts is not None:
                 plt.scatter(
                     prompts[:, 0], prompts[:, 1], s=10, c="blue", marker="o", alpha=0.5
                 )
                 plt.title(title)
+            plt.axis('off')
             plt.savefig(path)
             plt.clf()
             return
