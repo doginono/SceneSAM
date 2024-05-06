@@ -12,7 +12,7 @@ tracking:
   const_speed_assumption: True
   lr: 0.001
   pixels: 200
-  iters: 10
+  iters: 15
   gt_camera: False
 Segmenter:
   samplePixelFarther: 2
@@ -54,7 +54,7 @@ mapping:
   mapping_window_size: 5
   pixels: 1000
   iters_first: 1000 #finetune
-  iters: 60 #finetune
+  iters: 70 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetuneS
   middle_iter_ratio: 0.4 #0.4 #finetune

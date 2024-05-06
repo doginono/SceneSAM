@@ -6,7 +6,7 @@ data:
   input_folder: Datasets/Replica/office1
   output: output/Own/office1
   logs: logs/office1
-output_dimension_semantic: 250
+output_dimension_semantic: 350
 #Segmenter:
 #  use_stored: True
 #  border: 20
