@@ -186,3 +186,11 @@ Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 35837 seconds
 GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0131_01.yaml
 Execution time for configs/Scannet++/56a0ec536c.yaml: 32392 seconds
 GPU type: NVIDIA RTX A6000 for configs/Scannet++/56a0ec536c.yaml
+Execution time for 07f5b601ee: 26 seconds
+Execution time for 07f5b601ee: 2 seconds
+Execution time for 07f5b601ee: 478 seconds
+Execution time for 07f5b601ee: 2 seconds
+Execution time for 07f5b601ee: 174 seconds
+Execution time for 07f5b601ee: 2 seconds
+Execution time for 07f5b601ee: 463 seconds
+Execution time for 07f5b601ee: 2 seconds

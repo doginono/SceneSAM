@@ -1155,11 +1155,11 @@ class Mapper(object):
 
                 # add new frame to keyframe set
                 if outer_joint_iter == outer_joint_iters - 1:
-                    if (idx % self.keyframe_every == 0 or (idx == self.n_img - 2)) and (
-                        idx not in self.keyframe_list
+                    if (idx % self.keyframe_every == 0 ) and (
+                        idx not in self.keyframe_list and not self.coarse_mapper
                     ):
                         self.keyframe_list.append(idx.clone())
-                        if (self.is_full_slam and not self.coarse_mapper) or round == 1:
+                        if (self.is_full_slam or round == 1):
                             ignore_pixel = torch.sum(gt_semantic, dim=-1) == 0
                             self.keyframe_dict.append(
                             {

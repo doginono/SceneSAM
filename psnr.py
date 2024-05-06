@@ -27,9 +27,14 @@ from PIL import Image
 import json
 from src.utils.datasets import ScanNet_Panoptic
 from matplotlib import cm
-from src.utils.datasets import Replica
+#python psnr.py configs/Own/room0_panoptic.yaml output/Own/room0_panoptic/ckpts/ef2_ruunAuto_00674.tar
+#python psnr.py configs/ScanNet/scene0423_02_panoptic.yaml output/scannet/track_scene0423_02_panoptic/ckpts/plot_paper_00683.tar
 
-
+def PSNR(color1, color2):
+    mse = np.mean((color1 - color2) ** 2)
+    psnrScore=20 * np.log10(1.0 / np.sqrt(mse))
+    #print("Psnr score",psnrScore)
+    return psnrScore
 
 def main():
     parser = argparse.ArgumentParser(
@@ -69,7 +74,43 @@ def main():
     poses = None
     #basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
     #render_gif_dataset(cfg, args, slam, cfg['data']['output'])
-    render_gif(slam, cfg, cfg['data']['output'])
+    os.makedirs(cfg['data']['output'] + '/psnr', exist_ok=True)
+    os.makedirs(cfg['data']['output'] + '/psnr/rendered', exist_ok=True)
+    os.makedirs(cfg['data']['output'] + '/psnr/gt_color', exist_ok=True)
+    for_replica(slam, cfg, args)
+
+def for_replica(slam, cfg, args):
+    frame_reader = get_dataset(cfg, args,scale = 1,slam=slam)
+    frame_reader.__post_init__(slam)
+    psnr_scores = []
+    traj_indices = np.arange(2, 1900, step=5)
+
+    print("Traj indices", traj_indices)
+    for i in traj_indices:
+        if (i-2) % 30 != 0:
+            continue
+        i, color_data, depth_data, c2w, _ = frame_reader[i]
+        #print('start rendering')
+        _, _, color = slam.vis_renderer.render_img(
+                slam.shared_c,
+                slam.shared_decoders,
+                c2w.to("cuda"),
+                "cuda",
+                stage="color",
+                gt_depth=depth_data,
+            )
+        #print('end rendering')
+        color_np = color.detach().cpu().numpy()
+        #print(color_np.min(), color_np.max())
+        color_np = np.clip(color_np, 0, 1)
+        #print(color_np.shape, color_data.shape)
+        psnr_score = PSNR(color_np, color_data.cpu().numpy())
+        print(psnr_score)
+        psnr_scores.append(psnr_score)
+    
+    print("Average PSNR score", np.mean(psnr_scores))
+    with open('psnr.txt', 'a') as f:
+        f.write(f"Average PSNR score for {cfg['data']['output']}: {np.mean(psnr_scores)}\n")
 
 def load_panoptic_room0():
     basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/room0_panoptic/test_results_org_pan"
@@ -96,8 +137,7 @@ def load_scannet(basepath, split):
 
 def render_gif_dataset(cfg, args, slam, path):
     visualizerForId = vis.visualizerForIds()
-    #room0 Replica
-    frame_reader = Replica(cfg, args, 1,slam=slam)
+    frame_reader = ScanNet_Panoptic(cfg, args, 1,slam=slam, split='test')
     frame_reader.__post_init__(slam)
     if path is None:
         store_path = "run_traj_reversed/"
