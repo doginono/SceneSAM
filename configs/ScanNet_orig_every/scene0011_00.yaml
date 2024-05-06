@@ -6,14 +6,12 @@ Segmenter:
   samplePixelFarther: 5
   smallestMaskSize: 2000
 data:
-  input_folder: Datasets/Scannet/scene0011_00
-  logs: logs/ScanNet_orig/scene0011_00
-  output: output/ScanNet_orig/scene0011_00
-inherit_from: configs/ScanNet_orig/scannet_orig.yaml
+  input_folder: Datasets/ScanNet_orig/scene0011_00
+  logs: logs/ScanNet_orig/scene0011_00_every
+  output: output/ScanNet_orig/scene0011_00_every
+inherit_from: configs/ScanNet_orig_every/scannet_orig.yaml
 mapping:
   bound: [[-0.058492072892132985, 7.571544732080833], [-0.9260770880714251, 8.883156326845633],[-0.2775422830796035, 2.8201318347531097]]
-  every_frame: 1
   first_min_area: 2000
-  keyframe_every: 6
   marching_cubes_bound: [[-0.058492072892132985, 7.571544732080833], [-0.9260770880714251,8.883156326845633], [-0.2775422830796035, 2.8201318347531097]]
 output_dimension_semantic: 400

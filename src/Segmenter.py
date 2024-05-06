@@ -14,9 +14,10 @@ import threading
 from tqdm import tqdm
 from src.utils.datasets import get_dataset
 import time
-
+import open3d as o3d
 import torch.multiprocessing as mp
 from src.utils import backproject, create_instance_seg, id_generation, vis
+from plyfile import PlyData, PlyElement
 
 
 class Segmenter(object):
@@ -53,7 +54,7 @@ class Segmenter(object):
             #print("tumrgbd")
         elif cfg["dataset"] == "replica":# or cfg['dataset'] == 'scannet_panoptic':
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
-        elif cfg["dataset"] == "scannet++" or cfg['dataset'] == 'scannet_panoptic' or cfg['dataset'] == 'scannet_orig':
+        elif cfg["dataset"] == "scannet++" or cfg['dataset'] == 'scannet_panoptic' or cfg['dataset'] == 'scannet_orig' or cfg['dataset'] == 'scannet_orig_every':
             s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
             #s=1
         self.shift = s  # s"""
@@ -119,8 +120,37 @@ class Segmenter(object):
 
  
     def plot(self,idx):
+        return
+        if idx != 10 and idx != 80 and idx != 320:
+            return
+        if idx % 10 != 0:
+            return
         data = self.samples.copy()
-        data = data[:, data[1] > -2]
+        pickle.dump(data.T, open(f"pointcloud_scene0693_{idx}.pkl", "wb"))
+        '''points = data[:3].T
+        ids = data[3]
+        visualizerForIds = vis.visualizerForIds()
+        colors = visualizerForIds.get_colors(ids)[:, :3]
+        print(colors.shape)
+        #colors *= 255
+        #print(np.concatenate((points, colors), axis=1).shape)
+        #pickle.dump(np.concatenate((points, colors), axis=1), open(f"pointcloud_room0_{idx}.pkl", "wb"))
+        vertices = np.array([(point[0], point[1], point[2]) for point in points],
+                    dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+
+        # Define colors
+        colors_data = np.array([(int(color[0]*255), int(color[1]*255), int(color[2]*255)) for color in colors],
+                            dtype=[('red', 'u1'), ('green', 'u1'), ('blue', 'u1')])
+
+        # Create PlyElement for vertices and colors
+        #
+        vertices_element = PlyElement.describe(vertices, 'vertex')
+        colors_element = PlyElement.describe(colors_data, 'color')
+
+        # Write PlyElement to PLY file
+        print('stored pointcloud')
+        PlyData([vertices_element, colors_element]).write(f'pointcloud_room0_{idx}.ply')
+        #data = data[:, data[1] > -2]
         x = data[0]
         y = data[1]*-1
         z = data[2]*-1
@@ -145,9 +175,9 @@ class Segmenter(object):
 
         # Add a legend
         ax.legend()
-        plt.savefig("output/Scannet++/56a0ec536c/segmentationPlot/3Dplot_"+str(idx)+".png")
+        plt.savefig(f"{self.store_directory}/3Dplot_"+str(idx)+".png")
         plt.close()  # Close the plot to free up memory
-        # Show the plot
+        # Show the plot'''
     def update_cam(self):
         """
         Update the camera intrinsics according to pre-processing config,
@@ -443,7 +473,7 @@ class Segmenter(object):
             )
             if self.is_full_slam:
                 self.idx_segmenter[0] = idx
-            # self.plot()
+            self.plot()
             # print(f'outside samples: {np.unique(self.samples[-1])}')
         if self.n_img - 1 % self.every_frame_seg != 0:
             while self.idx[0] < self.n_img - 1:
@@ -569,7 +599,7 @@ class Segmenter(object):
             self.segment_idx_forAuto(idx)
             #print(idx, "segmented")
             #print(self.estimate_c2w_list.cpu()[idx])
-            #self.plot(idx)
+            self.plot(idx)
             stopTime=time.time()
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)

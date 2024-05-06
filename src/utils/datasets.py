@@ -115,7 +115,6 @@ class BaseDataset(Dataset):
         self.semantic_frames = slam.semantic_frames
 
     def get_zero_pose(self):
-
         return self.poses[0]  # * self.shift
 
     def get_segmentation(self, index):
@@ -496,6 +495,40 @@ class ScanNet(BaseDataset):
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
 
+class ScanNet_orig_every(BaseDataset):
+    def __init__(self, cfg, args, scale, device="cuda:0", slam = None):
+        super(ScanNet_orig_every, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
+        self.input_folder = os.path.join(self.input_folder)
+        self.color_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'color_1', "*.jpg"))],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )[:self.max_frames]
+        self.depth_paths = sorted([path for path in glob.glob(os.path.join(self.input_folder,'depth_1', "*.png"))],
+            key=lambda x: int(os.path.basename(x).split('.')[0]),
+        )[:self.max_frames]
+        self.load_poses(os.path.join(self.input_folder, "pose_1"))
+        self.poses = self.poses[:self.max_frames]
+        assert len(self.color_paths) == len(self.depth_paths) and len(self.color_paths) == len(self.poses), 'something went wrong when data loading'
+        self.n_img = len(self.color_paths)
+
+    def load_poses(self, path):
+        self.poses = []
+        pose_paths = sorted(
+            glob.glob(os.path.join(path, "*.txt")),
+            key=lambda x: int(x.split('/')[-1].split('.')[0],
+        ))
+        for pose_path in pose_paths:
+            with open(pose_path, "r") as f:
+                lines = f.readlines()
+            ls = []
+            for line in lines:
+                l = list(map(float, line.split(" ")))
+                ls.append(l)
+            c2w = np.array(ls).reshape(4, 4)
+            c2w[:3, 1] *= -1
+            c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            self.poses.append(c2w)
+
 class ScanNet_orig(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", slam = None):
         super(ScanNet_orig, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
@@ -529,6 +562,8 @@ class ScanNet_orig(BaseDataset):
             c2w[:3, 2] *= -1
             c2w = torch.from_numpy(c2w).float()
             self.poses.append(c2w)
+
+
 class ScanNet_Panoptic(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", slam = None, split = 'train'):
         super(ScanNet_Panoptic, self).__init__(cfg, args, scale,slam, tracker=False ,device= device) 
@@ -747,5 +782,6 @@ dataset_dict = {
     "scannet_orig": ScanNet_orig,
     "scannet++": ScanNetPlusPlus,
     "panoptic": Panoptic,
-    "scannet_panoptic": ScanNet_Panoptic
+    "scannet_panoptic": ScanNet_Panoptic,
+    "scannet_orig_every": ScanNet_orig_every
 }
