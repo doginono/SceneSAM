@@ -604,8 +604,9 @@ class Segmenter(object):
             #print("time taken for segmenting frame: ", stopTime-Starttime)
             #print("finished segmenting frame: ", idx)
             if self.store_vis:
+                i = np.min([idx // self.every_frame_seg, len(self.semantic_frames) - 1])
                 visualizerForId.visualize(
-                    self.semantic_frames[idx // self.every_frame_seg],
+                    self.semantic_frames[i],
                     path=f"{self.store_directory}/seg_{idx}.png",
                 )
             if self.is_full_slam:
@@ -632,13 +633,13 @@ class Segmenter(object):
             self.max_id = self.process_frames(self.semantic_frames)
 
         if self.store_vis or True:
-            index_frames = np.arange(0, self.n_img, self.every_frame_seg)
+            index_frames = np.arange(0, self.n_img-1, self.every_frame_seg)// self.every_frame_seg
             if self.every_frame_seg == 1:
                 index_frames=index_frames[:-1]
             if (self.n_img - 1) % self.every_frame_seg != 0:
-                index_frames = np.concatenate((index_frames, [self.n_img - 1]))
+                index_frames = np.concatenate((index_frames, [len(self.semantic_frames)- 1]))
             make_gif_from_array(
-                self.semantic_frames[index_frames // self.every_frame_seg],
+                self.semantic_frames[index_frames],
                 os.path.join(*self.store_directory.split('/'), "segmentation.gif"),
             )
             ##print(os.path.join(self.store_directory, "segmentation.gif"),)
