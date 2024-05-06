@@ -18,3 +18,171 @@ Execution time for scene0645_02: 8581 seconds
 Execution time for scene0423_02_panoptic: 9359 seconds
 Execution time for scene0693_00: 9190 seconds
 Execution time for configs/Own/office0.yaml: 10624 seconds
+Execution time for configs/Scannet++/7cd2ac43b4.yaml: 15 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/7cd2ac43b4.yaml
+Execution time for configs/Scannet++/07f5b601ee.yaml: 33 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/07f5b601ee.yaml
+Execution time for configs/Scannet++/8d563fc2cc.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/8d563fc2cc.yaml
+Execution time for configs/Scannet++/56a0ec536c.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/56a0ec536c.yaml
+Execution time for configs/Scannet++/39f36da05b.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/39f36da05b.yaml
+Execution time for configs/Scannet++/b20a261fdf.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/b20a261fdf.yaml
+Execution time for configs/Scannet++/8b5caf3398.yaml: 15 seconds
+GPU type: NVIDIA A100 80GB PCIe for configs/Scannet++/8b5caf3398.yaml
+Execution time for configs/Scannet++NoTruth/7cd2ac43b4.yaml: 16 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/7cd2ac43b4.yaml
+Execution time for configs/Scannet++NoTruth/07f5b601ee.yaml: 17 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/07f5b601ee.yaml
+Execution time for configs/Scannet++NoTruth/56a0ec536c.yaml: 11 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/56a0ec536c.yaml
+Execution time for configs/Scannet++NoTruth/39f36da05b.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/39f36da05b.yaml
+Execution time for configs/Scannet++NoTruth/8d563fc2cc.yaml: 11 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/8d563fc2cc.yaml
+Execution time for configs/Scannet++NoTruth/b20a261fdf.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/b20a261fdf.yaml
+Execution time for configs/ScanNet_orig/scene0011_00.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig/scene0011_00.yaml
+Execution time for configs/Scannet++NoTruth/8b5caf3398.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/8b5caf3398.yaml
+Execution time for configs/ScanNet_orig/scene0025_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0025_00.yaml
+Execution time for configs/ScanNet_orig/scene0671_00.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig/scene0671_00.yaml
+Execution time for configs/ScanNet_orig/scene0046_00.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig/scene0046_00.yaml
+Execution time for configs/ScanNet_orig/scene0131_01.yaml: 14 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0131_01.yaml
+Execution time for configs/Own/office0.yaml: 9962 seconds
+GPU type: NVIDIA A100 80GB PCIe for configs/Own/office0.yaml
+Execution time for configs/Own/office2.yaml: 7658 seconds
+GPU type: NVIDIA A100 80GB PCIe for configs/Own/office2.yaml
+Execution time for configs/Scannet++/07f5b601ee.yaml: 22 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/07f5b601ee.yaml
+Execution time for configs/Scannet++/7cd2ac43b4.yaml: 33 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++/7cd2ac43b4.yaml
+Execution time for configs/Scannet++/56a0ec536c.yaml: 34 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++/56a0ec536c.yaml
+Execution time for configs/Scannet++/39f36da05b.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++/39f36da05b.yaml
+Execution time for configs/Scannet++/b20a261fdf.yaml: 10 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++/b20a261fdf.yaml
+Execution time for configs/Scannet++/8d563fc2cc.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/8d563fc2cc.yaml
+Execution time for configs/Scannet++NoTruth/07f5b601ee.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/07f5b601ee.yaml
+Execution time for configs/Scannet++NoTruth/7cd2ac43b4.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/7cd2ac43b4.yaml
+Execution time for configs/Scannet++/8b5caf3398.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/8b5caf3398.yaml
+Execution time for configs/Scannet++NoTruth/8d563fc2cc.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/8d563fc2cc.yaml
+Execution time for configs/Scannet++NoTruth/39f36da05b.yaml: 10 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/39f36da05b.yaml
+Execution time for configs/Scannet++NoTruth/56a0ec536c.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/56a0ec536c.yaml
+Execution time for configs/Scannet++NoTruth/8b5caf3398.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/8b5caf3398.yaml
+Execution time for configs/ScanNet_orig/scene0011_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0011_00.yaml
+Execution time for configs/Scannet++NoTruth/b20a261fdf.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/b20a261fdf.yaml
+Execution time for configs/ScanNet_orig/scene0046_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0046_00.yaml
+Execution time for configs/ScanNet_orig/scene0131_01.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0131_01.yaml
+Execution time for configs/ScanNet_orig/scene0025_00.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig/scene0025_00.yaml
+Execution time for configs/ScanNet_orig/scene0671_00.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig/scene0671_00.yaml
+Execution time for configs/Own/office4.yaml: 10541 seconds
+GPU type: NVIDIA RTX A6000 for configs/Own/office4.yaml
+Execution time for configs/Own/room2.yaml: 13149 seconds
+GPU type: NVIDIA RTX A6000 for configs/Own/room2.yaml
+Execution time for configs/ScanNet/scene0389_00.yaml: 19627 seconds
+GPU type: NVIDIA A100 80GB PCIe for configs/ScanNet/scene0389_00.yaml
+Execution time for configs/Own/office3.yaml: 27709 seconds
+GPU type: NVIDIA RTX A6000 for configs/Own/office3.yaml
+Execution time for configs/ScanNet/scene0645_02_hs_c_dim.yaml: 28551 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet/scene0645_02_hs_c_dim.yaml
+Execution time for configs/ScanNet/scene0693_00.yaml: 28870 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet/scene0693_00.yaml
+Execution time for configs/Scannet++/8b5caf3398.yaml: 15 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/8b5caf3398.yaml
+Execution time for configs/Scannet++NoTruth/8b5caf3398.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++NoTruth/8b5caf3398.yaml
+Execution time for configs/ScanNet_orig_every/scene0011_00.yaml: 10 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0011_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0025_00.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0025_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0046_00.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0046_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0131_01.yaml
+Execution time for configs/ScanNet_orig_every/scene0671_00.yaml: 9 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0671_00.yaml
+Execution time for configs/ScanNet/scene0645_02.yaml: 25198 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet/scene0645_02.yaml
+Execution time for configs/ScanNet/scene0645_02_grid_len.yaml: 34513 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet/scene0645_02_grid_len.yaml
+Execution time for configs/ScanNet/scene0645_02_both_grid_sem_hs_c_dim.yaml: 35995 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet/scene0645_02_both_grid_sem_hs_c_dim.yaml
+Execution time for configs/Scannet++/8b5caf3398.yaml: 27 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++/8b5caf3398.yaml
+Execution time for configs/ScanNet_orig/scene0025_00.yaml: 10 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0025_00.yaml
+Execution time for configs/ScanNet_orig/scene0011_00.yaml: 10 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0011_00.yaml
+Execution time for configs/ScanNet_orig/scene0046_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0046_00.yaml
+Execution time for configs/ScanNet_orig/scene0131_01.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0131_01.yaml
+Execution time for configs/ScanNet_orig/scene0671_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0671_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0011_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0011_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0025_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0025_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0046_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0046_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0671_00.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0671_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 9 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0131_01.yaml
+Execution time for configs/ScanNet_orig_every/scene0025_00.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0025_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0046_00.yaml: 11 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0046_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0011_00.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0011_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0671_00.yaml: 11 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0671_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 40 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0131_01.yaml
+Execution time for configs/ScanNet_orig_every/scene0025_00.yaml: 11 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0025_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0046_00.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0046_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0671_00.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0671_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 12 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0131_01.yaml
+Execution time for configs/ScanNet_orig_every/scene0011_00.yaml: 41 seconds
+GPU type: NVIDIA RTX A6000 for configs/ScanNet_orig_every/scene0011_00.yaml
+Execution time for configs/ScanNet_orig/scene0671_00.yaml: 9372 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig/scene0671_00.yaml
+Execution time for configs/ScanNet_orig_every/scene0671_00.yaml: 22918 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0671_00.yaml
+Execution time for configs/Scannet++/8b5caf3398.yaml: 55 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/8b5caf3398.yaml
+Execution time for configs/Scannet++NoTruth/8b5caf3398.yaml: 29 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/Scannet++NoTruth/8b5caf3398.yaml
+Execution time for configs/Scannet++/7cd2ac43b4.yaml: 34007 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/7cd2ac43b4.yaml
+Execution time for configs/ScanNet_orig_every/scene0131_01.yaml: 35837 seconds
+GPU type: NVIDIA GeForce RTX 3090 for configs/ScanNet_orig_every/scene0131_01.yaml
+Execution time for configs/Scannet++/56a0ec536c.yaml: 32392 seconds
+GPU type: NVIDIA RTX A6000 for configs/Scannet++/56a0ec536c.yaml
