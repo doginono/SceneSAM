@@ -360,7 +360,7 @@ def createFrontMappingAutosort(
         depthCondition=depthCondition,
     )
 
-    if verbose:
+    if verbose or True:
         visualizer = visualizerForIds()
     if frontProjectedSamples.ndim == 3:
         # this should be the same as unsqueezing the middle dimension
@@ -371,10 +371,10 @@ def createFrontMappingAutosort(
     # TODO suna bakilcak
     ids = backproject.generateIds_Auto(mask, depthf, min_area=smallesMaskSize,samplePixelFarther=samplePixelFarther)
     # ids[depth_mask] = -100
-    if verbose:
+    if verbose or True:
         visualizer.visualize(
             ids,
-            path=f"test/{curr_frame_number:05d}_before.png",
+            path=f"testScannet++/{curr_frame_number:05d}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
