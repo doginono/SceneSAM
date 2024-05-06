@@ -120,12 +120,14 @@ class Segmenter(object):
 
  
     def plot(self,idx):
-        if idx != 60 and idx != 500 and idx != 320:
+        return
+        if idx != 10 and idx != 80 and idx != 320:
             return
         if idx % 10 != 0:
             return
         data = self.samples.copy()
-        points = data[:3].T
+        pickle.dump(data.T, open(f"pointcloud_scene0693_{idx}.pkl", "wb"))
+        '''points = data[:3].T
         ids = data[3]
         visualizerForIds = vis.visualizerForIds()
         colors = visualizerForIds.get_colors(ids)[:, :3]
@@ -175,7 +177,7 @@ class Segmenter(object):
         ax.legend()
         plt.savefig(f"{self.store_directory}/3Dplot_"+str(idx)+".png")
         plt.close()  # Close the plot to free up memory
-        # Show the plot
+        # Show the plot'''
     def update_cam(self):
         """
         Update the camera intrinsics according to pre-processing config,

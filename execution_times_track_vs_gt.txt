@@ -1,2 +1,6 @@
 Execution time for room 0 gt: 11440 seconds
 Execution time for room0 tracking activated: 1 seconds
+Execution time for room 0 gt: 4243 seconds
+Execution time for room0 tracking activated: 4165 seconds
+Execution time for room0 tracking activated: 5 seconds
+Execution time for room0 tracking activated: 6 seconds

@@ -26,6 +26,7 @@ from src.utils import vis
 from PIL import Image
 import json
 from src.utils.datasets import ScanNet_Panoptic
+from matplotlib import cm
 
 
 def main():
@@ -65,7 +66,17 @@ def main():
     poses = torch.from_numpy(poses).float()"""
     poses = None
     #basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
-    render_gif_dataset(cfg, args, slam, cfg['data']['output'])
+    #render_gif_dataset(cfg, args, slam, cfg['data']['output'])
+    render_gif(slam, cfg, cfg['data']['output'])
+
+def load_panoptic_room0():
+    basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/room0_panoptic/test_results_org_pan"
+    poses = np.loadtxt('Datasets/Replica/room0_panoptic/traj_test.txt')
+    poses = poses.reshape(-1, 4, 4)
+    poses = torch.from_numpy(poses).float()
+    gt_depths = sorted(glob.glob(basepath + "/depth*"))
+    gt_colors = sorted(glob.glob(basepath + "/frame*"))
+    return gt_colors, gt_depths, poses
 
 def load_scannet(basepath, split):
     gt_colors = sorted([path for path in glob.glob(os.path.join(basepath,'color', "*.jpg")) if os.path.basename(path).split('.')[0] in split],
@@ -94,6 +105,8 @@ def render_gif_dataset(cfg, args, slam, path):
     os.makedirs(store_path + "/all", exist_ok=True)
     depths, colors, semantics = [], [], []
     for i, color_data, depth_data, c2w, _ in tqdm(frame_reader):
+        if i % 10 != 0:
+            continue
         depth, _, color, semantic = slam.vis_renderer.render_img(
                 slam.shared_c,
                 slam.shared_decoders,
@@ -110,24 +123,28 @@ def render_gif_dataset(cfg, args, slam, path):
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
-        fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-        ax[0].imshow(color_np)
+        fig, ax = plt.subplots(1, 4, figsize=(15, 5))
+        ax[0].imshow(color_data.cpu().numpy())
         ax[0].set_xticks([])
         ax[0].set_yticks([])
-        #ax[1].imshow(color_data.cpu().numpy())
-        ax[1].imshow(depth_np / np.max(depth_np))
+
+        ax[1].imshow(color_np)
         ax[1].set_xticks([])
         ax[1].set_yticks([])
-        #ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
-        ax[2], _ = visualizerForId.visualize(semantic_argmax, ax=ax[2], sep_boarder=True, samplePixelFarther=7)
+        #ax[1].imshow(color_data.cpu().numpy())
+        ax[2].imshow(depth_np / np.max(depth_np), cmap='jet')
         ax[2].set_xticks([])
         ax[2].set_yticks([])
+        #ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
+        ax[3], _ = visualizerForId.visualize(semantic_argmax, ax=ax[3], sep_boarder=True, samplePixelFarther=4)
+        ax[3].set_xticks([])
+        ax[3].set_yticks([])
         plt.tight_layout()
         plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png", bbox_inches='tight',pad_inches=0)
         plt.close(fig)
-        Image.fromarray(semantic_argmax.astype(np.uint8)).save(
-            f"{seg_path}/0_{(i):04d}.png"
-        )
+        #Image.fromarray(semantic_argmax.astype(np.uint8)).save(
+        #    f"{seg_path}/0_{(i):04d}.png"
+        #)
 
     depths = np.stack(depths)
     depths /= np.max(depths)
@@ -137,7 +154,7 @@ def render_gif_dataset(cfg, args, slam, path):
     make_gif_from_array(semantics, f"{seg_path}/test_semantic.gif")
 
     pass
-def render_gif(slam, poses, cfg, basepath, path=None):
+def render_gif(slam, cfg, path=None):
     if path is None:
         store_path = "run_traj_reversed/"
     else:
@@ -147,16 +164,19 @@ def render_gif(slam, poses, cfg, basepath, path=None):
     os.makedirs(store_path + "/all", exist_ok=True)
     
    
-    split = json.load(open(os.path.join(basepath,"splits.json")))['test']
+    #split = json.load(open(os.path.join(basepath,"splits.json")))['test']
 
     #gt_depths = sorted(glob.glob(basepath + "/depth*"))
     #gt_colors = sorted(glob.glob(basepath + "/frame*"))
-    gt_colors, gt_depths, poses = load_scannet(basepath, split)
+    #gt_colors, gt_depths, poses = load_scannet(basepath, split)
+    gt_colors, gt_depths, poses = load_panoptic_room0()
     visualizerForId = vis.visualizerForIds()
     crop_size = cfg["cam"]["crop_size"] if "crop_size" in cfg["cam"] else None
     edge = cfg["cam"]["crop_edge"] if "crop_edge" in cfg["cam"] else 0
     depths, colors, semantics = [], [], []
     for i, c2w in tqdm(enumerate(poses)):
+        if i != 6 and i != 150:
+            continue
         c2w[:3, 1] *= -1
         c2w[:3, 2] *= -1
         # idx, gt_color, gt_depth, gt_pose, gt_semantic = slam.frame_reader[i]
@@ -213,19 +233,26 @@ def render_gif(slam, poses, cfg, basepath, path=None):
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
-        fig, ax = plt.subplots(1, 5, figsize=(15, 5))
-        ax[0].imshow(color_np)
-        ax[1].imshow(color_data.cpu().numpy())
-        ax[2].imshow(depth_np / np.max(depth_np))
-        ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
-        ax[4], _ = visualizerForId.visualize(semantic_argmax, ax=ax[4], sep_boarder=True, samplePixelFarther=7)
+        fig, ax = plt.subplots(1, 4, figsize=(15, 5))
+        ax[0].imshow(color_data.cpu().numpy())
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+
+        ax[1].imshow(color_np)
+        ax[1].set_xticks([])
+        ax[1].set_yticks([])
+        #ax[1].imshow(color_data.cpu().numpy())
+        ax[2].imshow(depth_np / np.max(depth_np), cmap='jet')
+        ax[2].set_xticks([])
+        ax[2].set_yticks([])
+        #ax[3].imshow(depth_data.cpu().numpy() / np.max(depth_data.cpu().numpy()))
+        ax[3], _ = visualizerForId.visualize(semantic_argmax, ax=ax[3], sep_boarder=True, samplePixelFarther=4)
+        ax[3].set_xticks([])
+        ax[3].set_yticks([])
         plt.tight_layout()
-        plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png")
+        print(f"{store_path+'/all/'}0_{(i):04d}.png")
+        plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png", bbox_inches='tight',pad_inches=0)
         plt.close(fig)
-        print(semantic_argmax)
-        Image.fromarray(semantic_argmax.astype(np.uint8)).save(
-            f"{seg_path}/0_{(i):04d}.png"
-        )
 
     depths = np.stack(depths)
     depths /= np.max(depths)
