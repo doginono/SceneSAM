@@ -1,7 +1,7 @@
 Segmenter:
   border: 10
   depthCondition: 0.1
-  every_frame: 1
+  every_frame: 2
   normalizePointNumber: 7
   samplePixelFarther: 5
   smallestMaskSize: 2000
@@ -11,6 +11,9 @@ data:
   output: output/Scannet++/07f5b601ee
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
+  max_frames: 811
+  mesh_freq: 60
+  every_frame: 2 # 2
   bound: [[-0.2511976616576286, 6.005896563627136], [-0.41437938379820016, 5.591336279594627],
     [-0.7037137696780063, 3.100893414053904]]
   first_min_area: 2000
