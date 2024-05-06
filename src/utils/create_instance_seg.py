@@ -58,7 +58,7 @@ def create_sam_forauto(device):
         SamAutomaticMaskGenerator: An SamAutomaticMaskGenerator object
     """
     # sam_checkpoint = "/home/koerner/Project/nice-slam/sam/sam_vit_b_01ec64.pth"
-    sam_checkpoint = "/home/rozenberszki/project/wsnsl/sam/sam_vit_h_4b8939.pth"
+    sam_checkpoint = "sam/sam_vit_h_4b8939.pth"
     model_type = "vit_h"
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
