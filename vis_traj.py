@@ -27,6 +27,8 @@ from PIL import Image
 import json
 from src.utils.datasets import ScanNet_Panoptic
 from matplotlib import cm
+from src.utils.datasets import Replica
+
 
 
 def main():
@@ -94,7 +96,8 @@ def load_scannet(basepath, split):
 
 def render_gif_dataset(cfg, args, slam, path):
     visualizerForId = vis.visualizerForIds()
-    frame_reader = ScanNet_Panoptic(cfg, args, 1,slam=slam, split='test')
+    #room0 Replica
+    frame_reader = Replica(cfg, args, 1,slam=slam)
     frame_reader.__post_init__(slam)
     if path is None:
         store_path = "run_traj_reversed/"
