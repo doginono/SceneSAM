@@ -6,7 +6,7 @@ Segmenter:
   samplePixelFarther: 5
   smallestMaskSize: 2000
 data:
-  input_folder: Datasets/ScanNet_orig/scene0131_01
+  input_folder: Datasets/Scannet/scene0131_01
   logs: logs/ScanNet_orig/scene0131_01
   output: output/ScanNet_orig/scene0131_01
 inherit_from: configs/ScanNet_orig/scannet_orig.yaml
