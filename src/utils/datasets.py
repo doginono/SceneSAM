@@ -115,7 +115,6 @@ class BaseDataset(Dataset):
         self.semantic_frames = slam.semantic_frames
 
     def get_zero_pose(self):
-
         return self.poses[0]  # * self.shift
 
     def get_segmentation(self, index):
