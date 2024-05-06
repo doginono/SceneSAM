@@ -1,6 +1,7 @@
 Segmenter:
   border: 10
   depthCondition: 0.1
+  every_frame: 1
   normalizePointNumber: 7
   samplePixelFarther: 8
   smallestMaskSize: 2000
@@ -10,10 +11,10 @@ data:
   output: output/Scannet++NoTruth/b20a261fdf
 inherit_from: configs/Scannet++NoTruth/scannet.yaml
 mapping:
-  bound: [[-1.7248667639229098, 8.383113244826705], [-3.1570403710739727, 6.723165048529641],
-    [-2.7347176550338643, 4.415264583007938]]
+  bound: [[0.951785098396134, 7.638032171011571], [-2.867397653608488, 2.4266228419539155],
+    [-5.717170856407959, 5.180330394333307]]
   first_min_area: 2000
-  marching_cubes_bound: [[-1.7248667639229098, 8.383113244826705], [-3.1570403710739727,
-    6.723165048529641], [-2.7347176550338643, 4.415264583007938]]
+  marching_cubes_bound: [[0.951785098396134, 7.638032171011571], [-2.867397653608488,
+    2.4266228419539155], [-5.717170856407959, 5.180330394333307]]
 output_dimension_semantic: 500
 scale: 1

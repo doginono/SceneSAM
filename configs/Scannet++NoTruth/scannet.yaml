@@ -52,7 +52,7 @@ mapping:
   no_mesh_on_first_frame: True
   mesh_freq: 200
   ckpt_freq: 200
-  keyframe_every: 5
+  keyframe_every: 10
   mapping_window_size: 10
   pixels: 5000
   iters_first: 1500 #finetune
