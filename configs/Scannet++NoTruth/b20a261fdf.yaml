@@ -1,7 +1,7 @@
 Segmenter:
   border: 10
   depthCondition: 0.1
-  every_frame: 1
+  every_frame: 10
   normalizePointNumber: 7
   samplePixelFarther: 8
   smallestMaskSize: 2000
