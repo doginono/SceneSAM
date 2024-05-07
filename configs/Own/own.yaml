@@ -11,8 +11,8 @@ tracking:
   seperate_LR: False
   const_speed_assumption: True
   lr: 0.001
-  pixels: 200
-  iters: 15
+  pixels: 400
+  iters: 25
   gt_camera: False
 Segmenter:
   samplePixelFarther: 2

@@ -17,7 +17,7 @@ pretrained_decoders:
   coarse: 'pretrained/coarse.pt'
   middle_fine: 'pretrained/middle_fine.pt' # one ckpt contain both middle and fine
 meshing:
-  confidence_threshold: 0.4 #masks out instance predictions to 'white' if maximal softmax score is lower than this when rendering the mesh
+  confidence_threshold: 0.3 #masks out instance predictions to 'white' if maximal softmax score is lower than this when rendering the mesh
   level_set: 0
   resolution: 512 # change to 512 for higher resolution geometry
   eval_rec: False
