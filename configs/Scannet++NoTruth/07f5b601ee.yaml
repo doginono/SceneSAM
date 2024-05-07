@@ -11,6 +11,8 @@ data:
   output: output/Scannet++NoTruth/07f5b601ee
 inherit_from: configs/Scannet++NoTruth/scannet.yaml
 mapping:
+  iters_first: 2000 #finetune
+  iters: 80 #finetune
   max_frames: 4000
   keyframe_every: 10
   bound: [[1.4986106761319469, 5.8388683617158526], [-2.373721660606694, 1.0810422625671243],

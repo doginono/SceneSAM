@@ -1,6 +1,6 @@
 inherit_from: configs/Own/own.yaml
 mapping:
-  first_min_area: 600
+  first_min_area: 0
   max_frames: 200
   bound: [[-6.7,5.1],[-7.5,4.9],[-2.8,3.5]]
   marching_cubes_bound: [[-6.7,5.1],[-7.5,4.9],[-2.8,3.5]]

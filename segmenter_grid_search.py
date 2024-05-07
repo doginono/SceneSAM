@@ -39,14 +39,24 @@ max_id_file = "max_id.txt"
     "scene0693_00",
 ]'''
 #paths = ['office0', 'office1', 'office2', 'office3', 'office4', 'room0_panoptic', 'room0', 'room1', 'room2']
-paths = ["scene0693_00"]
-basepath = "/home/rozenberszki/project/wsnsl/configs/ScanNet/"
-smallestMaskSizes = [1000, 2000, 5000]
-samplePixelFarthers = [2, 5, 8]
+#paths = ['room0','office0', 'office1', 'office2', 'office3', 'office4','room1', 'room2']
+paths= ['7cd2ac43b4']
+basepath = "/home/rozenberszki/D_Project/wsnsl/configs/Scannet++/"
+smallestMaskSizes = [ 1000,2000]
+samplePixelFarthers = [ 5]
 normalizePointNumbers = [7]
 border = [10]
-depthConditions = [0.05]
+depthConditions = [0.1]
+every=1
+
 hypers = []
+#egmenter:
+# border: 10
+# depthCondition: 0.1
+# every_frame: 2
+# normalizePointNumber: 7
+# samplePixelFarther: 5
+# smallestMaskSize: 2000
 for sms in smallestMaskSizes:
     for spf in samplePixelFarthers:
         for npn in normalizePointNumbers:
@@ -90,9 +100,9 @@ for p in paths:
     cfg["tracking"]["gt_camera"] = True
     cfg['Segmenter']['full_slam'] = False
     cfg["Segmenter"]["store_vis"] = False
-    cfg["Segmenter"]["every_frame"] = 2
+    cfg["Segmenter"]["every_frame"] = every
     for sms, spf, npn, b, dc in hypers:
-        parameter_string = f"sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}"
+        parameter_string = f"sms_{sms}_spf_{spf}_npn_{npn}_b_{b}_dc_{dc}_every_{every}"
         cfg["mapping"]["first_min_area"] = sms
         cfg["Segmenter"]["smallestMaskSize"] = sms
         cfg["Segmenter"]["samplePixelFarther"] = spf

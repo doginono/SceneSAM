@@ -618,13 +618,16 @@ class ScanNetPlusPlus(BaseDataset):
             self.numbering=self.numbering
             self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
             self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-
-        self.color_paths = self.color_paths[:self.max_frames]
-        
-        self.depth_paths = self.depth_paths[:self.max_frames]
-
-        self.load_poses(self.input_folder)
-        self.poses = self.poses[:self.max_frames]
+        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False:
+            self.color_paths = self.color_paths[4500:(self.max_frames+4500)]
+            self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
+            self.load_poses(self.input_folder)
+            self.poses = self.poses[4500:(self.max_frames+4500)]
+        else:
+            self.color_paths = self.color_paths[:self.max_frames]
+            self.depth_paths = self.depth_paths[:self.max_frames]
+            self.load_poses(self.input_folder)
+            self.poses = self.poses[:self.max_frames]
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
