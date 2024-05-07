@@ -525,6 +525,9 @@ class NICE_SLAM:
                 p.join()
         # if segmentation afterwards: run segmentetr here and then run the mapper again but only in stage segmentation
         if not self.is_full_slam:
+            if 'only_nice_slam' in self.cfg:
+                if self.cfg['only_nice_slam']:
+                    return
             self.segmenter = Segmenter(
                 self,
                 self.cfg,

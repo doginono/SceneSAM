@@ -1,0 +1,11 @@
+inherit_from: configs/Own/own.yaml
+mapping:
+  bound: [[-4.3,9.5],[-6.7,5.2],[-6.4,4.2]]
+  marching_cubes_bound: [[-4.3,9.5],[-6.7,5.2],[-6.4,4.2]]
+data:
+  input_folder: Datasets/Replica/room2
+  output: output/Own/room2_gt
+  logs: logs/room2
+output_dimension_semantic: 280
+tracking:
+  gt_camera: True 

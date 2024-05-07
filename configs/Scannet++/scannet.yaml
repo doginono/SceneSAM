@@ -53,11 +53,11 @@ mapping:
   no_mesh_on_first_frame: True
   mesh_freq: 50
   ckpt_freq: 50
-  keyframe_every: 5
+  keyframe_every: 6
   mapping_window_size: 10
   pixels: 5000
   iters_first: 1500 #finetune
-  iters: 80 #finetune
+  iters: 60 #finetune
   w_color_loss: 0.2 #maybe finetune
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune

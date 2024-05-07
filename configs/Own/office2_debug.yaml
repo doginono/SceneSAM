@@ -1,0 +1,13 @@
+inherit_from: configs/Own/own.yaml
+mapping:
+  bound: [[-5.0,4.6],[-4.4,6.9],[-2.8,3.1]]
+  marching_cubes_bound: [[-5.0,4.6],[-4.4,6.9],[-2.8,3.1]]
+data:
+  input_folder: Datasets/Replica/office2
+  output: output/Own/office2_gt
+  logs: logs/office2
+output_dimension_semantic: 400
+tracking:
+  gt_camera: True
+Segmenter:
+ full_slam: False

@@ -272,7 +272,7 @@ class Renderer(object):
             rays_o, rays_d = get_rays(
                 H, W, self.fx, self.fy, self.cx, self.cy, c2w, device
             )
-            print(f"Parameters {H, W, self.fx, self.fy, self.cx, self.cy, c2w}")
+            #print(f"Parameters {H, W, self.fx, self.fy, self.cx, self.cy, c2w}")
             rays_o = rays_o.reshape(-1, 3)
             rays_d = rays_d.reshape(-1, 3)
 
