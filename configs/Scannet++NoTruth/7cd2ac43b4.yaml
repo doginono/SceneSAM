@@ -14,6 +14,7 @@ mapping:
   iters_first: 2000 #finetune
   iters: 80 #finetune
   keyframe_every: 10
+  every_frame: 2
   max_frames: 4000
   bound: [[3.049461380983199, 11.049959113518218], [-2.5945950312402446, 3.797058918759644],
     [14.062973742734567, 20.414138248809163]]
