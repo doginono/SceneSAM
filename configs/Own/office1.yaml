@@ -3,7 +3,7 @@ mapping:
   bound: [[-5.3,6.5],[-5.1,6.0],[-4.5,5.2]]
   marching_cubes_bound: [[-5.3,6.5],[-5.1,6.0],[-4.5,5.2]]
 data:
-  input_folder: Datasets/Replica/office1
+  input_folder: /home/rozenberszki/project/wsnsl/Datasets/office1
   output: output/Own/office1
   logs: logs/office1
 output_dimension_semantic: 250
