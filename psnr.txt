@@ -17,3 +17,4 @@ Average PSNR score for output/Own/office2: 24.937981707772703
 Average PSNR score for output/Own/office2: 24.81907773881482
 Average PSNR score for output/Own/office2: 24.70055487696785
 Average PSNR score for output/Own/office2: 25.34466574450796
+Average PSNR score for output/Own/room0: 24.2513213492947
