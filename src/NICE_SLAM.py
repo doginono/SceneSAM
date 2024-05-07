@@ -236,6 +236,7 @@ class NICE_SLAM:
         self.set_grid(log_dict["c"])
         self.set_estimate_c2w_list(log_dict["estimate_c2w_list"])
         self.set_gt_c2w_list(log_dict["gt_c2w_list"])
+        return log_dict['keyframe_dict']
 
     def set_output_dimension_semantic(self, output_dimension_semantic):
         self.shared_decoders.semantic_decoder.output_linear = DenseLayer(
