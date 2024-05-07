@@ -266,9 +266,9 @@ class Replica(BaseDataset):
     def __init__(self, cfg, args, scale, device="cuda:0", tracker=False, slam=None):
         super(Replica, self).__init__(cfg, args, scale, slam, tracker, device)
 
-        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*"))
+        self.color_paths = sorted(glob.glob(f"{self.input_folder}/results/frame*"))[:self.max_frames]
 
-        self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))
+        self.depth_paths = sorted(glob.glob(f"{self.input_folder}/results/depth*.png"))[:self.max_frames]
 
         """# -------------------added-----------------------------------------------
         # self.semantic_paths = sorted(glob.glob(f'{self.input_folder}/results/semantic*.npy'))
@@ -285,7 +285,7 @@ class Replica(BaseDataset):
         # -------------------end added-----------------------------------------------"""
         self.n_img = len(self.color_paths)
         self.load_poses(f"{self.input_folder}/traj.txt")
-
+        self.poses = self.poses[:self.max_frames]
     def __getitem__(self, index):
         color_path = self.color_paths[index]
         depth_path = self.depth_paths[index]
@@ -618,13 +618,16 @@ class ScanNetPlusPlus(BaseDataset):
             self.numbering=self.numbering
             self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
             self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-
-        self.color_paths = self.color_paths[:self.max_frames]
-        
-        self.depth_paths = self.depth_paths[:self.max_frames]
-
-        self.load_poses(self.input_folder)
-        self.poses = self.poses[:self.max_frames]
+        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False:
+            self.color_paths = self.color_paths[4500:(self.max_frames+4500)]
+            self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
+            self.load_poses(self.input_folder)
+            self.poses = self.poses[4500:(self.max_frames+4500)]
+        else:
+            self.color_paths = self.color_paths[:self.max_frames]
+            self.depth_paths = self.depth_paths[:self.max_frames]
+            self.load_poses(self.input_folder)
+            self.poses = self.poses[:self.max_frames]
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
