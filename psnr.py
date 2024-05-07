@@ -75,8 +75,8 @@ def main():
     #basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
     #render_gif_dataset(cfg, args, slam, cfg['data']['output'])
     os.makedirs(cfg['data']['output'] + '/psnr', exist_ok=True)
-    os.makedirs(cfg['data']['output'] + '/psnr/rendered', exist_ok=True)
-    os.makedirs(cfg['data']['output'] + '/psnr/gt_color', exist_ok=True)
+    #os.makedirs(cfg['data']['output'] + '/psnr/rendered', exist_ok=True)
+    #os.makedirs(cfg['data']['output'] + '/psnr/gt_color', exist_ok=True)
     for_replica(slam, cfg, args)
 
 def for_replica(slam, cfg, args):
@@ -85,9 +85,9 @@ def for_replica(slam, cfg, args):
     psnr_scores = []
     traj_indices = np.arange(2, 1900, step=5)
 
-    print("Traj indices", traj_indices)
+    #print("Traj indices", traj_indices)
     for i in traj_indices:
-        if (i-2) % 30 != 0:
+        if (i-2) % 20 != 0:
             continue
         i, color_data, depth_data, c2w, _ = frame_reader[i]
         #print('start rendering')
@@ -104,8 +104,20 @@ def for_replica(slam, cfg, args):
         #print(color_np.min(), color_np.max())
         color_np = np.clip(color_np, 0, 1)
         #print(color_np.shape, color_data.shape)
+        
         psnr_score = PSNR(color_np, color_data.cpu().numpy())
-        print(psnr_score)
+        #print(psnr_score)
+        #fig, ax = plt.subplots(1, 3, figsize=(10, 5))
+        #ax[0].imshow(color_data.cpu().numpy())
+        #ax[1].imshow(color_np)
+        #dif = np.sum(np.array((color_np - color_data.cpu().numpy()) ** 2), axis=2)
+        #print(dif.shape)
+        #ma = np.max(dif)
+        #ax[2].imshow(dif, cmap='jet')
+        #plt.title(f"PSNR: {psnr_score}")
+        #plt.tight_layout()
+        #plt.savefig(f"{cfg['data']['output']}/psnr/{i}.png")
+        #print(psnr_score)
         psnr_scores.append(psnr_score)
     
     print("Average PSNR score", np.mean(psnr_scores))

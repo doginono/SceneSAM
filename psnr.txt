@@ -3,5 +3,17 @@ Average PSNR score for output/Own/office2: 19.954930791947703
 Average PSNR score for output/Own/office3: 21.306684466494502
 Average PSNR score for output/Own/office4: 24.00347620419105
 Average PSNR score for output/Own/room2: 24.981645400168347
+
 Average PSNR score for output/Own/office2: 24.119178262783088
 Average PSNR score for output/Own/office2: 22.451196409787038
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office2: 20.23513794518873
+Average PSNR score for output/Own/office0: 29.686490817182715
+Average PSNR score for output/Own/office2: 24.937981707772703
+Average PSNR score for output/Own/office2: 24.81907773881482
+Average PSNR score for output/Own/office2: 24.70055487696785
+Average PSNR score for output/Own/office2: 25.34466574450796
