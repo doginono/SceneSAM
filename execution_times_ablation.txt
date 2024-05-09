@@ -1,0 +1,9 @@
+Execution time for office0: 3889 seconds
+Execution time for office0_gt: 3646 seconds
+Execution time for office0_post_process: 3892 seconds
+Execution time for room0: 4350 seconds
+Execution time for room0_gt: 4051 seconds
+Execution time for room0_post_process: 4035 seconds
+Execution time for office2: 3751 seconds
+Execution time for office2_gt: 3512 seconds
+Execution time for office2 post process: 2912 seconds

@@ -117,6 +117,21 @@ class BaseDataset(Dataset):
     def get_zero_pose(self):
         return self.poses[0]  # * self.shift
 
+    def get_segmentation2(self, index):
+        # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
+        """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
+        semantic_data = np.load(semantic_path)"""
+        # Create one-hot encoding using numpy.eye
+        adjusted_index = min(
+            index // self.every_frame_seg, len(self.semantic_frames) - 1
+        )
+        if index % self.every_frame_seg == 0:
+            semantic_data = self.semantic_frames[adjusted_index].clone().int()
+        else:
+            semantic_data = self.semantic_frames[-1].clone().int()
+        
+        return semantic_data
+    
     def get_segmentation(self, index):
         # assert index % self.every_frame_seg == 0, "index should be multiple of every_frame"
         """semantic_path = os.path.join(self.seg_folder, f"seg_{index}.npy")
