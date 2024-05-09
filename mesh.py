@@ -30,12 +30,6 @@ from matplotlib import cm
 #python psnr.py configs/Own/room0_panoptic.yaml output/Own/room0_panoptic/ckpts/ef2_ruunAuto_00674.tar
 #python psnr.py configs/ScanNet/scene0423_02_panoptic.yaml output/scannet/track_scene0423_02_panoptic/ckpts/plot_paper_00683.tar
 
-def PSNR(color1, color2):
-    mse = np.mean((color1 - color2) ** 2)
-    psnrScore=20 * np.log10(1.0 / np.sqrt(mse))
-    #print("Psnr score",psnrScore)
-    return psnrScore
-
 def main():
     parser = argparse.ArgumentParser(
         description="Arguments for running the NICE-SLAM/iMAP*."
@@ -75,14 +69,14 @@ def main():
                             slam.shared_c,
                             slam.shared_decoders,
                             keyframe_dict,
-                            slam.estimate_c2w_list,  # instead of estimatee_c2w
+                            slam.estimate_c2w_list,  
                             1999,
                             'cuda',
                             show_forecast=cfg["meshing"]["mesh_coarse_level"],
                             clean_mesh=cfg["meshing"]["clean_mesh"],
                             get_mask_use_all_frames=False,
-                            color=False,
-                            semantic=True,
+                            color=True,
+                            semantic=False,
                         ) 
  
 if __name__ == "__main__":

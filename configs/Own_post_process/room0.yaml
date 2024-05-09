@@ -8,6 +8,8 @@ data:
   input_folder: 'Datasets/Replica/room0'
   logs: logs/room0_post
   output: output/Own/room0_post
-output_dimension_semantic: 400
+output_dimension_semantic: 500
 Segmenter:
   full_slam: False
+tracking:
+  gt_camera: True
