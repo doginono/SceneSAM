@@ -692,7 +692,7 @@ class Mapper(object):
                     cur_c2w,
                     self.c,
                     self.decoders,
-                    cur_gt_semantic,
+                    self.frame_reader.get_segmentation2(idx),
                     only_semantic=False,
                     stage=self.stage,
                     writer=writer,

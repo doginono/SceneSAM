@@ -83,8 +83,9 @@ class Visualizer(object):
                 # Carefull, this is the only up to date version of this function
                 gt_depth_np = gt_depth.cpu().numpy()
                 gt_color_np = gt_color.cpu().numpy()  # TODO add semantics
-                gt_semantic_np = gt_semantic.cpu().numpy()
-                gt_semantic_np = np.argmax(gt_semantic_np, axis=2)
+                """gt_semantic_np = gt_semantic.cpu().numpy()
+                gt_semantic_np = np.argmax(gt_semantic_np, axis=2)"""
+                gt_semantic_np = gt_semantic
                 if len(c2w_or_camera_tensor.shape) == 1:
                     bottom = (
                         torch.from_numpy(np.array([0, 0, 0, 1.0]).reshape([1, 4]))
