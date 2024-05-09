@@ -623,6 +623,11 @@ class ScanNetPlusPlus(BaseDataset):
             self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
             self.load_poses(self.input_folder)
             self.poses = self.poses[4500:(self.max_frames+4500)]
+        elif self.input_folder == "Dataset/56a0ec536c" and self.gt_camera==False:
+            self.color_paths = self.color_paths[767:(self.max_frames+767)]
+            self.depth_paths = self.depth_paths[767:(self.max_frames+767)]
+            self.load_poses(self.input_folder)
+            self.poses = self.poses[767:(self.max_frames+767)]
         else:
             self.color_paths = self.color_paths[:self.max_frames]
             self.depth_paths = self.depth_paths[:self.max_frames]

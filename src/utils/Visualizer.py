@@ -120,6 +120,20 @@ class Visualizer(object):
                 color_residual[gt_depth_np == 0.0] = 0.0
                 # ------------------added------------------
                 semantic_argmax = np.argmax(semantic_np, axis=2)
+                '''s_arg = semantic_argmax.flatten()
+                s_np = semantic_np.flatten()'''
+                row_indices = np.arange(semantic_np.shape[0])[:, None]  
+                col_indices = np.arange(semantic_np.shape[1])           
+                selected_elements = semantic_np[row_indices, col_indices, semantic_argmax]
+
+                condition = selected_elements.flatten() < 0.4
+
+                condition_reshaped = condition.reshape(semantic_argmax.shape)
+
+                semantic_argmax[condition_reshaped] = 999
+                #semantic_argmax[semantic_np[np.arange(semantic_np.shape[0]), semantic_argmax].flatten().numpy()<0.4] = 999
+                #s_arg[s_np[np.arange(s_np.shape[0]), s_arg].flatten().numpy()<0.4] = 999
+                #semantic_argmax = s_arg.reshape(semantic_argmax.shape)
                 # print("semantic prediction: ", semantic_argmax)
                 # print("predicted ids: ", np.unique(semantic_argmax))
                 # semantic_pred = np.abs(~(gt_semantic_np == semantic_argmax)) #added
@@ -130,59 +144,60 @@ class Visualizer(object):
                     gt_semantic_np,
                 ]  # should contain the predicted probability of the correct instance
                 # -----------------end-added------------------
-                fig, axs = plt.subplots(3, 3)  # previously 2,3
-                fig.suptitle(f"Frame: {idx:05d}, Iter: {iter:04d}")
-                fig.tight_layout()
+                fig, axs = plt.subplots(3, 3,figsize=(21,11.3))  # previously 2,3
+                #fig.suptitle(f"Frame: {idx:05d}, Iter: {iter:04d}")
+                fig.tight_layout(pad=0.5)
+                #plt.subplots_adjust(wspace=0.5, hspace=0.5) 
                 max_depth = np.max(gt_depth_np)
                 axs[0, 0].imshow(gt_depth_np, cmap="plasma", vmin=0, vmax=max_depth)
-                axs[0, 0].set_title("Input Depth")
+                #axs[0, 0].set_title("Input Depth")
                 axs[0, 0].set_xticks([])
                 axs[0, 0].set_yticks([])
                 axs[0, 1].imshow(depth_np, cmap="plasma", vmin=0, vmax=max_depth)
-                axs[0, 1].set_title("Generated Depth")
+                #axs[0, 1].set_title("Generated Depth")
                 axs[0, 1].set_xticks([])
                 axs[0, 1].set_yticks([])
                 axs[0, 2].imshow(depth_residual, cmap="plasma", vmin=0, vmax=max_depth)
-                axs[0, 2].set_title("Depth Residual")
+                #axs[0, 2].set_title("Depth Residual")
                 axs[0, 2].set_xticks([])
                 axs[0, 2].set_yticks([])
                 gt_color_np = np.clip(gt_color_np, 0, 1)
                 color_np = np.clip(color_np, 0, 1)
                 color_residual = np.clip(color_residual, 0, 1)
                 axs[1, 0].imshow(gt_color_np, cmap="plasma")
-                axs[1, 0].set_title("Input RGB")
+                #axs[1, 0].set_title("Input RGB")
                 axs[1, 0].set_xticks([])
                 axs[1, 0].set_yticks([])
                 axs[1, 1].imshow(color_np, cmap="plasma")
-                axs[1, 1].set_title("Generated RGB")
+                #axs[1, 1].set_title("Generated RGB")
                 axs[1, 1].set_xticks([])
                 axs[1, 1].set_yticks([])
                 axs[1, 2].imshow(color_residual, cmap="plasma")
-                axs[1, 2].set_title("RGB Residual")
+                #axs[1, 2].set_title("RGB Residual")
                 axs[1, 2].set_xticks([])
                 axs[1, 2].set_yticks([])
                 # ------------------added------------------
                 axs[2, 0], im = self.visualizerForIds.visualize(
-                    gt_semantic_np, ax=axs[2, 0], title="Input Segmentation"
+                    gt_semantic_np, ax=axs[2, 0]#, title="Input Segmentation"
                 )
                 # axs[2, 0].imshow(gt_semantic_np, cmap="plasma", interpolation='nearest')
                 # axs[2, 0].im
-                axs[2, 0].set_title("Input Instance")
+                #axs[2, 0].set_title("Input Instance")
                 axs[2, 0].set_xticks([])
                 axs[2, 0].set_yticks([])
                 axs[2, 1], im = self.visualizerForIds.visualize(
-                    semantic_argmax, ax=axs[2, 1], title="Generated Segmentation"
+                    semantic_argmax, ax=axs[2, 1]#, title="Generated Segmentation"
                 )
                 # axs[2, 1].imshow(semantic_argmax, cmap="plasma", interpolation='nearest')
                 # axs[2, 1].fig
-                axs[2, 1].set_title("Generated Instance")
+                #axs[2, 1].set_title("Generated Instance")
                 axs[2, 1].set_xticks([])
                 axs[2, 1].set_yticks([])
                 img = axs[2, 2].imshow(
                     predicted_semantic_probs, cmap="bwr", vmin=0, vmax=1
                 )
-                fig.colorbar(img, ax=axs[2, 2], label="Class Probability")
-                axs[2, 2].set_title("Residual Instance")
+                #fig.colorbar(img, ax=axs[2, 2], label="Class Probability")
+                #axs[2, 2].set_title("Residual Instance")
                 axs[2, 2].set_xticks([])
                 axs[2, 2].set_yticks([])
 

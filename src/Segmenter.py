@@ -120,13 +120,9 @@ class Segmenter(object):
 
  
     def plot(self,idx):
-        return
-        if idx != 10 and idx != 80 and idx != 320:
-            return
-        if idx % 10 != 0:
-            return
-        data = self.samples.copy()
-        pickle.dump(data.T, open(f"pointcloud_scene0693_{idx}.pkl", "wb"))
+        if idx % 10 ==0:
+            data = self.samples.copy()
+            pickle.dump(data.T, open(f"testRoom0/clouds/pointCloud_room0_{idx}.pkl", "wb"))
         '''points = data[:3].T
         ids = data[3]
         visualizerForIds = vis.visualizerForIds()

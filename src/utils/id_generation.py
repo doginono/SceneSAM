@@ -334,7 +334,7 @@ def createFrontMappingAutosort(
     normalizePointNumber=25,
     verbose=False,
 ):
-    verbose = False
+    verbose = True
     """print(K)
     K/=3
     print(T[curr_frame_number])"""
@@ -374,7 +374,7 @@ def createFrontMappingAutosort(
     if verbose:
         visualizer.visualize(
             ids,
-            path=f"testScannet++/{curr_frame_number:05d}_before.png",
+            path=f"testRoom0/{curr_frame_number:05d}_before.png",
         )
     current_unique_ids = np.unique(ids)
 
@@ -476,9 +476,8 @@ def createFrontMappingAutosort(
             visualizer.visualizer(
                 anns=ids,
                 path=
-                    f"test/{curr_frame_number:05d}_{id:05d}.png",
-
-                prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
+                    f"testRoom0/{curr_frame_number:05d}_after.png",
+                #prompts=frontProjectedSamples[:, frontProjectedSamples[2, :] == id],
             )
     return ids, samples, max_id
 
