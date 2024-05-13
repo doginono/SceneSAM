@@ -1,9 +1,10 @@
 tracking:
   col_and_track: True
+  gt_camera: False
 Segmenter:
   border: 20
   depthCondition: 0.1
-  every_frame: 1
+  every_frame: 10
   normalizePointNumber: 7
   samplePixelFarther: 5
   smallestMaskSize: 1000
@@ -13,11 +14,12 @@ data:
   output: output/Scannet++/7cd2ac43b4
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  iters: 10
-  iters_first: 100
-  every_frame: 1
-  max_frames: 560
-  mesh_freq: 60
+  iters: 60
+  iters_first: 1000
+  every_frame: 5
+  max_frames: 6000
+  mesh_freq: 50
+  keyframe_every: 50
   bound: [[-2.8947393362883638, 9.273386279077407], [-2.845392891691028, 7.410050085450137],
     [-2.1802682497091403, 6.49126345818223]]
   first_min_area: 1000

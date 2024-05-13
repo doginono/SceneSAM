@@ -6,3 +6,4 @@ Execution time for office1: 3862 seconds
 Execution time for office2: 3685 seconds
 Execution time for office3: 3740 seconds
 Execution time for office4: 4648 seconds
+Execution time for room0: 0 seconds

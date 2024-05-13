@@ -649,15 +649,16 @@ class ScanNetPlusPlus(BaseDataset):
 
     def load_poses(self, path):
         self.poses = []
-        if self.gt_camera:
+        
+        if self.col_and_track:
             T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
-        elif self.col_and_track:
-            T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
-            T_wc_full = np.zeros((self.numbering[-1]//10, 4, 4))
+            T_wc_full = np.zeros((self.numbering[-1] +1, 4, 4))
             T_wc_full[:] = np.nan
             for i in range(len(T_wc)):
                 T_wc_full[self.numbering[i]] = T_wc[i]
             T_wc = T_wc_full
+        elif self.gt_camera:
+            T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
         else:
             T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
         for i in range(len(T_wc)):  # 50

@@ -62,7 +62,7 @@ mapping:
   w_semantic_loss: 10 #finetune
   middle_iter_ratio: 0.4 #0.4 #finetune
   fine_iter_ratio: 0.6 #0.6 #finetune
-  semantic_iter_ratio: 1 #0.4 #finetune
+  semantic_iter_ratio: 0.4 #0.4 #finetune
   stage:
     color: #maybe finetune, because our color results are not as good as in the original paper
       decoders_lr: 0.005
