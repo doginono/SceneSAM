@@ -172,3 +172,6 @@ meshes/*
 output*
 .DS_Store
 ._.DS_Store
+*.pkl
+
+*Doginono
