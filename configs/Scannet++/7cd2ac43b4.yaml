@@ -1,3 +1,5 @@
+tracking:
+  col_and_track: True
 Segmenter:
   border: 20
   depthCondition: 0.1
@@ -6,11 +8,13 @@ Segmenter:
   samplePixelFarther: 5
   smallestMaskSize: 1000
 data:
-  input_folder: Dataset/7cd2ac43b4
+  input_folder: /home/rozenberszki/D_Project/wsnsl/Dataset/7cd2ac43b4
   logs: logs/Scannet++/7cd2ac43b4
   output: output/Scannet++/7cd2ac43b4
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
+ iters: 10
+ iters_first: 100
   every_frame: 1
   max_frames: 560
   mesh_freq: 60

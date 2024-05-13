@@ -619,6 +619,7 @@ class ScanNetPlusPlus(BaseDataset):
         super(ScanNetPlusPlus, self).__init__(cfg, args, scale, slam, tracker, device)
 
         self.gt_camera=cfg["tracking"]["gt_camera"]
+        self.col_and_track = cfg["tracking"]["col_and_track"] if 'col_and_track' in cfg["tracking"] else False
         # print("nice")
         
         self.color_paths = sorted(
@@ -627,13 +628,14 @@ class ScanNetPlusPlus(BaseDataset):
         self.depth_paths = sorted(
             glob.glob(os.path.join(self.input_folder, "color_path", "*.png"))
         )
-
-        if self.gt_camera:
-            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten()
+        if self.col_and_track:
+            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten().astype(int)
+        elif self.gt_camera:
+            self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten().astype(int)
             self.numbering=self.numbering
             self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
             self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False:
+        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False and self.col_and_track==False:
             self.color_paths = self.color_paths[4500:(self.max_frames+4500)]
             self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
             self.load_poses(self.input_folder)
@@ -642,13 +644,20 @@ class ScanNetPlusPlus(BaseDataset):
             self.color_paths = self.color_paths[:self.max_frames]
             self.depth_paths = self.depth_paths[:self.max_frames]
             self.load_poses(self.input_folder)
-            self.poses = self.poses[:self.max_frames]
+            #self.poses = self.poses[:self.max_frames]
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):
         self.poses = []
         if self.gt_camera:
             T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+        elif self.col_and_track:
+            T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+            T_wc_full = np.zeros((self.numbering[-1]//10, 4, 4))
+            T_wc_full[:] = np.nan
+            for i in range(len(T_wc)):
+                T_wc_full[self.numbering[i]] = T_wc[i]
+            T_wc = T_wc_full
         else:
             T_wc = np.loadtxt(os.path.join(path, "traj.txt")).reshape(-1, 4, 4)
         for i in range(len(T_wc)):  # 50

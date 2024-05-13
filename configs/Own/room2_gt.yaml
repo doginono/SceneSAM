@@ -6,6 +6,6 @@ data:
   input_folder: Datasets/Replica/room2
   output: output/Own/room2_gt
   logs: logs/room2
-output_dimension_semantic: 280
+output_dimension_semantic: 350
 tracking:
   gt_camera: True 

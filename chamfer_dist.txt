@@ -17,4 +17,5 @@ chamfer for panoptic scannet scene 0.0027 only one direction other direction is 
 
 
 chamfer our scannet scene 0.1104, Scannet: scene 0423_02
+0645_02 0.0748
 ====================================================================================================

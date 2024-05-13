@@ -1,0 +1,8 @@
+Execution time for room0: 3997 seconds
+Execution time for room1: 3278 seconds
+Execution time for room2: 3952 seconds
+Execution time for office0: 36474 seconds
+Execution time for office1: 3862 seconds
+Execution time for office2: 3685 seconds
+Execution time for office3: 3740 seconds
+Execution time for office4: 4648 seconds

@@ -19,6 +19,7 @@ class Tracker(object):
     def __init__(self, cfg, args, slam):
 
         self.cfg = cfg
+        self.col_and_track = cfg['tracking']['col_and_track']
         self.args = args
         writer = SummaryWriter(cfg["data"]["logs"])
         self.scale = cfg["scale"]
@@ -63,6 +64,8 @@ class Tracker(object):
             cfg, args, self.scale, device=self.device, tracker=True, slam=slam
         )
         self.frame_reader.__post_init__(slam)
+        if self.col_and_track:
+            self.numbering = self.frame_reader.numbering
         self.n_img = len(self.frame_reader)
         self.frame_loader = DataLoader(
             self.frame_reader, batch_size=1, shuffle=False, num_workers=1
@@ -234,13 +237,15 @@ class Tracker(object):
                 print(Style.RESET_ALL)
 
             if idx == 0 or self.gt_camera:
+                assert gt_c2w is not None, 'gt_c2w is None, but gt_camera is True. Mostly related to tracking + colmap.'
                 c2w = gt_c2w  # * self.shift.to(device)
                 # if not self.no_vis_on_first_frame:
                 # self.visualizer.vis(
                 #   idx, 0, gt_depth, gt_color, c2w, self.c, self.decoders)
 
             else:
-                gt_camera_tensor = get_tensor_from_camera(gt_c2w)
+                if not self.col_and_track or gt_c2w != torch.nan:
+                    gt_camera_tensor = get_tensor_from_camera(gt_c2w)
                 if self.const_speed_assumption and idx - 2 >= 0:
                     pre_c2w = pre_c2w.float()
                     delta = (
@@ -274,10 +279,10 @@ class Tracker(object):
                     )
                     cam_para_list = [camera_tensor]
                     optimizer_camera = torch.optim.Adam(cam_para_list, lr=self.cam_lr)
-
-                initial_loss_camera_tensor = (
-                    torch.abs(gt_camera_tensor.to(device) - camera_tensor).mean().item()
-                )
+                if not self.col_and_track or gt_c2w != torch.nan:
+                    initial_loss_camera_tensor = (
+                        torch.abs(gt_camera_tensor.to(device) - camera_tensor).mean().item()
+                    )
                 candidate_cam_tensor = None
                 current_min_loss = 10000000000.0
                 for cam_iter in range(self.num_cam_iters):
@@ -299,12 +304,13 @@ class Tracker(object):
                     if cam_iter == 0:
                         initial_loss = loss
 
-                    loss_camera_tensor = (
-                        torch.abs(gt_camera_tensor.to(device) - camera_tensor)
-                        .mean()
-                        .item()
-                    )
-                    if self.verbose:
+                    if not self.col_and_track or gt_c2w != torch.nan:
+                        loss_camera_tensor = (
+                            torch.abs(gt_camera_tensor.to(device) - camera_tensor)
+                            .mean()
+                            .item()
+                        )
+                    if self.verbose and (not self.col_and_track or gt_c2w != torch.nan):
                         if cam_iter == self.num_cam_iters - 1:
                             writer.add_scalar("Loss/poses", loss_camera_tensor, idx)
                             writer.add_scalar("Loss/Re_rendering", loss, idx)
@@ -322,6 +328,8 @@ class Tracker(object):
                 )
                 c2w = get_camera_from_tensor(candidate_cam_tensor.clone().detach())
                 c2w = torch.cat([c2w, bottom], dim=0)
+                if self.col_and_track:
+                    c2w = gt_c2w
             self.estimate_c2w_list[idx] = c2w.clone().cpu()
             self.gt_c2w_list[idx] = gt_c2w.clone().cpu()
             pre_c2w = c2w.clone()
