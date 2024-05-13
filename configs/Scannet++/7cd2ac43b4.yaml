@@ -13,8 +13,8 @@ data:
   output: output/Scannet++/7cd2ac43b4
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
- iters: 10
- iters_first: 100
+  iters: 10
+  iters_first: 100
   every_frame: 1
   max_frames: 560
   mesh_freq: 60
