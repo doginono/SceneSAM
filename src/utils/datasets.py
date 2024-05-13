@@ -631,9 +631,10 @@ class ScanNetPlusPlus(BaseDataset):
         if self.gt_camera:
             self.numbering = np.loadtxt(open(os.path.join(self.input_folder, "trackNumber.txt"))).flatten()
             self.numbering=self.numbering
+            # tracking if gt colmap camera is used then choose from tracknumber
             self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
             self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False:
+        '''if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False:
             self.color_paths = self.color_paths[4500:(self.max_frames+4500)]
             self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
             self.load_poses(self.input_folder)
@@ -647,7 +648,7 @@ class ScanNetPlusPlus(BaseDataset):
             self.color_paths = self.color_paths[:self.max_frames]
             self.depth_paths = self.depth_paths[:self.max_frames]
             self.load_poses(self.input_folder)
-            self.poses = self.poses[:self.max_frames]
+            self.poses = self.poses[:self.max_frames]'''
         self.n_img = len(self.color_paths)
 
     def load_poses(self, path):

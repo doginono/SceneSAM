@@ -132,6 +132,7 @@ class Visualizer(object):
                 condition_reshaped = condition.reshape(semantic_argmax.shape)
 
                 semantic_argmax[condition_reshaped] = 999
+
                 #semantic_argmax[semantic_np[np.arange(semantic_np.shape[0]), semantic_argmax].flatten().numpy()<0.4] = 999
                 #s_arg[s_np[np.arange(s_np.shape[0]), s_arg].flatten().numpy()<0.4] = 999
                 #semantic_argmax = s_arg.reshape(semantic_argmax.shape)
@@ -144,6 +145,8 @@ class Visualizer(object):
                     np.arange(semantic_np.shape[1]),
                     gt_semantic_np,
                 ]  # should contain the predicted probability of the correct instance
+                gt_semantic_np[gt_semantic_np<0]=999
+
                 # -----------------end-added------------------
                 fig, axs = plt.subplots(3, 3,figsize=(21,11.3))  # previously 2,3
                 #fig.suptitle(f"Frame: {idx:05d}, Iter: {iter:04d}")

@@ -55,7 +55,7 @@ class Segmenter(object):
         elif cfg["dataset"] == "replica":# or cfg['dataset'] == 'scannet_panoptic':
             s[[0, 0, 1, 1, 2], [1, 2, 0, 3, 3]] *= -1
         elif cfg["dataset"] == "scannet++" or cfg['dataset'] == 'scannet_panoptic' or cfg['dataset'] == 'scannet_orig' or cfg['dataset'] == 'scannet_orig_every':
-            s[[0, 0, 1, 1, 2,2], [1, 2, 0, 3, 0,3]] *= -1
+            s[[0, 0, 1, 1, 2, 2], [1, 2, 0, 3, 0, 3]] *= -1
             #s=1
         self.shift = s  # s"""
         self.id_counter = slam.id_counter
