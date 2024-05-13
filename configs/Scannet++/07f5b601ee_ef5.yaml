@@ -7,8 +7,8 @@ Segmenter:
   smallestMaskSize: 2000
 data:
   input_folder: wsnsl/Dataset/07f5b601ee
-  logs: logs/Scannet++/07f5b601ee
-  output: output/Scannet++/07f5b601ee
+  logs: logs/Scannet++/07f5b601ee_ef5
+  output: output/Scannet++/07f5b601ee_ef5
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
   every_frame: 5
