@@ -11,7 +11,7 @@ data:
   output: output/Scannet++/07f5b601ee
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
-  # 2
+  every_frame: 5
   bound: [[-0.2511976616576286, 6.005896563627136], [-0.41437938379820016, 5.591336279594627],
     [-0.7037137696780063, 3.100893414053904]]
   first_min_area: 2000

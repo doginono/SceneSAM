@@ -55,6 +55,7 @@ class Tracker(object):
         self.handle_dynamic = cfg["tracking"]["handle_dynamic"]
         self.use_color_in_tracking = cfg["tracking"]["use_color_in_tracking"]
         self.const_speed_assumption = cfg["tracking"]["const_speed_assumption"]
+        print(self.const_speed_assumption)
 
         self.every_frame = cfg["mapping"]["every_frame"]
         self.no_vis_on_first_frame = cfg["mapping"]["no_vis_on_first_frame"]
@@ -331,6 +332,7 @@ class Tracker(object):
                 c2w = get_camera_from_tensor(candidate_cam_tensor.clone().detach())
                 c2w = torch.cat([c2w, bottom], dim=0)
                 if self.col_and_track and ~torch.isnan(gt_c2w[0,0]):
+                    print('used gt_c2w')
                     c2w = gt_c2w
             self.estimate_c2w_list[idx] = c2w.clone().cpu()
             print('predicted c2w: ', c2w)

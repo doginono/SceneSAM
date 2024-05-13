@@ -16,7 +16,7 @@ inherit_from: configs/Scannet++/scannet.yaml
 mapping:
   iters: 60
   iters_first: 1000
-  every_frame: 5
+  every_frame: 2
   max_frames: 6000
   mesh_freq: 50
   keyframe_every: 50

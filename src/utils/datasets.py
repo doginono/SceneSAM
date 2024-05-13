@@ -635,12 +635,14 @@ class ScanNetPlusPlus(BaseDataset):
             self.numbering=self.numbering
             self.color_paths = [self.color_paths[int(i)] for i in self.numbering]
             self.depth_paths = [self.depth_paths[int(i)] for i in self.numbering]
-        if self.input_folder == "Dataset/07f5b601ee" and self.gt_camera==False and self.col_and_track==False:
-            self.color_paths = self.color_paths[4500:(self.max_frames+4500)]
-            self.depth_paths = self.depth_paths[4500:(self.max_frames+4500)]
+        if False and self.input_folder == "/home/rozenberszki/D_Project/wsnsl/Dataset/07f5b601ee" and self.gt_camera==False:
+            print('start 4500')
+            self.color_paths = self.color_paths[4500:]
+            self.depth_paths = self.depth_paths[4500:]
             self.load_poses(self.input_folder)
-            self.poses = self.poses[4500:(self.max_frames+4500)]
+            self.poses = self.poses[4500:]
         else:
+            print('here')
             self.color_paths = self.color_paths[:self.max_frames]
             self.depth_paths = self.depth_paths[:self.max_frames]
             self.load_poses(self.input_folder)
@@ -651,7 +653,10 @@ class ScanNetPlusPlus(BaseDataset):
         self.poses = []
         
         if self.col_and_track:
-            T_wc = np.loadtxt(os.path.join(path, "pose.txt")).reshape(-1, 4, 4)
+            T_wc = np.loadtxt(os.path.join(path, "pose.txt"))
+            T_wc = T_wc.reshape(-1, 4, 4)
+            print(T_wc[0])
+            print(T_wc[1])
             T_wc_full = np.zeros((self.numbering[-1] +1, 4, 4))
             T_wc_full[:] = np.nan
             for i in range(len(T_wc)):

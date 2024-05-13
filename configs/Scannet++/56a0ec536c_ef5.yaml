@@ -11,6 +11,7 @@ data:
   output: output/Scannet++/56a0ec536c
 inherit_from: configs/Scannet++/scannet.yaml
 mapping:
+  every_frame: 5
   mesh_freq: 50
   bound: [[-1.5586548233135855, 7.762284228551966], [-2.3390342807180935, 6.098653785055868],
     [-0.2664747972243242, 5.056522917208074]]
