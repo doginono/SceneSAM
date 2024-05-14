@@ -17,6 +17,7 @@ class Logger(object):
         self.gt_c2w_list = slam.gt_c2w_list
         self.shared_decoders = slam.shared_decoders
         self.estimate_c2w_list = slam.estimate_c2w_list
+        self.semantic_frames = slam.semantic_frames
 
     def log(self, idx, keyframe_dict, keyframe_list, selected_keyframes=None):
         path = os.path.join(self.ckptsdir, '{:05d}.tar'.format(idx))
@@ -28,6 +29,7 @@ class Logger(object):
             'keyframe_list': keyframe_list,
             'keyframe_dict': keyframe_dict, # to save keyframe_dict into ckpt, uncomment this line
             'selected_keyframes': selected_keyframes,
+            'semantic_frames': self.semantic_frames,
             'idx': idx,
         }, path, _use_new_zipfile_serialization=False)
 

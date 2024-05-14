@@ -236,6 +236,11 @@ class NICE_SLAM:
         self.set_grid(log_dict["c"])
         self.set_estimate_c2w_list(log_dict["estimate_c2w_list"])
         self.set_gt_c2w_list(log_dict["gt_c2w_list"])
+        self.mapper.keyframe_list = log_dict["keyframe_list"]
+        self.mapper.keyframe_dict = log_dict["keyframe_dict"]
+        self.idx[0] = log_dict["idx"]
+        self.idx.share_memory_()
+
         return log_dict['keyframe_dict']
 
     def set_output_dimension_semantic(self, output_dimension_semantic):
@@ -502,6 +507,10 @@ class NICE_SLAM:
                 end = 3
             else:
                 end = 4
+            if 'ckpt' in self.cfg:
+                assert False, 'not implemented'
+                self.set_log_dict(self.cfg['ckpt'])
+                d =torch.load(self.cfg['ckpt'])
             for rank in range(
                 0, end
             ):  # set to 3 to also use segmenter: 13.03 segmenternot updated
