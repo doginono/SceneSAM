@@ -25,11 +25,11 @@ from tqdm import tqdm
 from src.utils import vis
 from PIL import Image
 import json
-from src.utils.datasets import ScanNet_Panoptic
+from src.utils.datasets import ScanNet_Panoptic, ScanNetPlusPlus
 from matplotlib import cm
 from src.utils.datasets import Replica
 
-
+"python vis_traj.py configs/ScanNet/scene0693_00.yaml output/scannet/track_scene0693_00/ckpts/00691.tar --dataset scannet"
 
 def main():
     parser = argparse.ArgumentParser(
@@ -43,6 +43,7 @@ def main():
         type=str,
         help="output folder, this have higher priority, can overwrite the one in config file",
     )
+    parser.add_argument("--dataset", type=str, help="dataset name", default="scannet")
     parser.add_argument(
         "--input_folder",
         type=str,
@@ -69,7 +70,16 @@ def main():
     poses = None
     #basepath = "/home/rozenberszki/project/wsnsl/Datasets/Scannet/scene0423_02_panoptic"
     #render_gif_dataset(cfg, args, slam, cfg['data']['output'])
-    render_gif(slam, cfg, cfg['data']['output'])
+    if args.dataset == "scannet":
+        render_gif_dataset(cfg, args, slam, cfg['data']['output'], ScanNet_Panoptic)
+    elif args.dataset == "scannet++":
+        render_gif_dataset(cfg, args, slam, cfg['data']['output'], ScanNetPlusPlus)
+    elif args.dataset == "room0_panoptic":
+        render_gif(slam, cfg, cfg['data']['output'])
+    elif args.dataset == "replica":
+        render_gif_dataset(cfg, args, slam, cfg['data']['output'], Replica)
+    else:
+        raise NotImplementedError("Dataset for Scannet++ not implemented")
 
 def load_panoptic_room0():
     basepath = "/home/rozenberszki/project/wsnsl/Datasets/Replica/room0_panoptic/test_results_org_pan"
@@ -94,22 +104,33 @@ def load_scannet(basepath, split):
     poses = torch.from_numpy(np.stack(poses)).float()
     return gt_colors, gt_depths, poses
 
-def render_gif_dataset(cfg, args, slam, path):
+def render_gif_dataset(cfg, args, slam, path, Dataset):
     visualizerForId = vis.visualizerForIds()
     #room0 Replica
-    frame_reader = Replica(cfg, args, 1,slam=slam)
+    if args.dataset == "scannet":
+        frame_reader = Dataset(cfg, args, 1,slam=slam, split='test')
+    else:
+        frame_reader = Dataset(cfg, args, 1,slam=slam)
     frame_reader.__post_init__(slam)
     if path is None:
         store_path = "run_traj_reversed/"
     else:
         store_path = path + "/"
     seg_path = store_path + "/pred_semantics"
+    col_path = store_path + "/pred_colors"
     os.makedirs(seg_path, exist_ok=True)
+    os.makedirs(col_path, exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
     depths, colors, semantics = [], [], []
-    for i, color_data, depth_data, c2w, _ in tqdm(frame_reader):
+    if args.dataset == "scannet":
+        render_indices = range(len(frame_reader))
+    else:
+        render_indices = np.arange(len(frame_reader)-2, step=5) + 0
+    print(render_indices)
+    for i in tqdm(render_indices):
         if i % 10 != 0:
             continue
+        i, color_data, depth_data, c2w, _ = frame_reader[i]
         depth, _, color, semantic = slam.vis_renderer.render_img(
                 slam.shared_c,
                 slam.shared_decoders,
@@ -148,16 +169,21 @@ def render_gif_dataset(cfg, args, slam, path):
         plt.tight_layout()
         plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png", bbox_inches='tight',pad_inches=0)
         plt.close(fig)
+        semantic_im = (visualizerForId.get_colors(semantic_argmax)*255).astype(int)
+        cv2.imwrite(f"{seg_path}/frame_{(i):04d}.png", semantic_im)
+        color_image = (color_np* 255).astype(np.uint8)
+        color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
         #Image.fromarray(semantic_argmax.astype(np.uint8)).save(
         #    f"{seg_path}/0_{(i):04d}.png"
         #)
 
-    depths = np.stack(depths)
-    depths /= np.max(depths)
+    #depths = np.stack(depths)
+    #depths /= np.max(depths)
 
-    color_gif_from_array(colors, f"{seg_path}/test_color.gif")
-    color_gif_from_array(depths, f"{seg_path}/test_depth.gif")
-    make_gif_from_array(semantics, f"{seg_path}/test_semantic.gif")
+    #color_gif_from_array(colors, f"{seg_path}/test_color.gif")
+    #color_gif_from_array(depths, f"{seg_path}/test_depth.gif")
+    #make_gif_from_array(semantics, f"{seg_path}/test_semantic.gif")
 
     pass
 def render_gif(slam, cfg, path=None):
@@ -166,6 +192,8 @@ def render_gif(slam, cfg, path=None):
     else:
         store_path = path + "/"
     seg_path = store_path + "/pred_semantics"
+    col_path = store_path + "/pred_colors"
+    os.makedirs(col_path, exist_ok=True)
     os.makedirs(seg_path, exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
     
@@ -181,8 +209,6 @@ def render_gif(slam, cfg, path=None):
     edge = cfg["cam"]["crop_edge"] if "crop_edge" in cfg["cam"] else 0
     depths, colors, semantics = [], [], []
     for i, c2w in tqdm(enumerate(poses)):
-        if i != 6 and i != 150:
-            continue
         c2w[:3, 1] *= -1
         c2w[:3, 2] *= -1
         # idx, gt_color, gt_depth, gt_pose, gt_semantic = slam.frame_reader[i]
@@ -231,11 +257,14 @@ def render_gif(slam, cfg, path=None):
             stage="visualize",
             gt_depth=depth_data,
         )
+        #cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", (color.detach().cpu().numpy() * 255).astype(np.uint8))
         depth_np = depth.detach().cpu().numpy()
         color_np = color.detach().cpu().numpy()
         color_np = np.clip(color_np, 0, 1)
         semantic_np = semantic.detach().cpu().numpy()
         semantic_argmax = np.argmax(semantic_np, axis=2)
+        semantic_im = (visualizerForId.get_colors(semantic_argmax)*255).astype(int)
+        cv2.imwrite(f"{seg_path}/frame_{(i):04d}.png", semantic_im)
         depths.append(depth_np)
         colors.append(color_np)
         semantics.append(semantic_argmax)
@@ -259,13 +288,16 @@ def render_gif(slam, cfg, path=None):
         print(f"{store_path+'/all/'}0_{(i):04d}.png")
         plt.savefig(f"{store_path+'/all/'}0_{(i):04d}.png", bbox_inches='tight',pad_inches=0)
         plt.close(fig)
+        color_image = (color_np* 255).astype(np.uint8)
+        color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
 
-    depths = np.stack(depths)
-    depths /= np.max(depths)
+    #depths = np.stack(depths)
+    #depths /= np.max(depths)
 
-    color_gif_from_array(colors, "test_color.gif")
-    color_gif_from_array(depths, "test_depth.gif")
-    make_gif_from_array(semantics, "test_semantic.gif")
+    #color_gif_from_array(colors, "test_color.gif")
+    #color_gif_from_array(depths, "test_depth.gif")
+    #make_gif_from_array(semantics, "test_semantic.gif")
 
 
 if __name__ == "__main__":

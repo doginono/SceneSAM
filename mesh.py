@@ -39,6 +39,12 @@ def main():
     #parser.add_argument("trajectory", type=str, help="Path to the trajectory file.")
     parser.add_argument("mesh", type = str, help = "Path to the out mesh file")
     parser.add_argument(
+        "treshhold",
+        type=float,
+        default=0.5,
+        help="confidence threshold for meshing, default is 0.5",
+    )
+    parser.add_argument(
         "--output",
         type=str,
         help="output folder, this have higher priority, can overwrite the one in config file",
@@ -63,9 +69,9 @@ def main():
         path = None
     slam = NICE_SLAM(cfg, args)
     keyframe_dict = slam.set_log_dict(args.checkpoint)
-    slam.mesher.confidence_threshold = 0.9
+    slam.mesher.confidence_threshold = args.treshhold
     slam.mesher.get_mesh(
-                            args.mesh + ".ply",
+                            args.mesh,
                             slam.shared_c,
                             slam.shared_decoders,
                             keyframe_dict,
@@ -75,8 +81,8 @@ def main():
                             show_forecast=cfg["meshing"]["mesh_coarse_level"],
                             clean_mesh=cfg["meshing"]["clean_mesh"],
                             get_mask_use_all_frames=False,
-                            color=True,
-                            semantic=False,
+                            color=False,
+                            semantic=True,
                         ) 
  
 if __name__ == "__main__":

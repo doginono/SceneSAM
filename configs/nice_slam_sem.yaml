@@ -29,6 +29,7 @@ meshing:
   color_mesh_extraction_method: 'direct_point_query'
   remove_small_geometry_threshold: 0.2
 tracking:
+  col_and_track: False
   ignore_edge_W: 20
   ignore_edge_H: 20
   use_color_in_tracking: True
