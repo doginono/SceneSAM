@@ -29,7 +29,15 @@ from src.utils.datasets import ScanNet_Panoptic, ScanNetPlusPlus
 from matplotlib import cm
 from src.utils.datasets import Replica
 
-"python vis_traj.py configs/ScanNet/scene0693_00.yaml output/scannet/track_scene0693_00/ckpts/00691.tar --dataset scannet"
+"""python vis_traj.py configs/ScanNet/scene0693_00.yaml output/scannet/track_scene0693_00/ckpts/00691.tar --dataset scannet -----------
+
+python vis_traj.py configs/Own/room0_panoptic.yaml output/Own/room0_panoptic/ckpts/ef2_ruunAuto_00674.tar --dataset room0_panoptic
+python vis_traj.py configs/Own/room0_panoptic_gt.yaml output/Own/room0_panoptic/ckpts/ef2_gt_tracking_00674.tar --dataset room0_panoptic
+python vis_traj.py configs/ScanNet/scene0423_02_panoptic_gt.yaml output/scannet/gt_track_scene0423_02_panoptic/ckpts/00683.tar --dataset scannet
+python vis_traj.py configs/ScanNet/scene0423_02_panoptic.yaml output/scannet/track_scene0423_02_panoptic/ckpts/plot_paper_00683.tar --dataset scannet
+python vis_traj.py configs/Own/room1.yaml output/Own/room1/ckpts/v01999.tar --dataset replica
+python vis_traj.py configs/Own/room1_gt.yaml output_david/Own_gt/room1/ckpts/v01999.tar --dataset replica
+"""
 
 def main():
     parser = argparse.ArgumentParser(
@@ -112,6 +120,8 @@ def render_gif_dataset(cfg, args, slam, path, Dataset):
     else:
         frame_reader = Dataset(cfg, args, 1,slam=slam)
     frame_reader.__post_init__(slam)
+    if args.dataset == "scannet++":
+        frame_reader.poses = torch.load(args.checkpoint)['estimate_c2w_list']
     if path is None:
         store_path = "run_traj_reversed/"
     else:
@@ -120,16 +130,17 @@ def render_gif_dataset(cfg, args, slam, path, Dataset):
     col_path = store_path + "/pred_colors"
     os.makedirs(seg_path, exist_ok=True)
     os.makedirs(col_path, exist_ok=True)
+    os.makedirs(store_path + "/pred_depths", exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
     depths, colors, semantics = [], [], []
     if args.dataset == "scannet":
         render_indices = range(len(frame_reader))
     else:
-        render_indices = np.arange(len(frame_reader)-2, step=5) + 0
+        render_indices = np.arange(len(frame_reader)-2, step=5) + 2
     print(render_indices)
     for i in tqdm(render_indices):
-        if i % 10 != 0:
-            continue
+        #if i % 10 != 2:
+        #    continue
         i, color_data, depth_data, c2w, _ = frame_reader[i]
         depth, _, color, semantic = slam.vis_renderer.render_img(
                 slam.shared_c,
@@ -174,6 +185,7 @@ def render_gif_dataset(cfg, args, slam, path, Dataset):
         color_image = (color_np* 255).astype(np.uint8)
         color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
+        cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", (depth_np * 255).astype(np.uint8))
         #Image.fromarray(semantic_argmax.astype(np.uint8)).save(
         #    f"{seg_path}/0_{(i):04d}.png"
         #)
@@ -196,6 +208,7 @@ def render_gif(slam, cfg, path=None):
     os.makedirs(col_path, exist_ok=True)
     os.makedirs(seg_path, exist_ok=True)
     os.makedirs(store_path + "/all", exist_ok=True)
+    os.makedirs(store_path + "/pred_depths", exist_ok=True)
     
    
     #split = json.load(open(os.path.join(basepath,"splits.json")))['test']
@@ -291,7 +304,7 @@ def render_gif(slam, cfg, path=None):
         color_image = (color_np* 255).astype(np.uint8)
         color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
-
+        cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", (depth_np * 255).astype(np.uint8))
     #depths = np.stack(depths)
     #depths /= np.max(depths)
 

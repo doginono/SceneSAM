@@ -1,0 +1,29 @@
+dataset: 'scannet_panoptic'
+inherit_from: configs/ScanNet/scannet.yaml
+mapping:
+  bound: [[-5, 12],[-5.2, 12.7],[-0.3, 1.4]]
+  marching_cubes_bound: [[1.3, 5.8], [1.4, 5.9], [0.01, 0.8]]
+  every_frame: 1
+  keyframe_every: 6
+  first_min_area: 1000
+data:
+  input_folder: Datasets/Scannet/scene0423_02_panoptic
+  output: output/scannet/scene0423_02_panoptic_gt
+  logs: logs/scannet/scene0423_02_panoptic_gt
+output_dimension_semantic: 200
+Segmenter:
+  samplePixelFarther: 2
+  normalizePointNumber: 7
+  depthCondition: 0.05 #0.005 #0.0 
+  border: 10
+  smallestMaskSize: 1000 # 10000
+  every_frame: 2
+cam:
+  png_depth_scale: 1000
+  H: 480
+  W: 640
+  fx: 577.870605
+  fy: 577.870605
+  cx: 319.5
+  cy: 239.5
+#load_ckpt: '/home/rozenberszki/project/wsnsl/output/scannet/scans/scene0423_02_panoptic/ckpts/good_with_tracking_no_segmenter_00683.tar'
