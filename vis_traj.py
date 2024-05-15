@@ -36,7 +36,7 @@ python vis_traj.py configs/Own/room0_panoptic_gt.yaml output/Own/room0_panoptic/
 python vis_traj.py configs/ScanNet/scene0423_02_panoptic_gt.yaml output/scannet/gt_track_scene0423_02_panoptic/ckpts/00683.tar --dataset scannet
 python vis_traj.py configs/ScanNet/scene0423_02_panoptic.yaml output/scannet/track_scene0423_02_panoptic/ckpts/plot_paper_00683.tar --dataset scannet
 python vis_traj.py configs/Own/room1.yaml output/Own/room1/ckpts/v01999.tar --dataset replica
-python vis_traj.py configs/Own/room1_gt.yaml output_david/Own_gt/room1/ckpts/v01999.tar --dataset replica
+python vis_traj.py configs/Own/room1_gt.yaml output_david/Own_gt/room1/ckpts/v01999.tar --dataset replica --------------------
 """
 
 def main():
@@ -169,7 +169,7 @@ def render_gif_dataset(cfg, args, slam, path, Dataset):
         #ax[1].imshow(color_data.cpu().numpy())
         mi = np.min(depth_np)
         ma = np.max(depth_np)
-        depth_np = (depth_np - mi) / (ma - mi + 1e-8)
+        #depth_np = (depth_np - mi) / (ma - mi + 1e-8)
         ax[2].imshow(depth_np, cmap='jet')
         ax[2].set_xticks([])
         ax[2].set_yticks([])
@@ -185,7 +185,10 @@ def render_gif_dataset(cfg, args, slam, path, Dataset):
         color_image = (color_np* 255).astype(np.uint8)
         color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
-        cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", (depth_np * 255).astype(np.uint8))
+        depth_np = depth_np / 10
+        depth_np = (depth_np * 255).astype(np.uint8)
+        colored_depth = cv2.applyColorMap(depth_np, cv2.COLORMAP_JET)
+        cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", colored_depth)
         #Image.fromarray(semantic_argmax.astype(np.uint8)).save(
         #    f"{seg_path}/0_{(i):04d}.png"
         #)
@@ -305,6 +308,12 @@ def render_gif(slam, cfg, path=None):
         color_image = cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"{col_path}/frame_{(i):04d}.png", color_image)
         cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", (depth_np * 255).astype(np.uint8))
+        mi = np.min(depth_np)
+        ma = np.max(depth_np)
+        depth_np = (depth_np - mi) / (ma - mi + 1e-8)
+        depth_np = (depth_np * 255).astype(np.uint8)
+        colored_depth = cv2.applyColorMap(depth_np, cv2.COLORMAP_JET)
+        cv2.imwrite(f"{store_path + '/pred_depths/'}frame_{(i):04d}.png", colored_depth)
     #depths = np.stack(depths)
     #depths /= np.max(depths)
 

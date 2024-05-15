@@ -8,7 +8,7 @@ mapping:
   keyframe_every: 6
 data:
   input_folder: Datasets/Scannet/scene0693_00
-  output:  output/scannet/scene0693_00
+  output:  output/scannet/scene0693_00_gt
   logs: logs/scannet/scene0693_00
 output_dimension_semantic: 200
 Segmenter:
