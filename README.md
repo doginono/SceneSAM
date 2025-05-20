@@ -90,7 +90,6 @@ The runtime visualizaions and meshes are stored into the output/Own/room1_small 
 
 ### Replica
 You can download the Replica Dataset as below and then run WSNSL on it. 
-Running it on a full video takes around 5-6 hours. 
 
 ```bash
 bash scripts/download_replica.sh
