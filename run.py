@@ -68,21 +68,7 @@ def main():
     # writer.close()
     print("read in hparams")
     # -----------------------------------------------------------------------------------
-    """segmenter = Segmenter(
-        cfg,
-        args,
-        store_directory=os.path.join(cfg["data"]["input_folder"], "segmentation"),
-    )
-    frames, max_id = segmenter.run() # TODO
-    gifMaker.make_gif_from_array(
-        frames,
-        store=os.path.join(cfg["data"]["input_folder"], "segmentation", "gif.gif"),
-        duration=100,
-    )
-    del segmenter
-    cfg["output_dimension_semantic"] = (
-        max_id  # ensures that we have enough ids which we can predict
-    )"""
+    
     slam = NICE_SLAM(cfg, args)
 
     slam.run()
